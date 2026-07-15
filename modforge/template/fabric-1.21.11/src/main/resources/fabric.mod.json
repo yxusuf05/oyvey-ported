@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "__MOD_ID__",
+  "version": "__MOD_VERSION__",
+  "name": "__MOD_NAME__",
+  "description": "__MOD_DESCRIPTION__",
+  "authors": [
+    "ModForge"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.modforge.__PKG_ID__.ModEntry"
+    ]
+  },
+  "mixins": [
+    "__MOD_ID__.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=__LOADER_VERSION__",
+    "fabric": "*",
+    "minecraft": "__MC_VERSION__"
+  }
+}

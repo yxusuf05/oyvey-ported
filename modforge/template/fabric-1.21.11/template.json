@@ -1,0 +1,22 @@
+{
+  "id": "fabric-1.21.11",
+  "loader": "fabric",
+  "display_name": "Fabric — Minecraft 1.21.11",
+  "mc_version": "1.21.11",
+  "loader_version": "0.18.4",
+  "fabric_api_version": "0.141.1+1.21.11",
+  "pack_format": 75,
+  "pack_format_note": "resource pack format 75 = MC 1.21.11 (per minecraft.wiki); newer clients also read min_format/max_format",
+  "entry_class": "com.modforge.__PKG_ID__.ModEntry",
+  "jar_dir": "build/libs",
+  "placeholders": [
+    "__MOD_ID__",
+    "__PKG_ID__",
+    "__MOD_NAME__",
+    "__MOD_VERSION__",
+    "__MOD_DESCRIPTION__",
+    "__MC_VERSION__",
+    "__LOADER_VERSION__",
+    "__FABRIC_API_VERSION__"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "modforge",
+  "version": "0.1.0",
+  "description": "AI Minecraft mod generator — chat that writes Fabric mods and delivers built .jar files and resource pack .zips",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "warm-gradle": "node scripts/warm-gradle.js",
+    "verify": "node scripts/verify-e2e.js",
+    "smoke": "sh scripts/e2e-smoke.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "archiver": "^7.0.1",
+    "better-sqlite3": "^11.8.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "openai": "^4.87.0",
+    "pngjs": "^7.0.0",
+    "stripe": "^17.7.0"
+  }
+}

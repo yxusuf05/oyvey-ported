@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ModForge — KI-Minecraft-Mods</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login -->
+  <div id="auth-view" class="auth-view hidden">
+    <div class="auth-card">
+      <h1>⛏️ ModForge</h1>
+      <p class="tagline">Deine KI baut Minecraft-Mods &amp; Texture-Packs — fertig zum Download.</p>
+      <form id="auth-form">
+        <input type="email" id="auth-email" placeholder="E-Mail" required autocomplete="email">
+        <input type="password" id="auth-password" placeholder="Passwort (min. 8 Zeichen)" required autocomplete="current-password">
+        <div class="auth-buttons">
+          <button type="submit" data-mode="login" class="primary">Einloggen</button>
+          <button type="submit" data-mode="signup">Registrieren</button>
+        </div>
+        <p id="auth-error" class="error"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app-view" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">⛏️ ModForge</div>
+      <button id="new-project" class="primary wide">+ Neues Projekt</button>
+      <div id="project-list" class="project-list"></div>
+      <div class="account">
+        <div id="plan-badge" class="plan-badge"></div>
+        <div id="usage-info" class="usage"></div>
+        <button id="upgrade-btn" class="wide hidden">⭐ Auf Premium upgraden</button>
+        <button id="logout-btn" class="wide subtle">Ausloggen</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div id="empty-state" class="empty-state">
+        <h2>Willkommen bei ModForge!</h2>
+        <p>Erstelle links ein Projekt und beschreib der KI einfach, welchen Mod oder welches Texture-Pack du willst — sie stellt Rückfragen, schreibt den Code und legt dir die fertige Datei in den Chat.</p>
+      </div>
+      <div id="chat-view" class="chat hidden">
+        <header id="chat-header" class="chat-header"></header>
+        <div id="messages" class="messages"></div>
+        <div id="question-chips" class="chips hidden"></div>
+        <div id="status-bar" class="status-bar hidden"></div>
+        <form id="chat-form" class="composer">
+          <textarea id="chat-input" rows="2" placeholder="Beschreib deinen Mod… (z.B. „Ein Schwert aus Smaragden, das Gegner anzündet“)"></textarea>
+          <button type="submit" class="primary">Senden</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- New-project dialog -->
+  <dialog id="project-dialog">
+    <form id="project-form" method="dialog">
+      <h3>Neues Projekt</h3>
+      <label>Name<input type="text" id="project-name" placeholder="z.B. Rubin-Mod" required maxlength="60"></label>
+      <label>Art
+        <select id="project-kind">
+          <option value="mod">Mod (Fabric, .jar)</option>
+          <option value="resourcepack">Texture-/Resource-Pack (.zip)</option>
+        </select>
+      </label>
+      <div class="dialog-buttons">
+        <button type="button" id="project-cancel">Abbrechen</button>
+        <button type="submit" class="primary">Erstellen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
