@@ -22,7 +22,76 @@ document.addEventListener("DOMContentLoaded", () => {
   initProductPage();
   initLoginPage();
   initContactForm();
+  initScrollReveal();
+  initCookieBanner();
 });
+
+/* ---------- Scroll-Reveal-Animationen ---------- */
+function initScrollReveal() {
+  const selectors = [
+    ".section-head", ".feature-card", ".step-card", ".testimonial-card",
+    ".testimonial-note", ".gallery-grid img", ".cta-banner",
+    ".faq-list details", ".contact-card", ".contact-form-card", ".auth-card",
+  ];
+  const els = document.querySelectorAll(selectors.join(","));
+  if (!els.length) return;
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced || !("IntersectionObserver" in window)) return; // ohne Animation direkt sichtbar lassen
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in");
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: "0px 0px -40px 0px" });
+
+  // Stagger: Verzögerung pro Element innerhalb des gleichen Elternteils
+  const groupIndex = new Map();
+  els.forEach((el) => {
+    const parent = el.parentElement;
+    const idx = groupIndex.get(parent) || 0;
+    groupIndex.set(parent, idx + 1);
+    el.classList.add("reveal");
+    el.style.animationDelay = `${idx * 110}ms`;
+    io.observe(el);
+  });
+}
+
+/* ---------- Cookie-Banner ---------- */
+function initCookieBanner() {
+  const KEY = "flexshake-cookie-consent";
+  try {
+    if (localStorage.getItem(KEY)) return;
+  } catch (e) {
+    return;
+  }
+
+  const banner = document.createElement("div");
+  banner.id = "cookie-banner";
+  banner.setAttribute("role", "region");
+  banner.setAttribute("aria-label", "Cookie-Hinweis");
+  banner.innerHTML = `
+    <div class="cookie-inner">
+      <p><span data-i18n="cookie.text">${t("cookie.text")}</span></p>
+      <div class="cookie-actions">
+        <button type="button" id="cookie-accept" data-i18n="cookie.accept">${t("cookie.accept")}</button>
+        <button type="button" id="cookie-decline" data-i18n="cookie.decline">${t("cookie.decline")}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(banner);
+  window.setTimeout(() => banner.classList.add("show"), 400);
+
+  const close = (value) => {
+    try { localStorage.setItem(KEY, value); } catch (e) { /* ignore */ }
+    banner.classList.remove("show");
+    window.setTimeout(() => banner.remove(), 500);
+  };
+  document.getElementById("cookie-accept").addEventListener("click", () => close("all"));
+  document.getElementById("cookie-decline").addEventListener("click", () => close("essential"));
+}
 
 /* ---------- Mobile navigation ---------- */
 function initMobileNav() {

@@ -663,3 +663,71 @@ mark.ph {
   .cta-banner { padding: 2.2rem 1.6rem; }
   .price-bubble { right: 4px; }
 }
+
+/* ---------- Animationen ---------- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(.5) rotate(6deg); }
+  70%  { transform: scale(1.1) rotate(6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(6deg); }
+}
+
+/* Hero-Eingangsanimation (gestaffelt) */
+.hero-grid > div:first-child > * { animation: fadeUp .7s ease backwards; }
+.hero-grid > div:first-child > *:nth-child(1) { animation-delay: .05s; }
+.hero-grid > div:first-child > *:nth-child(2) { animation-delay: .15s; }
+.hero-grid > div:first-child > *:nth-child(3) { animation-delay: .25s; }
+.hero-grid > div:first-child > *:nth-child(4) { animation-delay: .35s; }
+.hero-grid > div:first-child > *:nth-child(5) { animation-delay: .45s; }
+.hero-image { animation: fadeUp .8s ease .2s backwards; }
+.hero-image img { animation: floatY 6s ease-in-out 1.4s infinite; }
+.price-bubble { animation: popIn .6s cubic-bezier(.34,1.56,.64,1) .9s backwards; }
+
+/* Scroll-Reveal (Klassen werden per JS gesetzt) */
+.reveal { opacity: 0; }
+.reveal.in { opacity: 1; animation: fadeUp .65s ease both; }
+
+/* Hover-Effekte */
+.feature-card, .step-card, .testimonial-card { transition: transform .25s ease, box-shadow .25s ease; }
+.feature-card:hover, .step-card:hover, .testimonial-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(20,60,40,.15); }
+.gallery-grid img { transition: transform .3s ease; }
+.gallery-grid img:hover { transform: scale(1.03); }
+
+/* ---------- Cookie-Banner ---------- */
+#cookie-banner {
+  position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 200;
+  display: flex; justify-content: center;
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .45s ease, transform .45s ease;
+  pointer-events: none;
+}
+#cookie-banner.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.cookie-inner {
+  max-width: 680px; background: var(--ink-900); color: #eef7f1;
+  border-radius: 16px; box-shadow: 0 18px 50px rgba(0,0,0,.35);
+  padding: 1.1rem 1.3rem; display: flex; flex-wrap: wrap; gap: .9rem;
+  align-items: center; font-size: .92rem; line-height: 1.5;
+}
+.cookie-inner p { margin: 0; flex: 1 1 280px; }
+.cookie-inner a { color: var(--lime-400); text-decoration: underline; }
+.cookie-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.cookie-actions button {
+  border: none; border-radius: 999px; padding: .55rem 1.15rem;
+  font-weight: 700; cursor: pointer; font-size: .88rem; font-family: var(--font);
+}
+#cookie-accept { background: linear-gradient(135deg, var(--green-500), var(--green-600)); color: #fff; }
+#cookie-accept:hover { filter: brightness(1.08); }
+#cookie-decline { background: transparent; color: #cfe0d6; border: 1px solid #3d5648; }
+#cookie-decline:hover { background: rgba(255,255,255,.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; }
+}

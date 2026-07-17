@@ -151,6 +151,11 @@ const I18N = {
     "contact.form.submit": "Nachricht senden",
     "contact.form.note": "Der Button öffnet dein E-Mail-Programm mit der vorbereiteten Nachricht.",
 
+    // Cookie-Banner
+    "cookie.text": "🍪 <strong>Cookies:</strong> Wir verwenden nur technisch notwendige Cookies für Warenkorb &amp; Checkout – kein Tracking. Mehr dazu in der <a href=\"datenschutz.html\">Datenschutzerklärung</a>.",
+    "cookie.accept": "Akzeptieren",
+    "cookie.decline": "Nur notwendige",
+
     // Footer
     "footer.tagline": "Frische Smoothies, wo immer du bist. Kompakt, kabellos, selbstreinigend.",
     "footer.shop": "Shop",
@@ -307,6 +312,11 @@ const I18N = {
     "contact.form.message": "Your message",
     "contact.form.submit": "Send message",
     "contact.form.note": "The button opens your email app with the prepared message.",
+
+    // Cookie banner
+    "cookie.text": "🍪 <strong>Cookies:</strong> We only use technically necessary cookies for the cart &amp; checkout – no tracking. Learn more in our <a href=\"datenschutz.html\">privacy policy</a>.",
+    "cookie.accept": "Accept",
+    "cookie.decline": "Essential only",
 
     // Footer
     "footer.tagline": "Fresh smoothies wherever you are. Compact, cordless, self-cleaning.",
