@@ -30,6 +30,7 @@ import me.alpha432.oyvey.features.modules.movement.ToggleSprintModule;
 import me.alpha432.oyvey.features.modules.player.FastPlaceModule;
 import me.alpha432.oyvey.features.modules.player.NoFallModule;
 import me.alpha432.oyvey.features.modules.player.VelocityModule;
+import me.alpha432.oyvey.features.modules.render.BlockGlintModule;
 import me.alpha432.oyvey.features.modules.render.BlockHighlightModule;
 import me.alpha432.oyvey.features.modules.render.FullbrightModule;
 import me.alpha432.oyvey.features.modules.render.ZoomModule;
@@ -67,6 +68,7 @@ public class ModuleManager implements Jsonable, Util {
         register(new FpsBoostModule());
         register(new FullbrightModule());
         register(new ZoomModule());
+        register(new BlockGlintModule());
         register(new ToggleSprintModule());
         register(new GhostTagHudModule());
         register(new KeystrokesModule());

@@ -26,6 +26,8 @@ FPS boost, a clean animated HUD and handy quality-of-life modules.
   (with remaining time) — all draggable in the HUD editor.
 
 ### Utility
+- **BlockGlint** — highlights crystal-PvP blocks around you (obsidian, crying obsidian, respawn
+  anchors, ender chests) with a filled box + outline. Scanning is throttled so it stays cheap.
 - **Fullbright** — see in the dark (restores your gamma on disable).
 - **Zoom** — smooth toggle zoom.
 - **ToggleSprint** — auto-sprint while moving.
