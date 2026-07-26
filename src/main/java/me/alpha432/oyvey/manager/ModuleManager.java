@@ -13,15 +13,26 @@ import me.alpha432.oyvey.features.modules.client.HudEditorModule;
 import me.alpha432.oyvey.features.modules.client.NotificationsModule;
 import me.alpha432.oyvey.features.modules.combat.CriticalsModule;
 import me.alpha432.oyvey.features.modules.combat.KeyPearlModule;
+import me.alpha432.oyvey.features.modules.hud.ArmorHudModule;
 import me.alpha432.oyvey.features.modules.hud.CoordinatesHudModule;
+import me.alpha432.oyvey.features.modules.hud.CpsHudModule;
+import me.alpha432.oyvey.features.modules.hud.FpsHudModule;
+import me.alpha432.oyvey.features.modules.hud.GhostTagHudModule;
+import me.alpha432.oyvey.features.modules.hud.KeystrokesModule;
+import me.alpha432.oyvey.features.modules.hud.PingHudModule;
+import me.alpha432.oyvey.features.modules.hud.PotionHudModule;
 import me.alpha432.oyvey.features.modules.hud.WatermarkHudModule;
+import me.alpha432.oyvey.features.modules.misc.FpsBoostModule;
 import me.alpha432.oyvey.features.modules.misc.MCFModule;
 import me.alpha432.oyvey.features.modules.movement.ReverseStepModule;
 import me.alpha432.oyvey.features.modules.movement.StepModule;
+import me.alpha432.oyvey.features.modules.movement.ToggleSprintModule;
 import me.alpha432.oyvey.features.modules.player.FastPlaceModule;
 import me.alpha432.oyvey.features.modules.player.NoFallModule;
 import me.alpha432.oyvey.features.modules.player.VelocityModule;
 import me.alpha432.oyvey.features.modules.render.BlockHighlightModule;
+import me.alpha432.oyvey.features.modules.render.FullbrightModule;
+import me.alpha432.oyvey.features.modules.render.ZoomModule;
 import me.alpha432.oyvey.util.traits.Jsonable;
 import me.alpha432.oyvey.util.traits.Util;
 import org.slf4j.Logger;
@@ -51,6 +62,19 @@ public class ModuleManager implements Jsonable, Util {
         register(new BlockHighlightModule());
         register(new NoFallModule());
         register(new KeyPearlModule());
+
+        // Ghost Client feature suite: performance, utility and modern animated HUD.
+        register(new FpsBoostModule());
+        register(new FullbrightModule());
+        register(new ZoomModule());
+        register(new ToggleSprintModule());
+        register(new GhostTagHudModule());
+        register(new KeystrokesModule());
+        register(new FpsHudModule());
+        register(new CpsHudModule());
+        register(new PingHudModule());
+        register(new ArmorHudModule());
+        register(new PotionHudModule());
 
         LOGGER.info("Registered {} modules", modules.size());
 
