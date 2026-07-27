@@ -25,12 +25,32 @@ FPS boost, a clean animated HUD and handy quality-of-life modules.
 - **FPS**, **CPS** (left / right), **Ping**, **ArmorHud** (with durability) and **PotionHud**
   (with remaining time) — all draggable in the HUD editor.
 
-### Utility
+### Combat (PvP)
+- **TriggerBot** — auto-attacks the entity under your crosshair with a configurable delay; filters
+  for players / mobs / crystals and skips friends. Never fires while a screen is open.
+- **AutoTotem** — keeps a Totem of Undying in your off-hand and refills it the instant one pops.
+- **Criticals** — packet criticals on your hits.
+
+### Render / ESP
+- **ESP** — boxes around players and mobs through walls, with a separate friend colour, adjustable
+  fill/outline and range. Positions are interpolated per frame so boxes stay smooth at any FPS.
+- **BlockOutline** — fully colour-customizable outline (+ optional fill) of the block you aim at,
+  with an **IgnoreCrystals** option so it stops cluttering the obsidian under end crystals, a
+  chroma mode and a toggle to replace the vanilla outline.
 - **BlockGlint** — highlights crystal-PvP blocks around you (obsidian, crying obsidian, respawn
   anchors, ender chests) with a filled box + outline. Scanning is throttled so it stays cheap.
 - **Fullbright** — see in the dark (restores your gamma on disable).
 - **Zoom** — smooth toggle zoom.
+
+### Player / Movement
+- **AutoRespawn** — respawns you instantly on death.
 - **ToggleSprint** — auto-sprint while moving.
+- **Step / ReverseStep / NoFall / Velocity / FastPlace** — movement & interaction helpers.
+
+### ClickGui (modern design)
+The ClickGui uses rounded, glass-style panels with an accent header, an animated hover/enable
+highlight on every module row and a configurable **corner rounding** and accent colour (with an
+optional rainbow mode). Open it with `Right Shift`.
 
 All modules are toggleable and configurable from the ClickGui (`Right Shift` by default) or via
 chat commands (prefix `.`). Drag HUD elements around with the **HudEditor** module.

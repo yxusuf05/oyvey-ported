@@ -35,6 +35,52 @@ public class RenderUtil implements Util {
         context.fill(Math.round(x1), Math.round(y1), Math.round(x1) + w, Math.round(y2), color);
     }
 
+    /**
+     * Filled rectangle with rounded corners, drawn entirely with {@link GuiGraphics#fill} so it
+     * works on the 1.21 GUI render pipeline without any custom shader. Regions never overlap, so
+     * translucent colours blend cleanly (no double-blended seams).
+     */
+    public static void roundedRect(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int color) {
+        roundedRect(g, x1, y1, x2, y2, radius, color, true, true);
+    }
+
+    public static void roundedRectTop(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int color) {
+        roundedRect(g, x1, y1, x2, y2, radius, color, true, false);
+    }
+
+    public static void roundedRectBottom(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int color) {
+        roundedRect(g, x1, y1, x2, y2, radius, color, false, true);
+    }
+
+    private static void roundedRect(GuiGraphics g, float fx1, float fy1, float fx2, float fy2, float radius, int color, boolean roundTop, boolean roundBottom) {
+        int x1 = Math.round(fx1), y1 = Math.round(fy1), x2 = Math.round(fx2), y2 = Math.round(fy2);
+        if (x2 < x1) { int t = x1; x1 = x2; x2 = t; }
+        if (y2 < y1) { int t = y1; y1 = y2; y2 = t; }
+
+        int r = Math.round(radius);
+        int maxR = Math.min((x2 - x1) / 2, (y2 - y1) / 2);
+        if (r > maxR) r = maxR;
+        if (r <= 0) { g.fill(x1, y1, x2, y2, color); return; }
+
+        int top = roundTop ? r : 0;
+        int bottom = roundBottom ? r : 0;
+
+        g.fill(x1, y1 + top, x2, y2 - bottom, color);
+        for (int i = 0; i < top; i++) {
+            int inset = cornerInset(r, i);
+            g.fill(x1 + inset, y1 + i, x2 - inset, y1 + i + 1, color);
+        }
+        for (int i = 0; i < bottom; i++) {
+            int inset = cornerInset(r, i);
+            g.fill(x1 + inset, y2 - 1 - i, x2 - inset, y2 - i, color);
+        }
+    }
+
+    private static int cornerInset(int r, int row) {
+        double dv = (r - row) - 0.5;
+        return r - (int) Math.round(Math.sqrt(Math.max(0.0, r * r - dv * dv)));
+    }
+
     public static void horizontalGradient(GuiGraphics context, float x1, float y1, float x2, float y2, Color left, Color right) {
         int ix1 = Math.round(x1);
         int iy1 = Math.round(y1);

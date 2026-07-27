@@ -5,14 +5,21 @@ import me.alpha432.oyvey.features.gui.OyVeyGui;
 import me.alpha432.oyvey.features.gui.Widget;
 import me.alpha432.oyvey.features.gui.items.Item;
 import me.alpha432.oyvey.features.modules.client.ClickGuiModule;
+import me.alpha432.oyvey.util.AnimationUtil;
+import me.alpha432.oyvey.util.ColorUtil;
 import me.alpha432.oyvey.util.render.RenderUtil;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 
+import java.awt.Color;
+
 public class Button
         extends Item {
     private boolean state;
+
+    private final AnimationUtil.Animation hoverAnim = new AnimationUtil.Animation(0f, 16f);
+    private final AnimationUtil.Animation enableAnim = new AnimationUtil.Animation(0f, 16f);
 
     public Button(String name) {
         super(name);
@@ -21,8 +28,31 @@ public class Button
 
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
-        RenderUtil.rect(context, this.x, this.y, this.x + (float) this.width, this.y + (float) this.height - 0.5f, this.getState() ? (!this.isHovering(mouseX, mouseY) ? OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().color.getValue().getAlpha()) : OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().topColor.getValue().getAlpha())) : (!this.isHovering(mouseX, mouseY) ? 0x11555555 : -2007673515));
-        drawString(this.getName(), this.x + 2.3f, this.y - 2.0f - (float) OyVeyGui.getClickGui().getTextOffset(), this.getState() ? -1 : -5592406);
+        boolean hovering = this.isHovering(mouseX, mouseY);
+        hoverAnim.setTarget(hovering ? 1f : 0f);
+        enableAnim.setTarget(this.getState() ? 1f : 0f);
+        float h = hoverAnim.update();
+        float e = enableAnim.update();
+
+        float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.55f;
+        float bx1 = this.x + 1f;
+        float by1 = this.y;
+        float bx2 = this.x + (float) this.width - 1f;
+        float by2 = this.y + (float) this.height - 1.5f;
+
+        int hoverAlpha = (int) (h * 55f);
+        if (hoverAlpha > 1) {
+            RenderUtil.roundedRect(context, bx1, by1, bx2, by2, rad, new Color(255, 255, 255, hoverAlpha).getRGB());
+        }
+        if (e > 0.02f) {
+            int baseAlpha = ClickGuiModule.getInstance().color.getValue().getAlpha();
+            int accent = OyVey.colorManager.getColorWithAlpha(this.y, (int) (e * baseAlpha));
+            RenderUtil.roundedRect(context, bx1, by1, bx2, by2, rad, accent);
+            RenderUtil.roundedRect(context, bx1, by1 + 2f, bx1 + 2f, by2 - 2f, rad * 0.5f, OyVey.colorManager.getColorWithAlpha(this.y, 255));
+        }
+
+        int textColor = ColorUtil.interpolate(new Color(0xB2, 0xB2, 0xBC), Color.WHITE, Math.max(e, h * 0.6f)).getRGB();
+        drawString(this.getName(), this.x + 4.0f, this.y - 2.0f - (float) OyVeyGui.getClickGui().getTextOffset(), textColor);
     }
 
     @Override

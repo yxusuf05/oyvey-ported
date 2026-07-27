@@ -50,12 +50,25 @@ public class Widget
         this.context = context;
         this.drag(mouseX, mouseY);
         float totalItemHeight = this.open ? this.getTotalItemHeight() - 2.0f : 0.0f;
-        int color = ClickGuiModule.getInstance().topColor.getValue().getRGB();
-        context.fill(this.x, this.y - 1, this.x + this.width, this.y + this.height - 6, ClickGuiModule.getInstance().rainbow.getValue() ? ColorUtil.rainbow(ClickGuiModule.getInstance().rainbowHue.getValue()).getRGB() : color);
+        ClickGuiModule gui = ClickGuiModule.getInstance();
+        float rad = gui.rounding.getValue();
+        int headerColor = gui.rainbow.getValue()
+                ? ColorUtil.rainbow(gui.rainbowHue.getValue()).getRGB()
+                : gui.topColor.getValue().getRGB();
+        int bodyColor = new Color(13, 13, 19, 214).getRGB();
+
+        float headerTop = this.y - 1;
+        float headerBottom = this.y + this.height - 6f;
         if (this.open) {
-            RenderUtil.rect(context, this.x, (float) this.y + 12.5f, this.x + this.width, (float) (this.y + this.height) + totalItemHeight, 0x77000000);
+            float bodyBottom = (float) (this.y + this.height) + totalItemHeight;
+            RenderUtil.roundedRectBottom(context, this.x, headerBottom, this.x + this.width, bodyBottom, rad, bodyColor);
+            RenderUtil.roundedRectTop(context, this.x, headerTop, this.x + this.width, headerBottom, rad, headerColor);
+            // subtle accent divider under the header
+            RenderUtil.rect(context, this.x + 1, headerBottom, this.x + this.width - 1, headerBottom + 0.75f, new Color(255, 255, 255, 40).getRGB());
+        } else {
+            RenderUtil.roundedRect(context, this.x, headerTop, this.x + this.width, headerBottom, rad, headerColor);
         }
-        drawString(this.getName(), (float) this.x + 3.0f, (float) this.y - 4.0f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
+        drawString(this.getName(), (float) this.x + 4.0f, (float) this.y - 4.0f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
         ScissorUtil.enable(context, x, 0, x + width, mc.getWindow().getGuiScaledHeight());
 
         if (this.open) {
