@@ -32,11 +32,19 @@ FPS boost, a clean animated HUD and handy quality-of-life modules.
   allows, relaxes the damage threshold into a face-place once the target is nearly dead, and aims
   via rotation packets so your camera never gets yanked around. Configurable place/break toggles
   and delays, place/break/wall ranges, damage thresholds, auto-swap and a render of the chosen spot.
+- **AutoAnchor** — respawn-anchor combat for overworld/end: finds or places an anchor next to the
+  target, charges it with glowstone and detonates, using the same damage prediction and self-damage
+  guards as AutoCrystal. **SafeAnchor** mode stops at one charge so a utility anchor never blows up
+  in your face.
 - **Surround** — walls your feet in with obsidian so nobody can crystal you point-blank; refills
   automatically the moment a block is blown out.
+- **KillAura** — melee aura with packet rotations, reach/target filters and an optional wait for the
+  vanilla attack cooldown so every hit is fully charged.
 - **TriggerBot** — auto-attacks the entity under your crosshair with a configurable delay; filters
   for players / mobs / crystals and skips friends. Never fires while a screen is open.
-- **AutoTotem** — keeps a Totem of Undying in your off-hand and refills it the instant one pops.
+- **AutoTotem** — keeps a Totem of Undying in your off-hand. **Packet** mode swaps instantly;
+  **Legit** mode opens your inventory and glides the real cursor onto the totem before clicking, and
+  **KeepInHotbar** parks a spare totem in a configurable hotbar slot.
 - **Criticals** — packet criticals on your hits.
 
 Damage decisions come from a client-side reimplementation of the vanilla explosion pipeline

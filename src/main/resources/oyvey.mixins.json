@@ -14,6 +14,7 @@
     "render.MixinChatComponent",
     "render.MixinLevelRenderer",
     "render.MixinDeltaTrackerTimer",
+    "render.gui.MixinAbstractContainerScreen",
     "render.gui.MixinCommandSuggestions",
     "render.gui.MixinGui"
   ],
