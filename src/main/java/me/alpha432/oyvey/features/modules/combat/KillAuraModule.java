@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -25,10 +26,12 @@ public class KillAuraModule extends Module {
     public final Setting<Boolean> mobs = bool("Mobs", false);
     public final Setting<Boolean> ignoreFriends = bool("IgnoreFriends", true);
     public final Setting<Boolean> rotate = bool("Rotate", true);
+    public final Setting<Boolean> autoBlock = bool("AutoBlock", false);
     public final Setting<Boolean> pauseOnScreen = bool("PauseOnScreen", true);
 
     private final Timer timer = new Timer();
     private LivingEntity target;
+    private boolean blocking;
 
     public KillAuraModule() {
         super("KillAura", "Automatically attacks nearby entities", Category.COMBAT);
@@ -37,6 +40,7 @@ public class KillAuraModule extends Module {
     @Override
     public void onDisable() {
         target = null;
+        stopBlocking();
     }
 
     @Override
@@ -46,6 +50,7 @@ public class KillAuraModule extends Module {
         if (pauseOnScreen.getValue() && mc.screen != null) return;
 
         target = findTarget();
+        handleAutoBlock();
         if (target == null) return;
         if (!timer.passedMs(delay.getValue())) return;
         if (requireFullCharge.getValue() && mc.player.getAttackStrengthScale(0.0f) < 1.0f) return;
@@ -54,6 +59,27 @@ public class KillAuraModule extends Module {
         mc.gameMode.attack(mc.player, target);
         mc.player.swing(InteractionHand.MAIN_HAND);
         timer.reset();
+    }
+
+    /** Raises an off-hand shield while a target is in range and lowers it again once none is. */
+    private void handleAutoBlock() {
+        if (!autoBlock.getValue() || !mc.player.getOffhandItem().is(Items.SHIELD)) {
+            stopBlocking();
+            return;
+        }
+        if (target != null && !mc.player.isUsingItem()) {
+            mc.gameMode.useItem(mc.player, InteractionHand.OFF_HAND);
+            blocking = true;
+        } else if (target == null) {
+            stopBlocking();
+        }
+    }
+
+    private void stopBlocking() {
+        if (blocking && mc.player != null && mc.player.isUsingItem() && mc.gameMode != null) {
+            mc.gameMode.releaseUsingItem(mc.player);
+        }
+        blocking = false;
     }
 
     private LivingEntity findTarget() {

@@ -46,6 +46,17 @@ FPS boost, a clean animated HUD and handy quality-of-life modules.
   **Legit** mode opens your inventory and glides the real cursor onto the totem before clicking, and
   **KeepInHotbar** parks a spare totem in a configurable hotbar slot.
 - **Criticals** — packet criticals on your hits.
+- **Reach** — extends the client-side entity/block interaction range (mixin on `raycastHitResult`).
+  Keep it within the server's tolerance or hits get rejected.
+- **Hitboxes** — inflates `Entity#getPickRadius` (ray-trace only, not collision) so targets are
+  easier to click.
+- **SilentAim** — rotates toward the nearest target for the outgoing move packet only and restores
+  your view, so hits land without the camera moving. Pairs with manual clicking / TriggerBot.
+- **AimAssist** — softly pulls your real camera toward a target already inside a configurable FOV
+  cone (a "legit"-style assist, not a snap).
+- **WTap** — sprint-reset on hit for extra knockback.
+- **AutoShieldBreaker** — swaps to an axe to break a blocking enemy's shield, then swaps back.
+- **KillAura** also gained an **AutoBlock** option (raises an off-hand shield between hits).
 
 Damage decisions come from a client-side reimplementation of the vanilla explosion pipeline
 (`DamageUtil`): the raw blast formula, difficulty scaling, armour absorption, resistance and
