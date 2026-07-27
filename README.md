@@ -25,11 +25,24 @@ FPS boost, a clean animated HUD and handy quality-of-life modules.
 - **FPS**, **CPS** (left / right), **Ping**, **ArmorHud** (with durability) and **PotionHud**
   (with remaining time) — all draggable in the HUD editor.
 
-### Combat (PvP)
+### Combat (crystal PvP)
+- **AutoCrystal** — the crystal bot. Picks the closest valid target, searches the surrounding
+  obsidian/bedrock for the placement with the highest predicted damage, places a crystal there and
+  detonates it. Refuses any action that would cost more of its own health than `MaxSelfDamage`
+  allows, relaxes the damage threshold into a face-place once the target is nearly dead, and aims
+  via rotation packets so your camera never gets yanked around. Configurable place/break toggles
+  and delays, place/break/wall ranges, damage thresholds, auto-swap and a render of the chosen spot.
+- **Surround** — walls your feet in with obsidian so nobody can crystal you point-blank; refills
+  automatically the moment a block is blown out.
 - **TriggerBot** — auto-attacks the entity under your crosshair with a configurable delay; filters
   for players / mobs / crystals and skips friends. Never fires while a screen is open.
 - **AutoTotem** — keeps a Totem of Undying in your off-hand and refills it the instant one pops.
 - **Criticals** — packet criticals on your hits.
+
+Damage decisions come from a client-side reimplementation of the vanilla explosion pipeline
+(`DamageUtil`): the raw blast formula, difficulty scaling, armour absorption, resistance and
+enchantment protection, in vanilla's order — so "is this worth placing" matches what the server
+will actually do.
 
 ### Render / ESP
 - **ESP** — boxes around players and mobs through walls, with a separate friend colour, adjustable
