@@ -31,3 +31,6 @@ forge*changelog.txt
 /HeadlessMC/
 /logs/
 /plugins/
+
+# generated icon preview
+smoothinv/icon/smoothinv-icon-preview.png
