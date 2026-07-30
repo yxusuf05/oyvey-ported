@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.smoothinv.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MixinInventoryScreen",
+    "MixinItemStack"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

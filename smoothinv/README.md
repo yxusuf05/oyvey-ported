@@ -1,0 +1,45 @@
+# SmoothInv
+
+A tiny standalone Fabric mod for Minecraft 1.21.11 that reduces inventory GUI
+stutter in PvP — especially on low-RAM setups. No dependencies besides Fabric
+Loader (Fabric API is **not** required). Works alongside Sodium, Lithium,
+ImmediatelyFast, etc.
+
+## What it does
+
+- **Tooltip caching** — vanilla rebuilds the full tooltip of the hovered item
+  every frame. With NBT-heavy items (shulker boxes, enchanted gear — i.e. a
+  typical crystal PvP inventory) that creates thousands of short-lived objects
+  per second. On low memory this fills the heap fast and triggers garbage
+  collector pauses, felt as sudden lag spikes when you open your inventory
+  mid-fight. SmoothInv caches tooltip lines for a few hundred milliseconds,
+  removing almost all of that work with no visible difference.
+- **Optional: hide the 3D player model** in the inventory screen. Since 1.21.6
+  it is rendered into its own offscreen texture every frame, which is
+  comparatively expensive with full enchanted armor. Off by default.
+
+## Building
+
+```sh
+cd smoothinv
+../gradlew build
+```
+
+The jar ends up in `build/libs/`. Drop it into your `mods` folder.
+
+## Config
+
+`config/smoothinv.json` (created on first launch):
+
+| Option | Default | Description |
+|---|---|---|
+| `cacheTooltips` | `true` | Reuse tooltip lines instead of rebuilding every frame |
+| `tooltipCacheMs` | `250` | How long a cached tooltip stays valid (0–5000 ms) |
+| `hidePlayerModelInInventory` | `false` | Skip rendering the 3D player model for extra FPS |
+
+## Note on RAM
+
+A mod cannot give the game more memory — that is set in your launcher
+(`-Xmx`). 4–6 GB is the sweet spot; much more than that makes GC pauses
+*longer*. This mod reduces how fast the heap fills up, so the GC has to run
+less often in the first place.
