@@ -1,0 +1,7 @@
+packages:
+  - 'packages/*'
+
+# pnpm 10 blocks lifecycle scripts by default. esbuild needs its postinstall to place the
+# native binary, and vite/vitest are unusable without it.
+onlyBuiltDependencies:
+  - esbuild

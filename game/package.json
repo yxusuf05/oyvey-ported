@@ -1,0 +1,32 @@
+{
+  "name": "prisma-game",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @game/client --filter @game/server run dev",
+    "dev:client": "pnpm --filter @game/client run dev",
+    "dev:server": "pnpm --filter @game/server run dev",
+    "build": "pnpm --filter @game/client run build && pnpm --filter @game/server run build",
+    "start": "node packages/server/dist/index.js",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "level": "tsx tools/dump-level.ts",
+    "shots": "node tools/shoot.mjs screenshots",
+    "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "^22.10.0",
+    "playwright": "^1.62.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.8"
+  }
+}

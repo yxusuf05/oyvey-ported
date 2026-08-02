@@ -1,6 +1,12 @@
 name: Java CI with Gradle
 
-on: push
+# The game lives in its own workspace under game/ and has its own workflow. Without this
+# filter every game commit would run a full Minecraft Gradle build for nothing.
+on:
+  push:
+    paths-ignore:
+      - 'game/**'
+      - '.github/workflows/game.yml'
 
 jobs:
   build:
