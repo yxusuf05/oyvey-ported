@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "blockoutlines",
+  "version": "${version}",
+  "name": "Block Outlines",
+  "description": "Highlights blocks with fully configurable outlines: colour, line width, fill, through-walls rendering, tracers and a searchable block list. Everything is configured in-game through Mod Menu.",
+  "authors": [
+    "yxusuf05"
+  ],
+  "license": "MIT",
+  "icon": "assets/blockoutlines/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.blockoutlines.BlockOutlines"
+    ],
+    "modmenu": [
+      "me.blockoutlines.compat.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "blockoutlines.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=21"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.blockoutlines.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MixinKeyboardHandler",
+    "MixinLevelRenderer"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
