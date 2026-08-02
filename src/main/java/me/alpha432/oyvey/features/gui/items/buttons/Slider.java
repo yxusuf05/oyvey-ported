@@ -5,10 +5,13 @@ import me.alpha432.oyvey.features.gui.OyVeyGui;
 import me.alpha432.oyvey.features.gui.Widget;
 import me.alpha432.oyvey.features.modules.client.ClickGuiModule;
 import me.alpha432.oyvey.features.settings.Setting;
+import me.alpha432.oyvey.util.MathUtil;
 import me.alpha432.oyvey.util.render.RenderUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
+
+import java.awt.Color;
 
 public class Slider
         extends Button {
@@ -29,10 +32,22 @@ public class Slider
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
         this.dragSetting(mouseX, mouseY);
-        float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.5f;
-        RenderUtil.roundedRect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, rad, !this.isHovering(mouseX, mouseY) ? 0x11555555 : -2007673515);
-        RenderUtil.roundedRect(context, this.x, this.y, (this.setting.getValue()).floatValue() <= this.min.floatValue() ? this.x : this.x + ((float) this.width + 7.4f) * this.partialMultiplier(), this.y + (float) this.height - 0.5f, rad, !this.isHovering(mouseX, mouseY) ? OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().color.getValue().getAlpha()) : OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().topColor.getValue().getAlpha()));
-        drawString(this.getName() + " " + ChatFormatting.GRAY + (this.setting.getValue() instanceof Float ? this.setting.getValue() : Double.valueOf((this.setting.getValue()).doubleValue())), this.x + 2.3f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
+        int accent = OyVey.colorManager.getColorWithAlpha(y, 255);
+        float left = this.x + 2.5f;
+        float right = this.x + (float) this.width + 7.4f - 2.5f;
+        float trackY = this.y + (float) this.height - 4.5f;
+
+        RenderUtil.rect(context, left, trackY, right, trackY + 1.6f, new Color(255, 255, 255, 38).getRGB());
+        float pct = Mth.clamp(this.partialMultiplier(), 0f, 1f);
+        if (pct > 0f) {
+            RenderUtil.rect(context, left, trackY, left + (right - left) * pct, trackY + 1.6f, accent);
+        }
+
+        drawString(this.getName(), this.x + 3.0f, this.y - 2.6f - (float) OyVeyGui.getClickGui().getTextOffset(), new Color(0xC8, 0xC8, 0xD2).getRGB());
+        String value = this.setting.getValue() instanceof Integer
+                ? String.valueOf(this.setting.getValue())
+                : String.valueOf(MathUtil.round(this.setting.getValue().floatValue(), 1));
+        drawString(value, right - mc.font.width(value), this.y - 2.6f - (float) OyVeyGui.getClickGui().getTextOffset(), new Color(0x9A, 0x9A, 0xA6).getRGB());
     }
 
     @Override

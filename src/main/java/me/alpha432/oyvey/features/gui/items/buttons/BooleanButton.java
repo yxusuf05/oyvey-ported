@@ -10,6 +10,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 
+import java.awt.Color;
+
 public class BooleanButton
         extends Button {
     private final Setting<Boolean> setting;
@@ -22,9 +24,12 @@ public class BooleanButton
 
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
-        float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.5f;
-        RenderUtil.roundedRect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, rad, this.getState() ? (!this.isHovering(mouseX, mouseY) ? OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().color.getValue().getAlpha()) : OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().topColor.getValue().getAlpha())) : (!this.isHovering(mouseX, mouseY) ? 0x11555555 : -2007673515));
-        drawString(this.getName(), this.x + 2.3f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), this.getState() ? -1 : -5592406);
+        if (this.isHovering(mouseX, mouseY)) {
+            float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.5f;
+            RenderUtil.roundedRect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, rad, new Color(255, 255, 255, 32).getRGB());
+        }
+        RenderUtil.checkGlyph(context, (int) (this.x + 3f), (int) (this.y + this.height / 2f - 3f), this.getState());
+        drawString(this.getName(), this.x + 12.0f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), this.getState() ? -1 : new Color(0xA6, 0xA6, 0xB0).getRGB());
     }
 
     @Override

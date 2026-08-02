@@ -71,6 +71,8 @@ will actually do.
   chroma mode and a toggle to replace the vanilla outline.
 - **BlockGlint** — highlights crystal-PvP blocks around you (obsidian, crying obsidian, respawn
   anchors, ender chests) with a filled box + outline. Scanning is throttled so it stays cheap.
+- **HoleESP** — colours the safe holes around you (full bedrock vs. one-obsidian) for crystal PvP.
+- **StorageESP** — boxes around chests, shulkers, barrels, ender chests and furnaces through walls.
 - **Fullbright** — see in the dark (restores your gamma on disable).
 - **Zoom** — smooth toggle zoom.
 

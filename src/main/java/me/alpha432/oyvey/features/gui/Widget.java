@@ -52,10 +52,11 @@ public class Widget
         float totalItemHeight = this.open ? this.getTotalItemHeight() - 2.0f : 0.0f;
         ClickGuiModule gui = ClickGuiModule.getInstance();
         float rad = gui.rounding.getValue();
-        int headerColor = gui.rainbow.getValue()
+        int headerColor = gui.topColor.getValue().getRGB();
+        int bodyColor = new Color(18, 16, 25, 224).getRGB();
+        int accent = gui.rainbow.getValue()
                 ? ColorUtil.rainbow(gui.rainbowHue.getValue()).getRGB()
-                : gui.topColor.getValue().getRGB();
-        int bodyColor = new Color(13, 13, 19, 214).getRGB();
+                : gui.color.getValue().getRGB();
 
         float headerTop = this.y - 1;
         float headerBottom = this.y + this.height - 6f;
@@ -63,12 +64,14 @@ public class Widget
             float bodyBottom = (float) (this.y + this.height) + totalItemHeight;
             RenderUtil.roundedRectBottom(context, this.x, headerBottom, this.x + this.width, bodyBottom, rad, bodyColor);
             RenderUtil.roundedRectTop(context, this.x, headerTop, this.x + this.width, headerBottom, rad, headerColor);
-            // subtle accent divider under the header
-            RenderUtil.rect(context, this.x + 1, headerBottom, this.x + this.width - 1, headerBottom + 0.75f, new Color(255, 255, 255, 40).getRGB());
+            RenderUtil.rect(context, this.x + 3, headerBottom - 0.5f, this.x + this.width - 3, headerBottom, ColorUtil.withAlpha(new Color(accent), 90).getRGB());
         } else {
             RenderUtil.roundedRect(context, this.x, headerTop, this.x + this.width, headerBottom, rad, headerColor);
         }
-        drawString(this.getName(), (float) this.x + 4.0f, (float) this.y - 4.0f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
+        // category icon (accent dot) + title
+        float headerMid = (headerTop + headerBottom) / 2f;
+        RenderUtil.dot(context, this.x + 7f, headerMid, 2.2f, accent);
+        drawString(this.getName(), (float) this.x + 13.0f, (float) this.y - 4.0f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
         ScissorUtil.enable(context, x, 0, x + width, mc.getWindow().getGuiScaledHeight());
 
         if (this.open) {

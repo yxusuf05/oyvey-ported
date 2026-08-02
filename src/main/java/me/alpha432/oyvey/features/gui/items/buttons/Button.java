@@ -34,25 +34,27 @@ public class Button
         float h = hoverAnim.update();
         float e = enableAnim.update();
 
-        float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.55f;
+        float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.5f;
         float bx1 = this.x + 1f;
         float by1 = this.y;
         float bx2 = this.x + (float) this.width - 1f;
         float by2 = this.y + (float) this.height - 1.5f;
 
-        int hoverAlpha = (int) (h * 55f);
+        // Subtle hover row, no heavy fills — the state is carried by the text colour instead.
+        int hoverAlpha = (int) (h * 42f);
         if (hoverAlpha > 1) {
             RenderUtil.roundedRect(context, bx1, by1, bx2, by2, rad, new Color(255, 255, 255, hoverAlpha).getRGB());
         }
-        if (e > 0.02f) {
-            int baseAlpha = ClickGuiModule.getInstance().color.getValue().getAlpha();
-            int accent = OyVey.colorManager.getColorWithAlpha(this.y, (int) (e * baseAlpha));
-            RenderUtil.roundedRect(context, bx1, by1, bx2, by2, rad, accent);
-            RenderUtil.roundedRect(context, bx1, by1 + 2f, bx1 + 2f, by2 - 2f, rad * 0.5f, OyVey.colorManager.getColorWithAlpha(this.y, 255));
-        }
 
-        int textColor = ColorUtil.interpolate(new Color(0xB2, 0xB2, 0xBC), Color.WHITE, Math.max(e, h * 0.6f)).getRGB();
-        drawString(this.getName(), this.x + 4.0f, this.y - 2.0f - (float) OyVeyGui.getClickGui().getTextOffset(), textColor);
+        Color accent = new Color(OyVey.colorManager.getColorWithAlpha(this.y, 255), true);
+        Color idle = ColorUtil.interpolate(new Color(0x9A, 0x9A, 0xA6), Color.WHITE, h * 0.7f);
+        int textColor = ColorUtil.interpolate(idle, accent, e).getRGB();
+        drawString(this.getName(), this.x + 5.0f, this.y - 2.0f - (float) OyVeyGui.getClickGui().getTextOffset(), textColor);
+
+        // Enabled indicator dot on the right edge.
+        if (e > 0.05f) {
+            RenderUtil.dot(context, bx2 - 3.5f, this.y + this.height / 2f - 1f, 1.6f * e, accent.getRGB());
+        }
     }
 
     @Override

@@ -81,6 +81,38 @@ public class RenderUtil implements Util {
         return r - (int) Math.round(Math.sqrt(Math.max(0.0, r * r - dv * dv)));
     }
 
+    /** Small filled dot (used as the category icon / enabled indicator in the ClickGui). */
+    public static void dot(GuiGraphics g, float cx, float cy, float radius, int color) {
+        roundedRect(g, cx - radius, cy - radius, cx + radius, cy + radius, radius, color);
+    }
+
+    /** Bresenham line drawn from square pixels — good enough for tiny check / cross glyphs. */
+    public static void line(GuiGraphics g, int x1, int y1, int x2, int y2, int thickness, int color) {
+        int dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
+        int sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1;
+        int err = dx - dy;
+        while (true) {
+            g.fill(x1, y1, x1 + thickness, y1 + thickness, color);
+            if (x1 == x2 && y1 == y2) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x1 += sx; }
+            if (e2 < dx) { err += dx; y1 += sy; }
+        }
+    }
+
+    /** Green check / red cross toggle glyph at the given top-left, drawn with {@link #line}. */
+    public static void checkGlyph(GuiGraphics g, int x, int y, boolean checked) {
+        if (checked) {
+            int color = new Color(80, 220, 120).getRGB();
+            line(g, x, y + 3, x + 2, y + 5, 1, color);
+            line(g, x + 2, y + 5, x + 6, y, 1, color);
+        } else {
+            int color = new Color(225, 80, 90).getRGB();
+            line(g, x, y, x + 5, y + 5, 1, color);
+            line(g, x + 5, y, x, y + 5, 1, color);
+        }
+    }
+
     public static void horizontalGradient(GuiGraphics context, float x1, float y1, float x2, float y2, Color left, Color right) {
         int ix1 = Math.round(x1);
         int iy1 = Math.round(y1);
