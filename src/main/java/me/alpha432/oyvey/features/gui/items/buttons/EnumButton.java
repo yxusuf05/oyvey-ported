@@ -25,12 +25,12 @@ public class EnumButton
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
         if (this.isHovering(mouseX, mouseY)) {
-            float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.5f;
-            RenderUtil.roundedRect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, rad, new Color(255, 255, 255, 32).getRGB());
+            float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.4f;
+            RenderUtil.roundedRect(context, this.x - 2, this.y, this.x + (float) this.width + 8f, this.y + (float) this.height, rad, new Color(255, 255, 255, 26).getRGB());
         }
-        float right = this.x + (float) this.width + 7.4f - 2.5f;
-        float textY = this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset();
-        drawString(this.setting.getName(), this.x + 3.0f, textY, new Color(0xC8, 0xC8, 0xD2).getRGB());
+        float right = this.x + (float) this.width + 8f;
+        float textY = this.y + this.height / 2f - 4f;
+        drawString(this.setting.getName() + ":", this.x, textY, new Color(0xC8, 0xC8, 0xD2).getRGB());
         String value = this.setting.currentEnumName();
         drawString(value, right - mc.font.width(value), textY, OyVey.colorManager.getColorWithAlpha(y, 255));
     }

@@ -16,6 +16,9 @@ import java.awt.Color;
 
 public class Button
         extends Item {
+    /** Height of the module card itself; the gap between cards is added by the parent widget. */
+    public static final int CARD_HEIGHT = 17;
+
     private boolean state;
 
     private final AnimationUtil.Animation hoverAnim = new AnimationUtil.Animation(0f, 16f);
@@ -23,7 +26,7 @@ public class Button
 
     public Button(String name) {
         super(name);
-        this.height = 15;
+        this.height = CARD_HEIGHT;
     }
 
     @Override
@@ -34,26 +37,26 @@ public class Button
         float h = hoverAnim.update();
         float e = enableAnim.update();
 
-        float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.5f;
-        float bx1 = this.x + 1f;
+        float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.7f;
+        float bx1 = this.x;
         float by1 = this.y;
-        float bx2 = this.x + (float) this.width - 1f;
-        float by2 = this.y + (float) this.height - 1.5f;
+        float bx2 = this.x + (float) this.width;
+        float by2 = this.y + CARD_HEIGHT;
 
-        // Subtle hover row, no heavy fills — the state is carried by the text colour instead.
-        int hoverAlpha = (int) (h * 42f);
-        if (hoverAlpha > 1) {
-            RenderUtil.roundedRect(context, bx1, by1, bx2, by2, rad, new Color(255, 255, 255, hoverAlpha).getRGB());
-        }
+        // Every module is its own rounded card, lifted slightly on hover.
+        int base = 0x2A + (int) (h * 0x18);
+        RenderUtil.roundedRect(context, bx1, by1, bx2, by2, rad, new Color(base, base - 6, base + 8, 235).getRGB());
 
         Color accent = new Color(OyVey.colorManager.getColorWithAlpha(this.y, 255), true);
-        Color idle = ColorUtil.interpolate(new Color(0x9A, 0x9A, 0xA6), Color.WHITE, h * 0.7f);
+        Color idle = ColorUtil.interpolate(new Color(0x8E, 0x8E, 0x9A), Color.WHITE, h * 0.6f);
         int textColor = ColorUtil.interpolate(idle, accent, e).getRGB();
-        drawString(this.getName(), this.x + 5.0f, this.y - 2.0f - (float) OyVeyGui.getClickGui().getTextOffset(), textColor);
 
-        // Enabled indicator dot on the right edge.
+        // Reserve room on the right for the enabled dot so long names never collide with it.
+        RenderUtil.centeredFittedText(context, this.getName(), bx1, bx2 - 6f, by1 + CARD_HEIGHT / 2f - 4f, textColor);
+
+        // Enabled indicator dot on the right edge, like the reference design.
         if (e > 0.05f) {
-            RenderUtil.dot(context, bx2 - 3.5f, this.y + this.height / 2f - 1f, 1.6f * e, accent.getRGB());
+            RenderUtil.dot(context, bx2 - 5f, by1 + CARD_HEIGHT / 2f, 1.7f * e, accent.getRGB());
         }
     }
 
@@ -79,7 +82,7 @@ public class Button
 
     @Override
     public int getHeight() {
-        return 14;
+        return CARD_HEIGHT;
     }
 
     public boolean isHovering(int mouseX, int mouseY) {
@@ -87,6 +90,6 @@ public class Button
             if (!widget.drag) continue;
             return false;
         }
-        return (float) mouseX >= this.getX() && (float) mouseX <= this.getX() + (float) this.getWidth() && (float) mouseY >= this.getY() && (float) mouseY < this.getY() + (float) this.height;
+        return (float) mouseX >= this.getX() && (float) mouseX <= this.getX() + (float) this.getWidth() && (float) mouseY >= this.getY() && (float) mouseY < this.getY() + (float) CARD_HEIGHT;
     }
 }

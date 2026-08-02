@@ -33,7 +33,8 @@ public class Widget
         super(name);
         this.x = x;
         this.y = y;
-        this.width = 88;
+        // Wide enough that long module names (AutoShieldBreaker) are not clipped at the edge.
+        this.width = 102;
         this.height = 18;
         this.open = open;
     }
@@ -68,18 +69,18 @@ public class Widget
         } else {
             RenderUtil.roundedRect(context, this.x, headerTop, this.x + this.width, headerBottom, rad, headerColor);
         }
-        // category icon (accent dot) + title
+        // category icon + title
         float headerMid = (headerTop + headerBottom) / 2f;
-        RenderUtil.dot(context, this.x + 7f, headerMid, 2.2f, accent);
-        drawString(this.getName(), (float) this.x + 13.0f, (float) this.y - 4.0f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
+        RenderUtil.categoryIcon(context, this.getName(), this.x + 7, (int) (headerMid - 4f), accent);
+        drawString(this.getName(), (float) this.x + 20.0f, headerMid - 4f, -1);
         ScissorUtil.enable(context, x, 0, x + width, mc.getWindow().getGuiScaledHeight());
 
         if (this.open) {
             float y = (float) (this.getY() + this.getHeight()) - 3.0f;
             for (Item item : this.getItems()) {
                 if (item.isHidden()) continue;
-                item.setLocation((float) this.x + 2.0f, y);
-                item.setWidth(this.getWidth() - 4);
+                item.setLocation((float) this.x + 5.0f, y);
+                item.setWidth(this.getWidth() - 10);
                 if (item.isHovering(mouseX, mouseY)) {
                     ScissorUtil.disable(context);
                 }

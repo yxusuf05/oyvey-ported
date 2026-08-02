@@ -25,11 +25,12 @@ public class BooleanButton
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
         if (this.isHovering(mouseX, mouseY)) {
-            float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.5f;
-            RenderUtil.roundedRect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, rad, new Color(255, 255, 255, 32).getRGB());
+            float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.4f;
+            RenderUtil.roundedRect(context, this.x - 2, this.y, this.x + (float) this.width + 8f, this.y + (float) this.height, rad, new Color(255, 255, 255, 26).getRGB());
         }
-        RenderUtil.checkGlyph(context, (int) (this.x + 3f), (int) (this.y + this.height / 2f - 3f), this.getState());
-        drawString(this.getName(), this.x + 12.0f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), this.getState() ? -1 : new Color(0xA6, 0xA6, 0xB0).getRGB());
+        RenderUtil.checkGlyph(context, (int) this.x, (int) (this.y + this.height / 2f - 3f), this.getState());
+        drawString(this.getName(), this.x + 10.0f, this.y + this.height / 2f - 4f,
+                this.getState() ? new Color(0xE0, 0xE0, 0xE8).getRGB() : new Color(0x8E, 0x8E, 0x9A).getRGB());
     }
 
     @Override

@@ -27,27 +27,34 @@ public class Slider
         this.max = setting.getMax();
         this.difference = this.max.intValue() - this.min.intValue();
         this.width = 15;
+        this.height = 18; // label row + track
+    }
+
+    @Override
+    public int getHeight() {
+        return 18;
     }
 
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
         this.dragSetting(mouseX, mouseY);
         int accent = OyVey.colorManager.getColorWithAlpha(y, 255);
-        float left = this.x + 2.5f;
-        float right = this.x + (float) this.width + 7.4f - 2.5f;
-        float trackY = this.y + (float) this.height - 4.5f;
+        float left = this.x;
+        float right = this.x + (float) this.width + 8f;
+        float trackY = this.y + (float) this.height - 3.5f;
 
-        RenderUtil.rect(context, left, trackY, right, trackY + 1.6f, new Color(255, 255, 255, 38).getRGB());
-        float pct = Mth.clamp(this.partialMultiplier(), 0f, 1f);
-        if (pct > 0f) {
-            RenderUtil.rect(context, left, trackY, left + (right - left) * pct, trackY + 1.6f, accent);
-        }
-
-        drawString(this.getName(), this.x + 3.0f, this.y - 2.6f - (float) OyVeyGui.getClickGui().getTextOffset(), new Color(0xC8, 0xC8, 0xD2).getRGB());
+        // Label left, value right, thin filled track underneath — as in the reference design.
+        drawString(this.getName() + ":", left, this.y, new Color(0xC8, 0xC8, 0xD2).getRGB());
         String value = this.setting.getValue() instanceof Integer
                 ? String.valueOf(this.setting.getValue())
                 : String.valueOf(MathUtil.round(this.setting.getValue().floatValue(), 1));
-        drawString(value, right - mc.font.width(value), this.y - 2.6f - (float) OyVeyGui.getClickGui().getTextOffset(), new Color(0x9A, 0x9A, 0xA6).getRGB());
+        drawString(value, right - mc.font.width(value), this.y, new Color(0x9A, 0x9A, 0xA6).getRGB());
+
+        RenderUtil.roundedRect(context, left, trackY, right, trackY + 2f, 1f, new Color(255, 255, 255, 32).getRGB());
+        float pct = Mth.clamp(this.partialMultiplier(), 0f, 1f);
+        if (pct > 0f) {
+            RenderUtil.roundedRect(context, left, trackY, left + (right - left) * pct, trackY + 2f, 1f, accent);
+        }
     }
 
     @Override

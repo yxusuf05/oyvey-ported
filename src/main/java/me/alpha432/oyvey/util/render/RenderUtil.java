@@ -100,6 +100,72 @@ public class RenderUtil implements Util {
         }
     }
 
+    /**
+     * Category glyph drawn from primitives (no texture atlas needed), sized into an 8x8 box whose
+     * top-left is (x, y). Approximates the icon set of the reference design.
+     */
+    public static void categoryIcon(GuiGraphics g, String category, int x, int y, int color) {
+        switch (category) {
+            case "Combat" -> { // crossed swords
+                line(g, x, y + 7, x + 7, y, 1, color);
+                line(g, x, y, x + 7, y + 7, 1, color);
+            }
+            case "Movement" -> { // two wheels + frame
+                ring(g, x + 2, y + 5, 2, color);
+                ring(g, x + 7, y + 5, 2, color);
+                line(g, x + 2, y + 5, x + 5, y + 1, 1, color);
+                line(g, x + 5, y + 1, x + 7, y + 5, 1, color);
+            }
+            case "Render" -> { // eye: ring + pupil
+                ring(g, x + 4, y + 4, 4, color);
+                dot(g, x + 4, y + 4, 1.4f, color);
+            }
+            case "Player" -> { // head + shoulders
+                dot(g, x + 4, y + 2, 2f, color);
+                roundedRect(g, x + 1, y + 5, x + 8, y + 9, 2f, color);
+            }
+            case "Misc" -> { // gear: ring + teeth
+                ring(g, x + 4, y + 4, 3, color);
+                g.fill(x + 3, y - 1, x + 6, y + 1, color);
+                g.fill(x + 3, y + 8, x + 6, y + 10, color);
+                g.fill(x - 1, y + 3, x + 1, y + 6, color);
+                g.fill(x + 8, y + 3, x + 10, y + 6, color);
+            }
+            default -> dot(g, x + 4, y + 4, 2.2f, color); // Client and anything new
+        }
+    }
+
+    /**
+     * Draws text centred in [x1, x2], shrinking it just enough to fit when it would otherwise
+     * overflow the card (module names like "AutoShieldBreaker" are wider than a panel column).
+     */
+    public static void centeredFittedText(GuiGraphics g, String text, float x1, float x2, float y, int color) {
+        float available = x2 - x1 - 4f;
+        int textWidth = mc.font.width(text);
+        if (textWidth <= available) {
+            g.drawString(mc.font, text, (int) (x1 + (x2 - x1) / 2f - textWidth / 2f), (int) y, color);
+            return;
+        }
+
+        float scale = available / textWidth;
+        g.pose().pushMatrix();
+        g.pose().translate(x1 + (x2 - x1) / 2f, y + 4f);
+        g.pose().scale(scale, scale);
+        g.drawString(mc.font, text, -textWidth / 2, -4, color);
+        g.pose().popMatrix();
+    }
+
+    /** Hollow circle approximated by sampling the perimeter. */
+    public static void ring(GuiGraphics g, float cx, float cy, float radius, int color) {
+        int steps = Math.max(10, (int) (radius * 8));
+        for (int i = 0; i < steps; i++) {
+            double a = (Math.PI * 2 * i) / steps;
+            int px = (int) Math.round(cx + Math.cos(a) * radius);
+            int py = (int) Math.round(cy + Math.sin(a) * radius);
+            g.fill(px, py, px + 1, py + 1, color);
+        }
+    }
+
     /** Green check / red cross toggle glyph at the given top-left, drawn with {@link #line}. */
     public static void checkGlyph(GuiGraphics g, int x, int y, boolean checked) {
         if (checked) {

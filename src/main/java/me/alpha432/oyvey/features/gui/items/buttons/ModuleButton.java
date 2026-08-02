@@ -58,11 +58,11 @@ public class ModuleButton
         super.drawScreen(context, mouseX, mouseY, partialTicks);
         if (!this.items.isEmpty()) {
             if (this.subOpen) {
-                float height = 16.0f;
+                float height = CARD_HEIGHT + 2f;
                 for (Item item : this.items) {
                     if (!item.isHidden()) {
-                        item.setLocation(this.x + 1.0f, this.y + height);
-                        item.setWidth(this.width - 9);
+                        item.setLocation(this.x + 4.0f, this.y + height);
+                        item.setWidth(this.width - 16);
                         item.drawScreen(context, mouseX, mouseY, partialTicks);
                         height += item.getHeight() + 1f;
                     }
@@ -125,14 +125,14 @@ public class ModuleButton
     @Override
     public int getHeight() {
         if (this.subOpen) {
-            int height = 16;
+            int height = CARD_HEIGHT + 4;
             for (Item item : this.items) {
                 if (item.isHidden()) continue;
                 height += item.getHeight() + 1;
             }
             return height;
         }
-        return 14;
+        return CARD_HEIGHT;
     }
 
     public Module getModule() {
