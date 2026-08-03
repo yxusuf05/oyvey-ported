@@ -45,7 +45,8 @@ import {
   type PaletteStop,
   type ThemeSpec,
 } from '@game/shared/levelgen';
-import { EntityFlags, EntityKind } from '@game/shared/protocol';
+import { EntityFlags, EntityKind, type WorldItemState } from '@game/shared/protocol';
+import { getItemSpec } from '@game/shared/content';
 import { clamp01, lerp, smoothstep } from '@game/shared/math';
 import { animateRig, buildBlindOne, buildPlayerAvatar, createActorMaterial, type ActorRig } from './actors';
 import { buildChunks, buildFixtureGeometry } from './mesher';
@@ -130,6 +131,13 @@ const FIXTURE_FRAGMENT = /* glsl */ `
   }
 `;
 
+/** Fallback marker colours for items that are not light sources. */
+const ITEM_COLOURS: Record<string, number> = {
+  almondWater: 0xe8e2c4,
+  medkit: 0xd24a4a,
+  flashlight: 0xb8b28e,
+};
+
 export class WorldRenderer {
   readonly renderer: WebGLRenderer;
   readonly scene = new Scene();
@@ -156,8 +164,11 @@ export class WorldRenderer {
   private chunkGroup = new Group();
   private actorGroup = new Group();
   private objectiveGroup = new Group();
+  private worldItemGroup = new Group();
   private actors = new Map<number, ActorInstance>();
   private objectiveMeshes = new Map<number, Mesh>();
+  /** Shared per colour: a floor of forty glowsticks is still one material. */
+  private worldItemMaterials = new Map<number, MeshBasicMaterial>();
 
   private darkRooms = new Set<number>();
   private lights: DynamicLight[] = [];
@@ -183,7 +194,7 @@ export class WorldRenderer {
     this.renderer.setClearColor(0x000000, 1);
 
     this.camera = new PerspectiveCamera(quality.fov, 1, 0.05, 220);
-    this.scene.add(this.chunkGroup, this.actorGroup, this.objectiveGroup);
+    this.scene.add(this.chunkGroup, this.actorGroup, this.objectiveGroup, this.worldItemGroup);
     this.noiseTexture = makeNoiseTexture(1337);
     this.palette = samplePalette(this.theme, 0);
     this.scene.fog = new FogExp2(this.palette.fog, this.palette.fogDensity);
@@ -503,6 +514,42 @@ export class WorldRenderer {
     }
   }
 
+  /**
+   * Rebuilds the props lying on the floor. Called only when the set actually changes, which
+   * is what buys them out of the twenty-times-a-second snapshot in the first place.
+   */
+  setWorldItems(items: WorldItemState[]): void {
+    for (const child of [...this.worldItemGroup.children]) {
+      this.worldItemGroup.remove(child);
+      if (child instanceof Mesh) child.geometry.dispose();
+    }
+
+    for (const world of items) {
+      const spec = getItemSpec(world.item);
+      if (!spec) continue;
+
+      // Unlit and emissive, like the objectives: a level that goes pitch black must not
+      // swallow the medkit you dropped two rooms back.
+      const colour =
+        world.lit && spec.lightColor
+          ? new Color(spec.lightColor[0], spec.lightColor[1], spec.lightColor[2]).getHex()
+          : ITEM_COLOURS[spec.id] ?? 0xbfb69a;
+      const material = this.worldItemMaterials.get(colour) ?? new MeshBasicMaterial({
+        color: colour,
+        fog: true,
+        toneMapped: false,
+      });
+      this.worldItemMaterials.set(colour, material);
+
+      const mesh = new Mesh(new BoxGeometry(0.22, 0.1, 0.22), material);
+      mesh.position.set(world.x, 0.08, world.z);
+      // A deterministic tilt from the id, so a floor of dropped items does not read as a
+      // grid of identical cubes. Decoration only — nothing here reaches the simulation.
+      mesh.rotation.y = (world.id % 16) * 0.39;
+      this.worldItemGroup.add(mesh);
+    }
+  }
+
   setObjectiveVisible(id: number, visible: boolean): void {
     const mesh = this.objectiveMeshes.get(id);
     if (mesh) mesh.visible = visible;
@@ -643,6 +690,10 @@ export class WorldRenderer {
       if (child instanceof Mesh) child.geometry.dispose();
     }
     for (const child of [...this.objectiveGroup.children]) this.objectiveGroup.remove(child);
+    for (const child of [...this.worldItemGroup.children]) {
+      this.worldItemGroup.remove(child);
+      if (child instanceof Mesh) child.geometry.dispose();
+    }
     for (const instance of this.actors.values()) this.actorGroup.remove(instance.rig.group);
     this.actors.clear();
     this.objectiveMeshes.clear();
@@ -651,6 +702,8 @@ export class WorldRenderer {
     this.fixtureMaterial?.dispose();
     for (const material of this.actorMaterials) material.dispose();
     for (const material of this.objectiveMaterials) material.dispose();
+    for (const material of this.worldItemMaterials.values()) material.dispose();
+    this.worldItemMaterials.clear();
     this.actorMaterials = [];
     this.objectiveMaterials = [];
     this.worldMaterial = null;

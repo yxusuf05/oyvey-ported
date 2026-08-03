@@ -12,8 +12,10 @@ import {
   AiState,
   EntityFlags,
   EntityKind,
+  type InventorySlotState,
   type ObjectiveState,
   type S2C,
+  type WorldItemState,
   rleDecode,
   type SnapshotPayload,
 } from '@game/shared/protocol';
@@ -39,13 +41,16 @@ import {
   worldToTile,
   type Level,
 } from '@game/shared/levelgen';
+import { BACKPACK_SLOTS, getItemSpec } from '@game/shared/content';
 import { clamp, clamp01, damp, lerp } from '@game/shared/math';
 import type { GridView } from '@game/shared/levelgen';
 import { hash3f } from '@game/shared/prng';
+import { t, type TranslationKey } from '../i18n';
 import type { AudioEngine } from '../audio/engine';
 import type { Connection } from '../net/connection';
 import type { Settings } from '../settings';
 import { WorldRenderer, type DynamicLight, type RenderActor } from '../render/world';
+import { MAX_DYNAMIC_LIGHTS } from '../render/worldMaterial';
 
 /** How far in the past remote actors are rendered, in milliseconds. */
 const BASE_INTERP_DELAY = 100;
@@ -77,6 +82,8 @@ export interface HudState {
   prompt: InteractPrompt | null;
   flashlightOn: boolean;
   focusBeam: boolean;
+  inventory: (InventorySlotState | null)[];
+  activeSlot: number;
   drawCalls: number;
   fps: number;
 }
@@ -114,6 +121,8 @@ export class GameSession {
     prompt: null,
     flashlightOn: false,
     focusBeam: false,
+    inventory: [],
+    activeSlot: 0,
     drawCalls: 0,
     fps: 0,
   };
@@ -137,6 +146,8 @@ export class GameSession {
 
   private snapshots: TimedSnapshot[] = [];
   private objectives: ObjectiveState[] = [];
+  private worldItems: WorldItemState[] = [];
+  private activeSlot = 0;
   private descentApplied = new Set<number>();
 
   private keys = new Set<string>();
@@ -224,6 +235,20 @@ export class GameSession {
         this.refreshObjectiveVisuals();
         break;
 
+      case 'inventory':
+        this.hud.inventory = msg.slots;
+        this.hud.activeSlot = msg.activeSlot;
+        // The server's idea of the selected slot wins. Number keys move the local value
+        // immediately so the hotbar feels instant, but a rejected slot must snap back
+        // rather than leave the HUD claiming something the simulation never agreed to.
+        this.activeSlot = msg.activeSlot;
+        break;
+
+      case 'worldItems':
+        this.worldItems = msg.items;
+        this.renderer.setWorldItems(this.worldItems);
+        break;
+
       case 'descentEvent':
         this.applyDescentEvent(msg.index);
         break;
@@ -268,6 +293,9 @@ export class GameSession {
     this.hud.fusesCollected = 0;
     this.hud.escaped = false;
     this.hud.dead = false;
+    this.worldItems = [];
+    this.activeSlot = 0;
+    this.hud.activeSlot = 0;
     this.hud.descent = 0;
     this.renderer.setDescent(0);
     this.renderer.setFlashReduction(this.settings.flashReduction);
@@ -381,6 +409,16 @@ export class GameSession {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.repeat) return;
       this.keys.add(event.code);
+      // The hotbar is not a button in the input mask — the slot rides along with every
+      // input as its own field, so selecting one is just changing what the next input says.
+      const digit = /^Digit([1-9])$/.exec(event.code);
+      if (digit) {
+        const slot = Number(digit[1]) - 1;
+        if (slot < BACKPACK_SLOTS) {
+          this.activeSlot = slot;
+          this.hud.activeSlot = slot;
+        }
+      }
     };
     const onKeyUp = (event: KeyboardEvent) => this.keys.delete(event.code);
     const onBlur = () => this.keys.clear();
@@ -425,6 +463,8 @@ export class GameSession {
     if (this.keys.has(keys.interact)) mask |= Buttons.Interact;
     if (this.keys.has(keys.flashlight)) mask |= Buttons.Flashlight;
     if (this.keys.has(keys.beamMode)) mask |= Buttons.BeamMode;
+    if (this.keys.has(keys.useItem)) mask |= Buttons.UseItem;
+    if (this.keys.has(keys.drop)) mask |= Buttons.Drop;
     return mask;
   }
 
@@ -449,7 +489,7 @@ export class GameSession {
         buttons: this.collectButtons() | this.edgeButtons,
         yaw: this.yaw,
         pitch: this.pitch,
-        slot: 0,
+        slot: this.activeSlot,
       };
       this.edgeButtons = 0;
 
@@ -609,7 +649,7 @@ export class GameSession {
         if (entity.kind !== EntityKind.Player) continue;
         if ((entity.flags & EntityFlags.Local) !== 0) continue;
         if ((entity.flags & EntityFlags.FlashlightOn) === 0) continue;
-        if (lights.length >= 8) break;
+        if (lights.length >= MAX_DYNAMIC_LIGHTS) break;
         const focus = (entity.flags & EntityFlags.FocusedBeam) !== 0;
         lights.push({
           position: new Vector3(entity.x, EYE_HEIGHT, entity.z),
@@ -619,6 +659,36 @@ export class GameSession {
           cosInner: focus ? 0.99 : 0.95,
           cosOuter: focus ? 0.965 : 0.86,
           shadowSteps: 14,
+        });
+      }
+    }
+
+    // Dropped glowsticks are real lights, not decals — that is the whole point of carrying
+    // them. They are omnidirectional (`cosOuter = -1` makes the cone test pass everywhere)
+    // and cast no shadows, because twenty raymarch steps per stick would cost more than the
+    // effect is worth for something the size of a pen.
+    const free = MAX_DYNAMIC_LIGHTS - lights.length;
+    if (free > 0 && this.worldItems.length > 0) {
+      const lit = this.worldItems
+        .map((world) => ({ world, spec: getItemSpec(world.item) }))
+        .filter((entry) => entry.world.lit && entry.spec?.lightRange !== undefined)
+        .map((entry) => ({
+          ...entry,
+          distance: Math.hypot(entry.world.x - camera.position.x, entry.world.z - camera.position.z),
+        }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, free);
+
+      for (const { world, spec } of lit) {
+        const color = spec!.lightColor ?? [1, 1, 1];
+        lights.push({
+          position: new Vector3(world.x, 0.18, world.z),
+          direction: new Vector3(0, -1, 0),
+          color: new Color(color[0], color[1], color[2]),
+          range: spec!.lightRange!,
+          cosInner: -1,
+          cosOuter: -1,
+          shadowSteps: 0,
         });
       }
     }
@@ -649,6 +719,19 @@ export class GameSession {
         best = { key: state.done ? 'hud.interact.exit' : 'hud.interact.exitLocked' };
       }
       bestDistance = distance;
+    }
+
+    // Loot prompts last, matching the server's interact order exactly: an objective within
+    // reach is always what `E` will actually do, so it is always what the HUD promises.
+    if (!best) {
+      for (const world of this.worldItems) {
+        const distance = Math.hypot(world.x - this.local.x, world.z - this.local.z);
+        if (distance > bestDistance) continue;
+        const spec = getItemSpec(world.item);
+        if (!spec) continue;
+        best = { key: 'hud.interact.pickup', params: { item: t(spec.nameKey as TranslationKey) } };
+        bestDistance = distance;
+      }
     }
 
     this.hud.prompt = best;

@@ -51,13 +51,22 @@ test.describe('single player', () => {
     const before = await debugState(page);
 
     // Walk in several directions; walls should stop the player, never swallow them.
+    // The measurement is the *furthest* the player got from the start, not where they ended
+    // up: the four headings oppose each other, so on a maze that boxes the player in early
+    // the net displacement can legitimately be centimetres. Since each run generates a new
+    // seed, asserting on the endpoint is a coin flip on the layout rather than on movement.
+    let reached = 0;
     for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
       await step(page, 90, Buttons.Forward | Buttons.Sprint, yaw);
+      const now = await debugState(page);
+      reached = Math.max(
+        reached,
+        Math.hypot(Number(now.x) - Number(before.x), Number(now.z) - Number(before.z)),
+      );
     }
 
     const after = await debugState(page);
-    const travelled = Math.hypot(Number(after.x) - Number(before.x), Number(after.z) - Number(before.z));
-    expect(travelled).toBeGreaterThan(0.5);
+    expect(reached).toBeGreaterThan(0.5);
     // The map is 128 tiles of 2 m centred on the origin, so nothing may exceed 128 m.
     expect(Math.abs(Number(after.x))).toBeLessThan(128);
     expect(Math.abs(Number(after.z))).toBeLessThan(128);

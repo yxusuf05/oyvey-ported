@@ -415,6 +415,20 @@ export class AudioEngine {
       case 'item.batteryDead':
         this.click(out, now, 700, 0.14);
         break;
+      case 'item.pickup':
+        this.click(out, now, 1800, 0.07);
+        break;
+      case 'item.drop':
+        this.clunk(out, now, 120);
+        break;
+      case 'item.useConsumable':
+        this.click(out, now, 520, 0.22);
+        break;
+      case 'item.glowstickCrack':
+        // A dry snap, not a click: the crack is the moment the light arrives, and it wants
+        // to be recognisable through a wall.
+        this.click(out, now, 3100, 0.05);
+        break;
       case 'objective.fusePickup':
         this.click(out, now, 1400, 0.1);
         break;

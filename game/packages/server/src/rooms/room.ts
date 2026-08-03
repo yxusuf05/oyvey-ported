@@ -198,9 +198,11 @@ export class GameRoom {
       player.sim = this.run.createPlayer(player.id, player.name);
       player.sim.connected = player.socket !== null;
       this.sendRunStart(player);
+      this.sendInventory(player);
     }
     this.broadcastRoomState();
     this.broadcastObjectives();
+    this.broadcastWorldItems();
   }
 
   private sendRunStart(player: RoomPlayer): void {
@@ -282,11 +284,42 @@ export class GameRoom {
       this.run.objectivesDirty = false;
       this.broadcastObjectives();
     }
+    if (this.run.worldItemsDirty) {
+      this.run.worldItemsDirty = false;
+      this.broadcastWorldItems();
+    }
+    // Backpacks go only to their owner. Nobody else has any use for what you are carrying,
+    // and a player who can read the others' inventories out of the socket knows things the
+    // game never showed them.
+    for (const player of this.players) {
+      if (!player.sim?.inventoryDirty) continue;
+      player.sim.inventoryDirty = false;
+      this.sendInventory(player);
+    }
   }
 
   private broadcastObjectives(): void {
     if (!this.run) return;
     this.broadcast({ t: 'objectives', objectives: this.run.objectives.map((o) => ({ ...o })) });
+  }
+
+  private broadcastWorldItems(): void {
+    if (!this.run) return;
+    this.broadcast({
+      t: 'worldItems',
+      // `burnLeft` is server-only: how long a glowstick has left is atmosphere, not a
+      // number the player should be reading off the floor.
+      items: this.run.worldItems.map(({ id, item, x, z, count, lit }) => ({ id, item, x, z, count, lit })),
+    });
+  }
+
+  private sendInventory(player: RoomPlayer): void {
+    if (!player.sim) return;
+    this.send(player, {
+      t: 'inventory',
+      slots: player.sim.inventory.map((slot) => (slot ? { ...slot } : null)),
+      activeSlot: player.sim.activeSlot,
+    });
   }
 
   private sendSnapshots(): void {

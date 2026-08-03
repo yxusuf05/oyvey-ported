@@ -20,7 +20,9 @@ export type ActionKey =
   | 'crouch'
   | 'interact'
   | 'flashlight'
-  | 'beamMode';
+  | 'beamMode'
+  | 'useItem'
+  | 'drop';
 
 export interface Settings {
   language: Language;
@@ -62,6 +64,8 @@ export const DEFAULT_KEYS: Record<ActionKey, string> = {
   interact: 'KeyE',
   flashlight: 'KeyF',
   beamMode: 'KeyR',
+  useItem: 'KeyQ',
+  drop: 'KeyG',
 };
 
 export function defaultSettings(): Settings {

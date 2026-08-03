@@ -13,12 +13,15 @@ import {
   AiState,
   EntityFlags,
   EntityKind,
+  type InventorySlotState,
   type ObjectiveState,
   type RunOutcome,
   type RunStats,
   type S2C,
+  type WorldItemState,
 } from '@game/shared/protocol';
 import {
+  FLOOR,
   generateLevel,
   getTheme,
   levelGrid,
@@ -37,6 +40,7 @@ import {
   FLASHLIGHT_DRAIN_FOCUS,
   FLASHLIGHT_DRAIN_WIDE,
   INTERACT_RANGE,
+  NOISE_ITEM_DROP,
   NoiseField,
   PLAYER_MAX_HP,
   REVIVE_SECONDS,
@@ -55,15 +59,47 @@ import {
 } from '@game/shared/sim';
 import { Rng } from '@game/shared/prng';
 import { clamp, clamp01 } from '@game/shared/math';
-import { getEntitySpec } from '@game/shared/content';
+import {
+  BACKPACK_SLOTS,
+  DEFAULT_LOADOUT,
+  LOOT_TABLE,
+  getEntitySpec,
+  getItemSpec,
+  type ItemSpec,
+} from '@game/shared/content';
 import { Director, MIN_SPAWN_DISTANCE } from '../ai/director';
 import { Navigator } from '../ai/nav';
 import { createEntity, updateEntity, type AiPlayerView, type AiWorld, type ServerEntity } from '../ai/brains';
+
+/**
+ * A dropped item. `burnLeft` is server-only — the client is told what is on the floor, not
+ * how much life it has left, because a countdown on a glowstick would turn a piece of
+ * atmosphere into a spreadsheet.
+ */
+export interface WorldItem extends WorldItemState {
+  burnLeft: number;
+}
+
+/** A fresh backpack: the default loadout laid into fixed slots, the rest left empty. */
+function startingInventory(): (InventorySlotState | null)[] {
+  const slots: (InventorySlotState | null)[] = new Array(BACKPACK_SLOTS).fill(null);
+  for (let i = 0; i < DEFAULT_LOADOUT.length && i < BACKPACK_SLOTS; i++) {
+    slots[i] = { item: DEFAULT_LOADOUT[i].item, count: DEFAULT_LOADOUT[i].count };
+  }
+  return slots;
+}
 
 export interface ServerPlayer {
   id: number;
   name: string;
   state: PlayerSimState;
+  /** Fixed-length backpack. `null` is an empty slot; slots keep their index. */
+  inventory: (InventorySlotState | null)[];
+  activeSlot: number;
+  /** Seconds until the use key does anything again. */
+  useCooldown: number;
+  /** Set whenever the backpack changes; the room turns it into one message. */
+  inventoryDirty: boolean;
   /** Inputs received but not yet simulated, ordered by sequence. */
   pending: Input[];
   lastProcessedSeq: number;
@@ -107,6 +143,10 @@ export class Run {
   outbox: S2C[] = [];
   objectivesDirty = false;
 
+  worldItems: WorldItem[] = [];
+  worldItemsDirty = false;
+
+  private nextWorldItemId = 1;
   private nextEntityId = 1000;
   private spawnCooldown = 6;
   private descentIndex = 0;
@@ -127,6 +167,61 @@ export class Run {
       done: false,
       carriedBy: -1,
     }));
+    this.scatterLoot();
+  }
+
+  /**
+   * Rolls the loot lying around the level.
+   *
+   * This runs on the server and is *sent*, never regenerated client-side, even though it
+   * would be trivially deterministic. Anything that decides who wins belongs to the server;
+   * the moment two clients could disagree about how many medkits exist, the rule stops
+   * holding for the things that matter too.
+   *
+   * The stream is derived by name, so adding a later roll cannot shift the maze or the
+   * entity spawns that were generated before it.
+   */
+  private scatterLoot(): void {
+    const rng = this.rng.derive('run:itemSpawns');
+    const spawnRoom = this.level.roomOf[this.level.spawn.y * this.level.width + this.level.spawn.x];
+    const weights = LOOT_TABLE.map((entry) => entry.weight);
+    const count = Math.max(4, Math.round(this.level.rooms.length * 0.55));
+
+    for (let i = 0; i < count; i++) {
+      const room = this.level.rooms[rng.int(0, this.level.rooms.length - 1)];
+      // Nothing in the room you start in: free loot at the door removes the walk that the
+      // whole level is made of.
+      if (room.id === spawnRoom) continue;
+
+      const tile = this.randomFloorTile(room, rng);
+      if (!tile) continue;
+      const world = tileToWorld(this.level, tile.x, tile.y);
+      const item = rng.weighted(LOOT_TABLE, weights).item;
+      const spec = getItemSpec(item);
+      if (!spec) continue;
+
+      this.worldItems.push({
+        id: this.nextWorldItemId++,
+        item,
+        x: world.x,
+        z: world.z,
+        count: spec.stack > 1 ? rng.int(1, Math.min(2, spec.stack)) : 1,
+        lit: false,
+        burnLeft: 0,
+      });
+    }
+    this.worldItemsDirty = true;
+  }
+
+  private randomFloorTile(room: { x0: number; y0: number; x1: number; y1: number }, rng: Rng):
+    | { x: number; y: number }
+    | null {
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const x = rng.int(room.x0, room.x1);
+      const y = rng.int(room.y0, room.y1);
+      if (this.grid.tiles[y * this.grid.width + x] === FLOOR) return { x, y };
+    }
+    return null;
   }
 
   get fuseTotal(): number {
@@ -149,6 +244,10 @@ export class Run {
       id,
       name,
       state: createPlayerState(spawn.x + Math.cos(angle) * 0.7, spawn.z + Math.sin(angle) * 0.7),
+      inventory: startingInventory(),
+      activeSlot: 0,
+      useCooldown: 0,
+      inventoryDirty: true,
       pending: [],
       lastProcessedSeq: 0,
       lastAckedTick: 0,
@@ -174,6 +273,7 @@ export class Run {
     this.elapsed += dt;
 
     this.stepPlayers(players, dt);
+    this.stepItems(dt);
     this.stepDescent(players, dt);
     this.stepEntities(players, dt);
     this.stepSurvival(players, dt);
@@ -230,6 +330,15 @@ export class Run {
     const pressed = (bit: number): boolean =>
       hasButton(input.buttons, bit) && !hasButton(player.lastButtons, bit);
 
+    // The selected slot arrives with every input and is clamped here rather than trusted.
+    // A client that sends slot 200 selects the last slot, not memory past the end of the
+    // backpack.
+    const slot = clamp(Math.floor(input.slot), 0, BACKPACK_SLOTS - 1);
+    if (slot !== player.activeSlot) {
+      player.activeSlot = slot;
+      player.inventoryDirty = true;
+    }
+
     if (pressed(Buttons.Flashlight) && player.battery > 0) {
       player.flashlightOn = !player.flashlightOn;
       this.emitSound('item.flashlightClick', player.state.x, player.state.z, 2);
@@ -237,7 +346,178 @@ export class Run {
     if (pressed(Buttons.BeamMode) && player.flashlightOn) {
       player.focusBeam = !player.focusBeam;
     }
+    if (pressed(Buttons.UseItem)) this.useActiveItem(player);
+    if (pressed(Buttons.Drop)) this.dropActiveItem(player);
     if (pressed(Buttons.Interact)) this.handleInteract(player, players);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Backpack
+  // ---------------------------------------------------------------------------
+
+  /** The item in the player's hand, or null if that slot is empty. */
+  activeItem(player: ServerPlayer): ItemSpec | null {
+    const slot = player.inventory[player.activeSlot];
+    return slot ? getItemSpec(slot.item) : null;
+  }
+
+  useActiveItem(player: ServerPlayer): void {
+    if (player.downed || !this.isAlive(player) || player.escaped) return;
+    if (player.useCooldown > 0) return;
+
+    const slot = player.inventory[player.activeSlot];
+    if (!slot) return;
+    const spec = getItemSpec(slot.item);
+    if (!spec || !spec.usable) return;
+
+    switch (spec.kind) {
+      case 'tool':
+        // The only tool so far is the flashlight, which also has its own key. Routing it
+        // through the hotbar as well means the backpack is never a special case with one
+        // item mysteriously exempt from it.
+        if (spec.id === 'flashlight') {
+          if (player.battery <= 0 && !player.flashlightOn) return;
+          player.flashlightOn = !player.flashlightOn;
+        }
+        break;
+
+      case 'placeable': {
+        this.spawnWorldItem(spec.id, player.state.x, player.state.z, 1, spec.burnSeconds ?? 0);
+        this.consumeActive(player, 1);
+        break;
+      }
+
+      case 'consumable': {
+        if (spec.restoreSanity !== undefined) {
+          player.sanity = clamp(player.sanity + spec.restoreSanity, 0, SANITY_MAX);
+        }
+        if (spec.restoreHp !== undefined) {
+          player.hp = clamp(player.hp + spec.restoreHp, 0, PLAYER_MAX_HP);
+        }
+        this.consumeActive(player, 1);
+        break;
+      }
+    }
+
+    player.useCooldown = spec.cooldown;
+    this.emitSound(spec.useSound, player.state.x, player.state.z, spec.noiseOnUse);
+    // The sound is atmosphere; this is the gameplay. Reaching into the backpack is never
+    // free — the Blind One hunts this field, and it feeds the descent.
+    const tile = worldToTile(this.level, player.state.x, player.state.z);
+    this.noise.emit(tile.x, tile.y, spec.noiseOnUse);
+  }
+
+  dropActiveItem(player: ServerPlayer): void {
+    if (player.downed || !this.isAlive(player) || player.escaped) return;
+    const slot = player.inventory[player.activeSlot];
+    if (!slot) return;
+
+    // The whole stack goes down at once: dropping one of four glowsticks and leaving three
+    // behind is fiddly, and there is never a moment in a chase when it is what you meant.
+    this.spawnWorldItem(slot.item, player.state.x, player.state.z, slot.count, 0);
+    player.inventory[player.activeSlot] = null;
+    player.inventoryDirty = true;
+
+    this.emitSound('item.drop', player.state.x, player.state.z, NOISE_ITEM_DROP);
+    const tile = worldToTile(this.level, player.state.x, player.state.z);
+    this.noise.emit(tile.x, tile.y, NOISE_ITEM_DROP);
+  }
+
+  /**
+   * Puts `count` of an item into a free slot, stacking where the spec allows it.
+   * Returns how many did not fit — a full backpack is a real refusal, not a silent loss.
+   */
+  giveItem(player: ServerPlayer, item: string, count: number): number {
+    const spec = getItemSpec(item);
+    if (!spec) return count;
+    let left = count;
+
+    if (spec.stack > 1) {
+      for (const slot of player.inventory) {
+        if (left <= 0) break;
+        if (!slot || slot.item !== item) continue;
+        const room = spec.stack - slot.count;
+        const moved = Math.min(room, left);
+        slot.count += moved;
+        left -= moved;
+      }
+    }
+
+    for (let i = 0; i < player.inventory.length && left > 0; i++) {
+      if (player.inventory[i]) continue;
+      const moved = Math.min(spec.stack, left);
+      player.inventory[i] = { item, count: moved };
+      left -= moved;
+    }
+
+    if (left !== count) player.inventoryDirty = true;
+    return left;
+  }
+
+  private consumeActive(player: ServerPlayer, count: number): void {
+    const slot = player.inventory[player.activeSlot];
+    if (!slot) return;
+    slot.count -= count;
+    if (slot.count <= 0) player.inventory[player.activeSlot] = null;
+    player.inventoryDirty = true;
+  }
+
+  private spawnWorldItem(item: string, x: number, z: number, count: number, burnSeconds: number): void {
+    this.worldItems.push({
+      id: this.nextWorldItemId++,
+      item,
+      x,
+      z,
+      count,
+      lit: burnSeconds > 0,
+      burnLeft: burnSeconds,
+    });
+    this.worldItemsDirty = true;
+  }
+
+  /** Burns down placeables and clears the ones that have gone out. */
+  private stepItems(dt: number): void {
+    let changed = false;
+    for (let i = this.worldItems.length - 1; i >= 0; i--) {
+      const world = this.worldItems[i];
+      if (world.burnLeft <= 0) continue;
+      world.burnLeft -= dt;
+      if (world.burnLeft <= 0) {
+        this.worldItems.splice(i, 1);
+        changed = true;
+      }
+    }
+    if (changed) this.worldItemsDirty = true;
+  }
+
+  /** The world item within reach, nearest first, or null. */
+  private nearestWorldItem(player: ServerPlayer): WorldItem | null {
+    let best: WorldItem | null = null;
+    let bestDistance = INTERACT_RANGE;
+    for (const world of this.worldItems) {
+      const distance = Math.hypot(world.x - player.state.x, world.z - player.state.z);
+      if (distance > bestDistance) continue;
+      best = world;
+      bestDistance = distance;
+    }
+    return best;
+  }
+
+  private tryPickup(player: ServerPlayer): boolean {
+    const world = this.nearestWorldItem(player);
+    if (!world) return false;
+
+    const left = this.giveItem(player, world.item, world.count);
+    if (left === world.count) return false; // Backpack full: it stays on the floor.
+
+    if (left > 0) {
+      world.count = left;
+    } else {
+      this.worldItems.splice(this.worldItems.indexOf(world), 1);
+    }
+    this.worldItemsDirty = true;
+    this.emitSound('item.pickup', world.x, world.z, 3);
+    return true;
   }
 
   private handleInteract(player: ServerPlayer, players: ServerPlayer[]): void {
@@ -298,6 +578,12 @@ export class Run {
         return;
       }
     }
+
+    // Loot is checked last, after every objective has had its chance. Dropping a glowstick
+    // on top of a fuse must never make the fuse unpickable — losing an objective to your
+    // own tidiness would be an unfixable run, and no amount of proximity weighting is worth
+    // that risk when ordering solves it outright.
+    this.tryPickup(player);
   }
 
   // ---------------------------------------------------------------------------
@@ -436,6 +722,8 @@ export class Run {
   private stepSurvival(players: ServerPlayer[], dt: number): void {
     for (const player of players) {
       if (!this.isAlive(player) || player.escaped) continue;
+
+      if (player.useCooldown > 0) player.useCooldown = Math.max(0, player.useCooldown - dt);
 
       if (player.flashlightOn) {
         const drain = player.focusBeam ? FLASHLIGHT_DRAIN_FOCUS : FLASHLIGHT_DRAIN_WIDE;

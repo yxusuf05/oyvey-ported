@@ -77,6 +77,7 @@ export const Buttons = {
   UseItem: 1 << 7,
   Flashlight: 1 << 8,
   BeamMode: 1 << 9,
+  Drop: 1 << 10,
 } as const;
 
 export type ButtonMask = number;

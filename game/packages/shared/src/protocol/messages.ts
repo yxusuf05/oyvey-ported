@@ -66,6 +66,34 @@ export interface ObjectiveState {
   carriedBy: PlayerId;
 }
 
+/** One backpack slot. `null` is an empty slot; slots keep their index. */
+export interface InventorySlotState {
+  item: string;
+  count: number;
+}
+
+/**
+ * An item lying on the floor.
+ *
+ * These deliberately do *not* travel in the snapshot. They never move, so paying twenty
+ * updates a second for information that changes only when someone drops or picks something
+ * up is bandwidth spent on nothing. They ride the same change-driven JSON path as
+ * objectives instead.
+ */
+export interface WorldItemState {
+  id: number;
+  item: string;
+  x: number;
+  z: number;
+  count: number;
+  /**
+   * Whether this one is actually burning. A glowstick lying in a cupboard is not a light
+   * source — you have to crack it — so "is a glowstick" and "is lit" are different
+   * questions and the renderer must not answer the second with the first.
+   */
+  lit: boolean;
+}
+
 export interface RunStats {
   fusesCollected: number;
   fusesTotal: number;
@@ -107,6 +135,10 @@ export type S2C =
   | { t: 'runEnd'; outcome: RunOutcome; stats: RunStats }
   | { t: 'descentEvent'; index: number; tick: number }
   | { t: 'objectives'; objectives: ObjectiveState[] }
+  /** Your own backpack. Sent only to its owner — nobody else needs to know what you carry. */
+  | { t: 'inventory'; slots: (InventorySlotState | null)[]; activeSlot: number }
+  /** Everything lying on the floor, resent whenever the set changes. */
+  | { t: 'worldItems'; items: WorldItemState[] }
   /**
    * Determinism fallback. If the client's regenerated maze does not match the server's
    * layout hash it asks for this, and a determinism bug degrades to four kilobytes of
