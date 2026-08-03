@@ -166,6 +166,8 @@ export const en = {
   'subtitle.item.decoyBeep': '[the decoy shrieks]',
   'subtitle.item.emfClick': '[the detector switches]',
   'subtitle.item.emfPing': '[ping]',
+  'subtitle.hallucination.breath': '[breathing, close]',
+  'subtitle.hallucination.falseScare': '[something that was not there]',
   'subtitle.objective.fusePickup': '[fuse taken]',
   'subtitle.objective.fuseInsert': '[fuse seated]',
   'subtitle.objective.exitOpen': '[the exit unlocks]',

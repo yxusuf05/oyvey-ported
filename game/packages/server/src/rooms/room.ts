@@ -242,6 +242,14 @@ export class GameRoom {
 
     if (!this.run || this.phase !== 'running') return;
 
+    // A run with nobody watching it is paused, not fast-forwarded. Simulating an abandoned
+    // maze at 60 Hz — entities, noise propagation, the descent — burns a full core per dead
+    // room until the half-hour idle sweep collects it, and on a shared server a handful of
+    // closed tabs is enough to starve the rooms people are actually playing in. A player who
+    // reconnects inside the grace period comes back to the run they left rather than to one
+    // that kept getting worse without them.
+    if (this.connectedCount === 0) return;
+
     this.tickAccumulator += dt;
     // Cap catch-up so a stalled process does not fast-forward the world on resume.
     if (this.tickAccumulator > 0.25) this.tickAccumulator = 0.25;
@@ -367,6 +375,8 @@ export class GameRoom {
         stamina: player.sim.state.stamina,
         battery: player.sim.battery,
         hp: player.sim.hp,
+        bleedout: player.sim.downed ? player.sim.bleedout : 0,
+        reviveProgress: Math.round(player.sim.reviveProgress * 100),
         entities,
       });
       this.sendBinary(player, buffer);

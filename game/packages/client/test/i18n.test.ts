@@ -59,6 +59,8 @@ describe('translations', () => {
       'player.revived',
       'hallucination.whisper',
       'hallucination.step',
+      'hallucination.breath',
+      'hallucination.falseScare',
     ];
     for (const sound of soundKeys) {
       const key = `subtitle.${sound}` as keyof typeof en;

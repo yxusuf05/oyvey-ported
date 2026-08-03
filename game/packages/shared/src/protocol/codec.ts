@@ -36,6 +36,10 @@ export interface SnapshotPayload {
   stamina: number;
   battery: number;
   hp: number;
+  /** Seconds of bleedout left while downed. Zero when up — 60 fits in a byte. */
+  bleedout: number;
+  /** How far along a revive is, 0..100. */
+  reviveProgress: number;
   entities: EntitySnapshot[];
 }
 
@@ -45,7 +49,7 @@ export interface InputPayload {
 }
 
 const ENTITY_BYTES = 12;
-const SNAPSHOT_HEADER_BYTES = 1 + 4 + 4 + 4 + 1 + 1 + 1 + 1 + 1 + 2;
+const SNAPSHOT_HEADER_BYTES = 1 + 4 + 4 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 2;
 const INPUT_RECORD_BYTES = 11;
 
 export function encodeSnapshot(payload: SnapshotPayload): ArrayBuffer {
@@ -61,6 +65,8 @@ export function encodeSnapshot(payload: SnapshotPayload): ArrayBuffer {
   view.setUint8(o, clampByte(payload.stamina)); o += 1;
   view.setUint8(o, clampByte(payload.battery)); o += 1;
   view.setUint8(o, clampByte(payload.hp)); o += 1;
+  view.setUint8(o, clampByte(payload.bleedout)); o += 1;
+  view.setUint8(o, clampByte(payload.reviveProgress)); o += 1;
   view.setUint16(o, payload.entities.length); o += 2;
 
   for (const e of payload.entities) {
@@ -87,6 +93,8 @@ export function decodeSnapshot(buffer: ArrayBuffer): SnapshotPayload {
   const stamina = view.getUint8(o); o += 1;
   const battery = view.getUint8(o); o += 1;
   const hp = view.getUint8(o); o += 1;
+  const bleedout = view.getUint8(o); o += 1;
+  const reviveProgress = view.getUint8(o); o += 1;
   const count = view.getUint16(o); o += 2;
 
   const entities: EntitySnapshot[] = new Array(count);
@@ -102,7 +110,19 @@ export function decodeSnapshot(buffer: ArrayBuffer): SnapshotPayload {
     entities[i] = { id, kind, flags, x, z, yaw, aiState, hp: entityHp };
   }
 
-  return { tick, baselineTick, lastProcessedInputSeq, descent, sanity, stamina, battery, hp, entities };
+  return {
+    tick,
+    baselineTick,
+    lastProcessedInputSeq,
+    descent,
+    sanity,
+    stamina,
+    battery,
+    hp,
+    bleedout,
+    reviveProgress,
+    entities,
+  };
 }
 
 /**

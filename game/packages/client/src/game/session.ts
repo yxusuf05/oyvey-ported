@@ -46,6 +46,7 @@ import { clamp, clamp01, damp, lerp } from '@game/shared/math';
 import type { GridView } from '@game/shared/levelgen';
 import { hash3f } from '@game/shared/prng';
 import { t, type TranslationKey } from '../i18n';
+import { HALLUCINATION_COOLDOWN, decideHallucination } from './hallucinate';
 import type { AudioEngine } from '../audio/engine';
 import type { Connection } from '../net/connection';
 import type { Settings } from '../settings';
@@ -76,7 +77,10 @@ export interface HudState {
   carrying: boolean;
   exitOpen: boolean;
   downed: boolean;
+  /** Seconds left before bleeding out. Meaningless unless `downed`. */
   bleedout: number;
+  /** 0..1 while a teammate is picking you up. */
+  reviveProgress: number;
   escaped: boolean;
   dead: boolean;
   prompt: InteractPrompt | null;
@@ -116,6 +120,7 @@ export class GameSession {
     exitOpen: false,
     downed: false,
     bleedout: 0,
+    reviveProgress: 0,
     escaped: false,
     dead: false,
     prompt: null,
@@ -161,6 +166,7 @@ export class GameSession {
   private shake = 0;
   private hallucinationActor: RenderActor | null = null;
   private hallucinationUntil = 0;
+  private sinceHallucination = HALLUCINATION_COOLDOWN;
   private frameTimes: number[] = [];
 
   private disposers: (() => void)[] = [];
@@ -299,6 +305,8 @@ export class GameSession {
     this.hud.dead = false;
     this.worldItems = [];
     this.renderer.setMarks([]);
+    this.sinceHallucination = HALLUCINATION_COOLDOWN;
+    this.hallucinationActor = null;
     this.activeSlot = 0;
     this.hud.activeSlot = 0;
     this.hud.descent = 0;
@@ -343,6 +351,8 @@ export class GameSession {
     this.hud.stamina = snapshot.stamina / 100;
     this.hud.battery = snapshot.battery / FLASHLIGHT_BATTERY_MAX;
     this.hud.hp = snapshot.hp / 100;
+    this.hud.bleedout = snapshot.bleedout;
+    this.hud.reviveProgress = snapshot.reviveProgress / 100;
 
     this.renderer.setDescent(snapshot.descent);
     this.renderer.setSanity(this.hud.sanity);
@@ -708,6 +718,20 @@ export class GameSession {
     let best: InteractPrompt | null = null;
     let bestDistance = INTERACT_RANGE;
 
+    // Reviving outranks everything, exactly as it does in `Run.handleInteract`. The prompt
+    // has to promise what the key will actually do, or it teaches the wrong reflex at the
+    // worst possible moment.
+    const latest = this.snapshots[this.snapshots.length - 1];
+    for (const entity of latest?.payload.entities ?? []) {
+      if (entity.kind !== EntityKind.Player) continue;
+      if ((entity.flags & EntityFlags.Local) !== 0) continue;
+      if ((entity.flags & EntityFlags.Downed) === 0) continue;
+      const distance = Math.hypot(entity.x - this.local.x, entity.z - this.local.z);
+      if (distance > INTERACT_RANGE) continue;
+      this.hud.prompt = { key: 'hud.interact.revive', params: { name: '' } };
+      return;
+    }
+
     for (const placement of this.level.objectives) {
       const state = this.objectives[placement.id];
       if (!state) continue;
@@ -766,37 +790,56 @@ export class GameSession {
    * player gets different ones — "did you see that?" / "see what?" is the point.
    */
   private updateHallucinations(dt: number): void {
-    if (!this.settings.hallucinations || !this.level) return;
-    if (this.hud.sanity > 0.7) return;
+    if (!this.level) return;
+    this.sinceHallucination += dt;
 
-    this.audio.updateHallucinations(dt, true, (key) => {
+    this.audio.updateHallucinations(dt, this.settings.hallucinations && this.settings.scareIntensity > 0, (key) => {
       const angle = Math.random() * Math.PI * 2;
       const distance = 4 + Math.random() * 8;
       this.audio.play(key, this.local.x + Math.cos(angle) * distance, this.local.z + Math.sin(angle) * distance, 0.8);
     });
 
-    // A figure at the end of the corridor, for well under a second.
-    const bucket = Math.floor(performance.now() / 1000);
-    const roll = hash3f(this.connection.playerId, bucket, this.level.layoutHash);
-    const pressure = clamp01((0.7 - this.hud.sanity) / 0.7);
-    if (this.hallucinationActor === null && roll < pressure * 0.06) {
-      const distance = 7 + roll * 40;
-      const x = this.local.x + Math.sin(this.yaw) * distance;
-      const z = this.local.z - Math.cos(this.yaw) * distance;
-      const tile = worldToTile(this.level, x, z);
-      if (this.level.tiles[tile.y * this.level.width + tile.x] === 1) {
-        this.hallucinationActor = {
-          id: 60000,
-          kind: EntityKind.Player,
-          flags: EntityFlags.Alive,
-          x,
-          z,
-          yaw: this.yaw + Math.PI,
-          aiState: AiState.Idle,
-        };
-        this.hallucinationUntil = performance.now() + 420 + roll * 500;
-      }
+    const decision = decideHallucination({
+      sanity: this.hud.sanity,
+      scareIntensity: this.settings.scareIntensity,
+      enabled: this.settings.hallucinations,
+      bucket: Math.floor(performance.now() / 1000),
+      playerId: this.connection.playerId,
+      layoutHash: this.level.layoutHash,
+      sinceLast: this.sinceHallucination,
+    });
+    if (!decision) return;
+
+    if (decision.kind === 'falseScare') {
+      // No figure, no sound source, nothing to find afterwards. It runs through the same
+      // path a real entity scare does, so the intensity scalar and the screenshake switch
+      // apply to it without a second code path to keep honest.
+      this.sinceHallucination = 0;
+      this.triggerScare(decision.intensity);
+      this.audio.play('hallucination.falseScare', this.local.x, this.local.z, 0.9);
+      return;
     }
+
+    const heading = this.yaw + decision.bearing;
+    const x = this.local.x + Math.sin(heading) * decision.distance;
+    const z = this.local.z - Math.cos(heading) * decision.distance;
+    const tile = worldToTile(this.level, x, z);
+    // Inside a wall it would be invisible anyway, and the cooldown should not be spent on a
+    // hallucination nobody could have seen.
+    if (this.level.tiles[tile.y * this.level.width + tile.x] !== 1) return;
+
+    this.sinceHallucination = 0;
+    this.hallucinationActor = {
+      id: 60000,
+      kind: EntityKind.Player,
+      flags: EntityFlags.Alive,
+      x,
+      z,
+      yaw: heading + Math.PI,
+      aiState: AiState.Idle,
+    };
+    this.hallucinationUntil = performance.now() + decision.duration * 1000;
+    this.audio.play('hallucination.breath', x, z, 0.55);
   }
 
   private triggerScare(intensity: number): void {

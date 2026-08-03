@@ -475,6 +475,13 @@ export class AudioEngine {
       case 'hallucination.whisper':
         this.whisper(out, now);
         break;
+      case 'hallucination.breath':
+        // Barely a sound at all: filtered noise with a slow envelope, close to the ear.
+        this.whisper(out, now);
+        break;
+      case 'hallucination.falseScare':
+        this.sting(out, now, 260, 70, 0.45, 0.85);
+        break;
       case 'hallucination.step':
         this.footstep(out, now, 0.8, 420, 2.4);
         break;

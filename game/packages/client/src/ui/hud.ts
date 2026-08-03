@@ -44,6 +44,10 @@ export class Hud {
   private readonly debug: HTMLElement;
   private readonly hint: HTMLElement;
   private readonly hotbar: HTMLElement;
+  private readonly downedPanel: HTMLElement;
+  private readonly downedLabel: HTMLElement;
+  private readonly downedTimer: HTMLElement;
+  private readonly reviveFill: HTMLElement;
   private readonly hotbarSlots: HTMLElement[] = [];
 
   private activeSubtitles: { key: string; until: number; node: HTMLElement }[] = [];
@@ -81,6 +85,18 @@ export class Hud {
     }
     this.hotbar = el('div', { class: 'hud__hotbar' }, ...this.hotbarSlots);
 
+    // The most dramatic moment in the game had no readout at all: a sixty-second timer
+    // nobody could see is not tension, it is an unexplained death.
+    this.downedLabel = el('span', { class: 'downed__label' });
+    this.downedTimer = el('strong', { class: 'downed__timer' });
+    this.reviveFill = el('div', { class: 'meter__fill meter__fill--revive' });
+    this.downedPanel = el(
+      'div',
+      { class: 'hud__downed hidden' },
+      el('div', { class: 'downed__row' }, this.downedLabel, this.downedTimer),
+      el('div', { class: 'meter__track' }, this.reviveFill),
+    );
+
     this.root = el(
       'div',
       { class: 'hud' },
@@ -93,6 +109,7 @@ export class Hud {
       el('div', { class: 'hud__objective' }, this.objectiveValue, this.objectiveLabel),
       el('div', { class: 'hud__corner' }, this.sanity.root, this.stamina.root, this.battery.root),
       this.hotbar,
+      this.downedPanel,
       this.prompt,
       this.banner,
       this.subtitles,
@@ -148,6 +165,21 @@ export class Hud {
     }
   }
 
+  private updateDowned(hud: HudState): void {
+    const visible = hud.downed && !hud.dead && !hud.escaped;
+    this.downedPanel.classList.toggle('hidden', !visible);
+    if (!visible) return;
+
+    // Ceil, so the number only reaches zero when the time actually has. Watching a timer
+    // sit on 0 while you are still alive reads as a bug.
+    const seconds = Math.max(0, Math.ceil(hud.bleedout));
+    const reviving = hud.reviveProgress > 0;
+    this.downedLabel.textContent = reviving ? t('hud.reviving') : t('hud.bleedout', { seconds });
+    this.downedTimer.textContent = `${seconds}s`;
+    this.downedPanel.classList.toggle('hud__downed--reviving', reviving);
+    this.reviveFill.style.width = `${Math.round(hud.reviveProgress * 100)}%`;
+  }
+
   update(hud: HudState, showDebug: boolean): void {
     this.sanity.fill.style.width = `${Math.round(hud.sanity * 100)}%`;
     this.stamina.fill.style.width = `${Math.round(hud.stamina * 100)}%`;
@@ -155,6 +187,7 @@ export class Hud {
     this.descentFill.style.width = `${Math.round(hud.descent * 100)}%`;
 
     this.updateHotbar(hud);
+    this.updateDowned(hud);
 
     this.objectiveValue.textContent = `${hud.fusesCollected} / ${hud.fusesTotal}`;
     this.objectiveLabel.textContent = hud.carrying ? t('hud.carrying') : t('hud.fuses');

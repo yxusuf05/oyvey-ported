@@ -532,3 +532,44 @@ select {
 .hidden {
   display: none !important;
 }
+
+/* Down and out. Centred and just below the banner, because at this moment there is nothing
+   else worth looking at. */
+.hud__downed {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translateX(-50%);
+  width: 260px;
+  padding: 9px 12px 11px;
+  border: 1px solid rgba(190, 60, 60, 0.45);
+  border-radius: 6px;
+  background: rgba(18, 6, 6, 0.62);
+}
+
+.hud__downed--reviving {
+  border-color: rgba(120, 190, 130, 0.5);
+}
+
+.downed__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.downed__label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.downed__timer {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.meter__fill--revive {
+  background: linear-gradient(90deg, #4f8f5c, #8fd6a0);
+}

@@ -167,6 +167,8 @@ export const de: Record<keyof typeof en, string> = {
   'subtitle.item.decoyBeep': '[der Köder kreischt]',
   'subtitle.item.emfClick': '[der Detektor schaltet]',
   'subtitle.item.emfPing': '[Ping]',
+  'subtitle.hallucination.breath': '[Atmen, ganz nah]',
+  'subtitle.hallucination.falseScare': '[etwas, das nicht da war]',
   'subtitle.objective.fusePickup': '[Sicherung genommen]',
   'subtitle.objective.fuseInsert': '[Sicherung sitzt]',
   'subtitle.objective.exitOpen': '[der Ausgang entriegelt]',

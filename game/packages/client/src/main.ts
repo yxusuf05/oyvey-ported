@@ -75,7 +75,11 @@ const screens = new Screens(uiRoot, {
     connection.send({ t: 'ready', ready });
   },
   start(seed) {
-    connection.send({ t: 'startRun', seed: seed || undefined });
+    // Tests get a fixed maze. Without this every browser run generates a new level, so
+    // assertions about how far a player got or how dark a room is are really assertions
+    // about which layout came up — flaky for reasons that have nothing to do with the code.
+    const forced = E2E ? params.get('seed') ?? 'e2e-fixed-seed' : '';
+    connection.send({ t: 'startRun', seed: seed || forced || undefined });
   },
   settingsChanged(next) {
     applySettingsEverywhere(next);

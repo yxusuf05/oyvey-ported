@@ -98,14 +98,29 @@ test.describe('single player', () => {
     await startRun(page);
     await step(page, 20);
 
-    const unlit = await frameStatsAtDescent(page, 1);
+    // Sample every direction rather than whichever one the player happens to face.
+    // Players are fanned out around the spawn by their id, so the heading at spawn is not
+    // fixed even for a fixed seed — and at descent 1 the frame is so close to black that a
+    // wall thirty centimetres away dominates the mean. Averaging over four headings asks
+    // the question the test is named after: did switching it on put light into the level.
+    const headings = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+    const sweep = async (): Promise<number> => {
+      let total = 0;
+      for (const yaw of headings) {
+        await step(page, 2, 0, yaw);
+        total += (await frameStatsAtDescent(page, 1)).mean;
+      }
+      return total / headings.length;
+    };
+
+    const unlit = await sweep();
 
     // Press and release so the toggle sees a rising edge, then give the server time to
     // acknowledge it — the flashlight is server-authoritative, like everything else.
     await stepRealtime(page, 6, Buttons.Flashlight);
     await stepRealtime(page, 60);
 
-    const lit = await frameStatsAtDescent(page, 1);
-    expect(lit.mean).toBeGreaterThan(unlit.mean * 1.05);
+    const lit = await sweep();
+    expect(lit).toBeGreaterThan(unlit * 1.05);
   });
 });

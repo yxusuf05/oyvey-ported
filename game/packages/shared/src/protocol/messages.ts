@@ -6,7 +6,9 @@
  * from the network tab. Only the per-tick hot path is binary (see `codec.ts`).
  */
 
-export const PROTOCOL_VERSION = 1;
+// Bumped when the binary snapshot layout changes. The `hello` handshake compares it, so a
+// stale tab is told to reload instead of silently decoding the wrong bytes.
+export const PROTOCOL_VERSION = 2;
 
 export type PlayerId = number;
 
