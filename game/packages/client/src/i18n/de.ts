@@ -122,6 +122,8 @@ export const de: Record<keyof typeof en, string> = {
 
   'theme.level0': 'Ebene 0 — Sonnenschein-Flure',
   'entity.blind': 'Der Blinde',
+  'entity.smiler': 'Der Grinsende',
+  'entity.watcher': 'Die Beobachterin',
   'item.flashlight': 'Taschenlampe',
   'item.flashlight.desc': 'Weiter oder fokussierter Kegel. Die Batterie kommt nicht zurück.',
   'item.glowstick': 'Leuchtstab',
@@ -155,6 +157,8 @@ export const de: Record<keyof typeof en, string> = {
   'subtitle.entity.run': '[etwas rennt]',
   'subtitle.entity.alerted': '[es hat dich gehört]',
   'subtitle.entity.telegraph': '[es holt aus]',
+  'subtitle.entity.smilerFreeze': '[es erstarrt]',
+  'subtitle.entity.watcherShift': '[etwas hat sich bewegt]',
   'subtitle.item.flashlightClick': '[Klick]',
   'subtitle.item.batteryDead': '[das Licht stirbt]',
   'subtitle.item.pickup': '[du hebst etwas auf]',

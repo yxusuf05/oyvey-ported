@@ -406,6 +406,14 @@ export class AudioEngine {
       case 'entity.alerted':
         this.sting(out, now, 380, 90, 0.5, 0.7);
         break;
+      case 'entity.smilerFreeze':
+        // A wet, arrested sound: the thing stops mid-stride. Low and short so it reads as
+        // a body locking up rather than as a hit.
+        this.clunk(out, now, 140);
+        break;
+      case 'entity.watcherShift':
+        this.footstep(out, now, 1.2, 200, 2.6);
+        break;
       case 'entity.telegraph':
         this.sting(out, now, 140, 40, 0.9, 1);
         break;

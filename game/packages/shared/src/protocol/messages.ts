@@ -22,6 +22,8 @@ export const MessageTag = {
 export const EntityKind = {
   Player: 0,
   Blind: 1,
+  Smiler: 2,
+  Watcher: 3,
 } as const;
 export type EntityKindId = (typeof EntityKind)[keyof typeof EntityKind];
 

@@ -55,6 +55,16 @@ export interface AiPlayerView {
   alive: boolean;
   downed: boolean;
   crouching: boolean;
+  /**
+   * Where this player is looking, and whether their torch is on.
+   *
+   * All three come from the authoritative `ServerPlayer`, never from a client claim. That
+   * distinction is the whole reason the Watcher is safe: "I am not looking at it right now"
+   * is precisely the sentence a modified client would want to be believed about.
+   */
+  yaw: number;
+  flashlightOn: boolean;
+  focusBeam: boolean;
 }
 
 export interface AiWorld {
@@ -74,6 +84,74 @@ export interface AiWorld {
 
 /** Think at 10 Hz. Movement still integrates every tick, only the decisions are throttled. */
 const THINK_INTERVAL = 0.1;
+
+/**
+ * The flashlight cone, as the simulation sees it.
+ *
+ * These mirror the renderer's cone in `session.ts:updateLights` — 30 degrees to the edge
+ * wide, 15 focused — because a player who can see something lit has to be able to trust
+ * that the game agrees. Kept as plain numbers rather than shared constants so a purely
+ * visual tweak to the torch cannot silently retune a monster.
+ */
+const BEAM_HALF_ANGLE_WIDE = 0.54;
+const BEAM_HALF_ANGLE_FOCUS = 0.27;
+const BEAM_RANGE_WIDE = 19;
+const BEAM_RANGE_FOCUS = 30;
+
+/** How wide a glance counts as "looking at it" for the Watcher. Roughly a 90° view. */
+const GAZE_HALF_ANGLE = 0.78;
+
+export interface ObserveOptions {
+  /** Half-angle of the cone, radians. */
+  halfAngle: number;
+  /** Metres. */
+  range: number;
+  /** Only count players whose torch is on, and use the beam's own cone and reach. */
+  requireFlashlight?: boolean;
+}
+
+/**
+ * The first living player who has this entity inside the given cone, with line of sight.
+ *
+ * One function, two very different monsters: the Smiler asks with `requireFlashlight` and
+ * freezes; the Watcher asks with a wide cone and stops moving. Sharing the geometry means
+ * there is exactly one place where "can that player see it" can be wrong.
+ */
+export function observedBy(entity: ServerEntity, world: AiWorld, options: ObserveOptions): AiPlayerView | null {
+  const tile = worldToTile(world.level, entity.x, entity.z);
+
+  for (const player of world.players) {
+    // A body on the floor is not watching anything, and neither is a corpse.
+    if (!player.alive || player.downed) continue;
+    if (options.requireFlashlight && !player.flashlightOn) continue;
+
+    const halfAngle = options.requireFlashlight
+      ? player.focusBeam
+        ? BEAM_HALF_ANGLE_FOCUS
+        : BEAM_HALF_ANGLE_WIDE
+      : options.halfAngle;
+    const range = options.requireFlashlight
+      ? player.focusBeam
+        ? BEAM_RANGE_FOCUS
+        : BEAM_RANGE_WIDE
+      : options.range;
+
+    const dx = entity.x - player.x;
+    const dz = entity.z - player.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+    if (distance > range || distance < 0.001) continue;
+
+    // Same yaw convention as everything else: forward is (sin yaw, -cos yaw).
+    const angleTo = Math.atan2(dx, -dz);
+    let delta = Math.abs(((angleTo - player.yaw + Math.PI) % (Math.PI * 2)) - Math.PI);
+    if (delta > Math.PI) delta = Math.PI * 2 - delta;
+    if (delta > halfAngle) continue;
+
+    if (!hasLineOfSight(world.grid, player.tileX + 0.5, player.tileY + 0.5, tile.x + 0.5, tile.y + 0.5)) continue;
+    return player;
+  }
+  return null;
+}
 
 export function createEntity(id: number, kind: string, spec: EntitySpec, tile: NavTile, level: Level): ServerEntity {
   const world = tileToWorld(level, tile.x, tile.y);
@@ -138,6 +216,25 @@ function setState(entity: ServerEntity, next: AiStateId, world: AiWorld): void {
 function think(entity: ServerEntity, world: AiWorld, dt: number): void {
   const spec = entity.spec;
   const tile = worldToTile(world.level, entity.x, entity.z);
+
+  // The Smiler, pinned by a torch. Checked before anything else, including the lunge
+  // resolution, so a beam brought up during the telegraph actually saves the player —
+  // a freeze that only applied between attacks would not be a counter, it would be a
+  // decoration.
+  if (spec.freezesInBeam) {
+    if (observedBy(entity, world, { halfAngle: 0, range: 0, requireFlashlight: true })) {
+      if (entity.state !== AiState.Stunned) {
+        world.emitSound('entity.smilerFreeze', entity.x, entity.z, 6);
+        world.onScare(entity.id, 'smilerFreeze', 0.4);
+      }
+      setState(entity, AiState.Stunned, world);
+      // Awareness keeps decaying while it is held, so holding the light on it long enough
+      // actually calms it down rather than merely pausing the problem.
+      entity.awareness = Math.max(0, entity.awareness - spec.awarenessDecay * dt);
+      return;
+    }
+    if (entity.state === AiState.Stunned) setState(entity, AiState.Investigate, world);
+  }
 
   // --- Hearing ---
   let heard: { x: number; y: number; value: number } | null = null;
@@ -302,6 +399,16 @@ function nearestPlayerWithin(entity: ServerEntity, world: AiWorld, range: number
 /** Steering along the current path, with the same collision resolution players use. */
 function move(entity: ServerEntity, world: AiWorld, dt: number): void {
   const spec = entity.spec;
+
+  // The Watcher stops dead while anyone has eyes on it — but keeps its state machine
+  // running underneath, so the debug overlay and the tests still show what it *wants* to
+  // do. A creature that reported "Patrol" while frozen would be lying about itself.
+  if (spec.movesOnlyUnobserved && observedBy(entity, world, { halfAngle: GAZE_HALF_ANGLE, range: spec.sightRange })) {
+    entity.vx = 0;
+    entity.vz = 0;
+    return;
+  }
+
   let speed = 0;
   switch (entity.state) {
     case AiState.Patrol:

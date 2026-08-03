@@ -210,6 +210,82 @@ export function buildBlindOne(material: ShaderMaterial): ActorRig {
   return { group, leftArm, rightArm, leftLeg, rightLeg, head, torso };
 }
 
+/**
+ * The Smiler. Short, wide, and all face — the silhouette has to read as *grinning* at the
+ * far end of a corridor with no light on it, because that is the moment it matters.
+ */
+export function buildSmiler(material: ShaderMaterial): ActorRig {
+  const group = new Group();
+
+  const torso = new Mesh(new CapsuleGeometry(0.3, 0.45, 4, 10), material);
+  torso.position.y = 0.95;
+  group.add(torso);
+
+  // Oversized and level, unlike the Blind One's downturned listening posture. This one is
+  // looking straight at you, and the head is the whole tell.
+  const head = new Mesh(new BoxGeometry(0.52, 0.34, 0.3), material);
+  head.position.y = 1.5;
+  group.add(head);
+
+  const grin = new Mesh(new BoxGeometry(0.44, 0.09, 0.06), material);
+  grin.position.set(0, 1.44, -0.16);
+  group.add(grin);
+
+  const leftArm = limb(0.1, 0.55, 0.1, material, true);
+  leftArm.position.set(-0.34, 1.2, 0);
+  group.add(leftArm);
+
+  const rightArm = limb(0.1, 0.55, 0.1, material, true);
+  rightArm.position.set(0.34, 1.2, 0);
+  group.add(rightArm);
+
+  const leftLeg = limb(0.13, 0.68, 0.13, material, true);
+  leftLeg.position.set(-0.14, 0.68, 0);
+  group.add(leftLeg);
+
+  const rightLeg = limb(0.13, 0.68, 0.13, material, true);
+  rightLeg.position.set(0.14, 0.68, 0);
+  group.add(rightLeg);
+
+  return { group, leftArm, rightArm, leftLeg, rightLeg, head, torso };
+}
+
+/**
+ * The Watcher. Tall, thin and armless, so that the only thing it can be doing is standing
+ * there — which is exactly what it will be doing every single time you look at it.
+ */
+export function buildWatcher(material: ShaderMaterial): ActorRig {
+  const group = new Group();
+
+  const torso = new Mesh(new CapsuleGeometry(0.16, 1.35, 4, 10), material);
+  torso.position.y = 1.5;
+  group.add(torso);
+
+  const head = new Mesh(new BoxGeometry(0.2, 0.5, 0.2), material);
+  head.position.y = 2.42;
+  group.add(head);
+
+  // Vestigial arms held flat against the body. The rig contract needs four limbs; the
+  // silhouette needs them to be almost invisible.
+  const leftArm = limb(0.06, 0.9, 0.06, material, true);
+  leftArm.position.set(-0.18, 1.85, 0);
+  group.add(leftArm);
+
+  const rightArm = limb(0.06, 0.9, 0.06, material, true);
+  rightArm.position.set(0.18, 1.85, 0);
+  group.add(rightArm);
+
+  const leftLeg = limb(0.09, 0.82, 0.09, material, true);
+  leftLeg.position.set(-0.1, 0.82, 0);
+  group.add(leftLeg);
+
+  const rightLeg = limb(0.09, 0.82, 0.09, material, true);
+  rightLeg.position.set(0.1, 0.82, 0);
+  group.add(rightLeg);
+
+  return { group, leftArm, rightArm, leftLeg, rightLeg, head, torso };
+}
+
 /** A remote player: readable at a distance, deliberately unremarkable. */
 export function buildPlayerAvatar(material: ShaderMaterial): ActorRig {
   const group = new Group();

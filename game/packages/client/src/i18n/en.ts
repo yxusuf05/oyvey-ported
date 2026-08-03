@@ -124,6 +124,8 @@ export const en = {
 
   'theme.level0': 'Level 0 — Sunbeam Halls',
   'entity.blind': 'The Blind One',
+  'entity.smiler': 'The Smiler',
+  'entity.watcher': 'The Watcher',
   'item.flashlight': 'Flashlight',
   'item.flashlight.desc': 'Wide or focused beam. The battery does not come back.',
   'item.glowstick': 'Glowstick',
@@ -154,6 +156,8 @@ export const en = {
   'subtitle.entity.run': '[something running]',
   'subtitle.entity.alerted': '[it heard you]',
   'subtitle.entity.telegraph': '[it lunges]',
+  'subtitle.entity.smilerFreeze': '[it locks up]',
+  'subtitle.entity.watcherShift': '[something shifted]',
   'subtitle.item.flashlightClick': '[click]',
   'subtitle.item.batteryDead': '[the light dies]',
   'subtitle.item.pickup': '[you pick something up]',

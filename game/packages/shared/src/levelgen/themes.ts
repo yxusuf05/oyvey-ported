@@ -183,7 +183,13 @@ const LEVEL0: ThemeSpec = {
     footstepQ: 1.2,
     motifBpm: 96,
   },
-  entities: [{ kind: 'blind', wakesAt: 0.18, max: 2 }],
+  entities: [
+    { kind: 'blind', wakesAt: 0.18, max: 2 },
+    // Staggered on purpose. Each entity gets a stretch of run where it is the only new
+    // thing, so its rule can be learned before the next one complicates the picture.
+    { kind: 'smiler', wakesAt: 0.42, max: 2 },
+    { kind: 'watcher', wakesAt: 0.66, max: 1 },
+  ],
 };
 
 export const THEMES: Record<string, ThemeSpec> = {

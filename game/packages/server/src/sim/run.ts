@@ -829,6 +829,9 @@ export class Run {
         alive: this.isAlive(p) && !p.escaped && p.connected,
         downed: p.downed,
         crouching: p.state.crouching,
+        yaw: p.state.yaw,
+        flashlightOn: p.flashlightOn,
+        focusBeam: p.focusBeam,
       };
     });
 

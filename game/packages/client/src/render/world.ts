@@ -48,7 +48,15 @@ import {
 import { EntityFlags, EntityKind, type ChalkMarkState, type WorldItemState } from '@game/shared/protocol';
 import { getItemSpec } from '@game/shared/content';
 import { clamp01, lerp, smoothstep } from '@game/shared/math';
-import { animateRig, buildBlindOne, buildPlayerAvatar, createActorMaterial, type ActorRig } from './actors';
+import {
+  animateRig,
+  buildBlindOne,
+  buildPlayerAvatar,
+  buildSmiler,
+  buildWatcher,
+  createActorMaterial,
+  type ActorRig,
+} from './actors';
 import { buildChunks, buildFixtureGeometry } from './mesher';
 import { Composer, type GradeParams, type VolumetricParams } from './postfx';
 import { makeNoiseTexture, makeSurfaceTextures, type SurfaceTextures } from './textures';
@@ -137,6 +145,20 @@ const ITEM_COLOURS: Record<string, number> = {
   medkit: 0xd24a4a,
   flashlight: 0xb8b28e,
 };
+
+/** One silhouette per entity kind: the shape is how a player identifies what is coming. */
+function rigFor(kind: number, material: ShaderMaterial): ActorRig {
+  switch (kind) {
+    case EntityKind.Player:
+      return buildPlayerAvatar(material);
+    case EntityKind.Smiler:
+      return buildSmiler(material);
+    case EntityKind.Watcher:
+      return buildWatcher(material);
+    default:
+      return buildBlindOne(material);
+  }
+}
 
 export class WorldRenderer {
   readonly renderer: WebGLRenderer;
@@ -467,7 +489,7 @@ export class WorldRenderer {
       let instance = this.actors.get(actor.id);
       if (!instance) {
         const material = this.actorMaterialFor(actor.kind);
-        const rig = actor.kind === EntityKind.Player ? buildPlayerAvatar(material) : buildBlindOne(material);
+        const rig = rigFor(actor.kind, material);
         this.actorGroup.add(rig.group);
         instance = { rig, kind: actor.kind, phase: 0, lastX: actor.x, lastZ: actor.z, seen: true };
         this.actors.set(actor.id, instance);
