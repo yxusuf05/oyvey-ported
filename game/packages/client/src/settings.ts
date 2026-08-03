@@ -102,6 +102,30 @@ export const QUALITY_PRESETS: Record<QualityPreset, Partial<Settings>> = {
 };
 
 const STORAGE_KEY = 'prisma.settings.v1';
+const PROFILE_KEY = 'prisma.profile.v1';
+
+/**
+ * This browser's meta-progression identity.
+ *
+ * No accounts, no passwords, no email: a random id in localStorage, created once and sent
+ * with the hello. For two friends on one server that is the right trade — the honest cost
+ * is that clearing browser data loses your unlocks, and the README says so.
+ */
+export function profileId(): string {
+  try {
+    const existing = localStorage.getItem(PROFILE_KEY);
+    if (existing && existing.length > 0) return existing;
+    const fresh =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `p${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`;
+    localStorage.setItem(PROFILE_KEY, fresh);
+    return fresh;
+  } catch {
+    // Private browsing with storage blocked: play without progression rather than crash.
+    return '';
+  }
+}
 
 let settings: Settings = defaultSettings();
 const listeners = new Set<(s: Settings) => void>();

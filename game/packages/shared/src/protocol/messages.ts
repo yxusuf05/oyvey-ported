@@ -126,7 +126,9 @@ export interface RunStats {
 
 /** Client to server. */
 export type C2S =
-  | { t: 'hello'; protocol: number; name: string; sessionToken?: string }
+  | { t: 'hello'; protocol: number; name: string; sessionToken?: string; profileId?: string }
+  /** Buy the next level of a perk. The server decides whether it happens. */
+  | { t: 'buyPerk'; perk: string }
   | { t: 'createRoom' }
   | { t: 'joinRoom'; code: string }
   | { t: 'leaveRoom' }
@@ -175,6 +177,8 @@ export type S2C =
   | { t: 'playerDown'; playerId: PlayerId; by: number }
   | { t: 'playerRevived'; playerId: PlayerId; by: PlayerId }
   | { t: 'pong'; sent: number }
+  /** Meta-progression, sent only to its owner after a hello, a run, or a purchase. */
+  | { t: 'profile'; credits: number; runs: number; deepest: number; perks: Record<string, number> }
   | { t: 'error'; code: string; message: string };
 
 export function encodeJson(msg: S2C | C2S): string {

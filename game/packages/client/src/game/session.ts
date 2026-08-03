@@ -871,6 +871,7 @@ export class GameSession {
       yaw: this.yaw,
       descent: this.hud.descent,
       sanity: this.hud.sanity,
+      flashlightOn: this.hud.flashlightOn,
       entities: this.snapshots[this.snapshots.length - 1]?.payload.entities.length ?? 0,
       drawCalls: this.renderer.drawCalls,
       triangles: this.renderer.triangles,

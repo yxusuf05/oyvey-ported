@@ -6,4 +6,12 @@ services:
     environment:
       PORT: '8787'
       HOST: '0.0.0.0'
+      DATA_DIR: '/data'
+    volumes:
+      # Meta-progression lives here. Without this line every container restart wipes
+      # everyone's unlocks, which is the kind of thing you only notice once.
+      - prisma-data:/data
     restart: unless-stopped
+
+volumes:
+  prisma-data:

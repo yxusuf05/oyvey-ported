@@ -19,9 +19,10 @@ import {
   type Settings,
 } from '../settings';
 import type { LobbyPlayer, RunOutcome, RunStats } from '@game/shared/protocol';
+import { PERK_SPECS, perkCost } from '@game/shared/content';
 import { clear, el, field, toggle } from './dom';
 
-export type ScreenName = 'menu' | 'lobby' | 'settings' | 'howto' | 'summary' | 'game';
+export type ScreenName = 'menu' | 'lobby' | 'settings' | 'howto' | 'hub' | 'summary' | 'game';
 
 export interface ScreenCallbacks {
   host(name: string): void;
@@ -31,6 +32,15 @@ export interface ScreenCallbacks {
   start(seed: string): void;
   settingsChanged(settings: Settings): void;
   backToLobby(): void;
+  buyPerk(perk: string): void;
+}
+
+/** Meta-progression as the shop sees it. Everything here comes from the server. */
+export interface ProfileView {
+  credits: number;
+  runs: number;
+  deepest: number;
+  perks: Record<string, number>;
 }
 
 export interface LobbyView {
@@ -51,6 +61,7 @@ export class Screens {
   private error = '';
   private lobby: LobbyView | null = null;
   private summary: { outcome: RunOutcome; stats: RunStats } | null = null;
+  private profile: ProfileView = { credits: 0, runs: 0, deepest: 0, perks: {} };
   private pendingRebind: ActionKey | null = null;
 
   constructor(root: HTMLElement, callbacks: ScreenCallbacks) {
@@ -121,6 +132,9 @@ export class Screens {
       case 'howto':
         screen.append(this.renderHowTo());
         break;
+      case 'hub':
+        screen.append(this.renderHub());
+        break;
       case 'summary':
         screen.append(this.renderSummary());
         break;
@@ -177,9 +191,68 @@ export class Screens {
         el('div', { class: 'grow' }, codeInput),
         el('button', { class: 'btn btn--row', text: t('lobby.join'), onclick: joinNow }),
       ),
+      el('button', { class: 'btn', text: t('menu.hub'), onclick: () => this.show('hub') }),
       el('button', { class: 'btn', text: t('menu.settings'), onclick: () => this.show('settings') }),
       el('button', { class: 'btn', text: t('menu.howToPlay'), onclick: () => this.show('howto') }),
       el('p', { class: 'error', text: this.error }),
+    );
+  }
+
+  /** Called whenever the server sends a profile: at hello, after a run, after a purchase. */
+  setProfile(profile: ProfileView): void {
+    this.profile = profile;
+    if (this.current === 'hub') this.render();
+  }
+
+  /**
+   * The hub: what a run was worth, and what to spend it on.
+   *
+   * Every price and every level here is only a display of what the server already decided.
+   * Pressing buy sends a wish; the panel redraws when the answer comes back, so a refused
+   * purchase visibly snaps back instead of leaving an optimistic number on screen.
+   */
+  private renderHub(): HTMLElement {
+    const rows = Object.values(PERK_SPECS).map((spec) => {
+      const level = this.profile.perks[spec.id] ?? 0;
+      const cost = perkCost(spec.id, level);
+      const affordable = cost !== null && this.profile.credits >= cost;
+
+      return el(
+        'div',
+        { class: 'field' },
+        el(
+          'div',
+          {},
+          el('div', { class: 'field__label', text: `${t(spec.nameKey as TranslationKey)}  ${level}/${spec.maxLevel}` }),
+          el('p', { class: 'hint', text: t(spec.descriptionKey as TranslationKey) }),
+        ),
+        cost === null
+          ? el('span', { class: 'field__value', text: t('hub.maxed') })
+          : el('button', {
+              class: `btn btn--row${affordable ? ' btn--primary' : ''}`,
+              text: t('hub.buy', { cost }),
+              disabled: affordable ? undefined : 'disabled',
+              onclick: () => this.callbacks.buyPerk(spec.id),
+            }),
+      );
+    });
+
+    return el(
+      'div',
+      { class: 'panel panel--wide' },
+      el('h1', { class: 'title', text: t('hub.title') }),
+      el('p', { class: 'subtitle', text: t('hub.subtitle') }),
+      el('div', { class: 'stat' }, el('span', { text: t('hub.credits') }), el('span', { text: String(this.profile.credits) })),
+      el('div', { class: 'stat' }, el('span', { text: t('hub.runs') }), el('span', { text: String(this.profile.runs) })),
+      el(
+        'div',
+        { class: 'stat' },
+        el('span', { text: t('hub.deepest') }),
+        el('span', { text: `${Math.round(this.profile.deepest * 100)}%` }),
+      ),
+      el('h2', { text: t('hub.perks') }),
+      ...rows,
+      el('button', { class: 'btn btn--primary', text: t('menu.back'), onclick: () => this.show('menu') }),
     );
   }
 

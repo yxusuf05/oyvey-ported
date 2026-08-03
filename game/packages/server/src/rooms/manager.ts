@@ -10,6 +10,7 @@ import { randomBytes } from 'node:crypto';
 import type { WebSocket } from 'ws';
 import { isValidRoomCode, randomRoomCode } from '@game/shared/prng';
 import { MAX_PLAYERS } from '@game/shared/sim';
+import type { ProgressionStore } from '../persist/store';
 import { GameRoom, ROOM_IDLE_TTL, sanitiseName, type RoomPlayer } from './room';
 
 export interface Session {
@@ -25,6 +26,11 @@ export class RoomManager {
   private readonly rooms = new Map<string, GameRoom>();
   private readonly sessions = new Map<string, Session>();
   private nextPlayerId = 1;
+  private readonly store: ProgressionStore;
+
+  constructor(store: ProgressionStore) {
+    this.store = store;
+  }
 
   get roomCount(): number {
     return this.rooms.size;
@@ -42,6 +48,7 @@ export class RoomManager {
     // collisions rare, but "rare" is not "never" and a collision would be baffling.
     for (let attempt = 0; attempt < 64 && this.rooms.has(code); attempt++) code = randomRoomCode();
     const room = new GameRoom(code);
+    room.attachStore(this.store);
     this.rooms.set(code, room);
     return room;
   }
@@ -51,7 +58,7 @@ export class RoomManager {
   }
 
   /** Joins an existing room, resuming a previous session when the token still matches. */
-  join(code: string, name: string, socket: WebSocket, sessionToken?: string): JoinResult {
+  join(code: string, name: string, socket: WebSocket, sessionToken?: string, profileId = ''): JoinResult {
     const normalised = code.toUpperCase();
     if (!isValidRoomCode(normalised)) {
       return { ok: false, code: 'bad_code', message: 'That room code is not valid.' };
@@ -78,23 +85,26 @@ export class RoomManager {
 
     if (room.isFull) return { ok: false, code: 'room_full', message: `Room is full (${MAX_PLAYERS} players).` };
 
-    const player = this.makePlayer(name, socket);
+    const player = this.makePlayer(name, socket, profileId);
     this.sessions.set(player.sessionToken, { roomCode: normalised, playerId: player.id });
     room.welcome(player);
     room.addPlayer(player);
     return { ok: true, room, player, reconnected: false };
   }
 
-  host(name: string, socket: WebSocket): JoinResult {
+  host(name: string, socket: WebSocket, profileId = ''): JoinResult {
     const room = this.createRoom();
-    const player = this.makePlayer(name, socket);
+    const player = this.makePlayer(name, socket, profileId);
     this.sessions.set(player.sessionToken, { roomCode: room.code, playerId: player.id });
     room.welcome(player);
     room.addPlayer(player);
     return { ok: true, room, player, reconnected: false };
   }
 
-  private makePlayer(name: string, socket: WebSocket): RoomPlayer {
+  private makePlayer(name: string, socket: WebSocket, profileId = ''): RoomPlayer {
+    // Perks are read once, when the player enters a room, and stay frozen for the run. A
+    // purchase made mid-run must not change the rules of the run it is being made during.
+    const profile = profileId.length > 0 ? this.store.load(profileId) : null;
     return {
       id: this.nextPlayerId++,
       name: sanitiseName(name),
@@ -102,6 +112,8 @@ export class RoomManager {
       sessionToken: randomBytes(16).toString('hex'),
       socket,
       sim: null,
+      profileId,
+      perks: profile?.perks ?? {},
     };
   }
 

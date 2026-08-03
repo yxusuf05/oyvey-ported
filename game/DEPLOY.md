@@ -67,6 +67,17 @@ Add to the generated `fly.toml` so the container listens where Fly expects:
 on the next request, so an idle evening costs nothing. The first connection after a sleep
 takes a second or two.
 
+### Persistent progress
+
+Credits and unlocks live in a SQLite file under `DATA_DIR` (default `./data`). **Give that
+directory a volume.** Without one the file lives inside the container, and every restart or
+redeploy silently resets everyone's progress — the game keeps working, which is exactly why
+it takes a while to notice. `docker-compose.yml` already mounts one; on a platform that
+gives you a disk, mount it and point `DATA_DIR` at it.
+
+`PRISMA_MEMORY_DB=1` keeps everything in memory instead. That is what the browser tests use;
+there is no reason to set it in production.
+
 ### Railway / Render
 
 Point the service at this repository with the root directory set to `game`. Both detect the

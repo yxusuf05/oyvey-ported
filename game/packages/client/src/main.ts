@@ -27,7 +27,10 @@ let settings: Settings = loadSettings();
 if (E2E) {
   // The software renderer in CI cannot afford the full stack, and the test harness cares
   // about liveness and geometry, not about bloom.
-  settings = { ...settings, resolutionScale: 0.5, volumetric: false, bloom: 0, grain: 0 };
+  // `flashReduction` is on for a different reason than the rest: it kills the ceiling-tube
+  // flicker, which is a 6.7 Hz function of wall-clock time. Sampling two frames of that and
+  // comparing the mean to another two frames is a coin flip, not a measurement.
+  settings = { ...settings, resolutionScale: 0.5, volumetric: false, bloom: 0, grain: 0, flashReduction: true };
 }
 
 const connection = new Connection();
@@ -87,6 +90,9 @@ const screens = new Screens(uiRoot, {
   backToLobby() {
     screens.show('lobby');
   },
+  buyPerk(perk) {
+    connection.send({ t: 'buyPerk', perk });
+  },
 });
 
 screens.show('menu');
@@ -142,6 +148,10 @@ connection.onMessage((msg: S2C) => {
       hud.root.remove();
       document.exitPointerLock?.();
       screens.setSummary(msg.outcome, msg.stats);
+      break;
+
+    case 'profile':
+      screens.setProfile({ credits: msg.credits, runs: msg.runs, deepest: msg.deepest, perks: msg.perks });
       break;
 
     case 'error':

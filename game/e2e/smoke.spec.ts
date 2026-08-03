@@ -10,6 +10,7 @@ import {
   startRun,
   step,
   stepRealtime,
+  stepUntil,
 } from './harness';
 
 test.describe('single player', () => {
@@ -115,10 +116,13 @@ test.describe('single player', () => {
 
     const unlit = await sweep();
 
-    // Press and release so the toggle sees a rising edge, then give the server time to
-    // acknowledge it — the flashlight is server-authoritative, like everything else.
+    // Press and release so the toggle sees a rising edge, then wait for the server to
+    // acknowledge it rather than for a fixed number of frames. The flashlight is
+    // server-authoritative like everything else, and a fixed wait is a coin flip whenever
+    // the machine is busy — which, running last in the suite, it always is.
     await stepRealtime(page, 6, Buttons.Flashlight);
-    await stepRealtime(page, 60);
+    const on = await stepUntil(page, (state) => state.flashlightOn === true);
+    expect(on, 'the flashlight never came on').toBe(true);
 
     const lit = await sweep();
     expect(lit).toBeGreaterThan(unlit * 1.05);

@@ -6,6 +6,7 @@
  * `game/`, because they need the level's collision grid to do their job.
  */
 
+import { profileId } from '../settings';
 import {
   MessageTag,
   PROTOCOL_VERSION,
@@ -62,7 +63,13 @@ export class Connection {
 
       socket.addEventListener('open', () => {
         this.setState('open');
-        this.send({ t: 'hello', protocol: PROTOCOL_VERSION, name: this.name, sessionToken: this.sessionToken || undefined });
+        this.send({
+          t: 'hello',
+          protocol: PROTOCOL_VERSION,
+          name: this.name,
+          sessionToken: this.sessionToken || undefined,
+          profileId: profileId() || undefined,
+        });
         this.startPing();
         resolve();
       });

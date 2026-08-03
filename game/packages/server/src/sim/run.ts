@@ -67,9 +67,12 @@ import {
   EMF_PING_NOISE,
   EMF_PING_SLOW,
   LOOT_TABLE,
+  bonusSlots,
   getEntitySpec,
   getItemSpec,
+  noiseFactor,
   type ItemSpec,
+  type PerkLevels,
 } from '@game/shared/content';
 import { Director, MIN_SPAWN_DISTANCE } from '../ai/director';
 import { Navigator } from '../ai/nav';
@@ -93,10 +96,16 @@ export interface WorldItem extends WorldItemState {
   pulseIn: number;
 }
 
-/** A fresh backpack: the default loadout laid into fixed slots, the rest left empty. */
-function startingInventory(): (InventorySlotState | null)[] {
-  const slots: (InventorySlotState | null)[] = new Array(BACKPACK_SLOTS).fill(null);
-  for (let i = 0; i < DEFAULT_LOADOUT.length && i < BACKPACK_SLOTS; i++) {
+/**
+ * A fresh backpack: the default loadout laid into fixed slots, the rest left empty.
+ *
+ * The size comes from the player's perks rather than from the constant, which is the point
+ * of the backpack perk — but the extra room always lands at the end, so slot 1 is the
+ * flashlight for everyone regardless of what they have bought.
+ */
+function startingInventory(size: number): (InventorySlotState | null)[] {
+  const slots: (InventorySlotState | null)[] = new Array(size).fill(null);
+  for (let i = 0; i < DEFAULT_LOADOUT.length && i < size; i++) {
     slots[i] = { item: DEFAULT_LOADOUT[i].item, count: DEFAULT_LOADOUT[i].count };
   }
   return slots;
@@ -113,6 +122,8 @@ export interface ServerPlayer {
   useCooldown: number;
   /** Set whenever the backpack changes; the room turns it into one message. */
   inventoryDirty: boolean;
+  /** Meta-progression this player brought into the run. Read-only during it. */
+  perks: PerkLevels;
   /** EMF detector: switched on, and seconds until the next ping. */
   emfOn: boolean;
   emfPingIn: number;
@@ -260,7 +271,7 @@ export class Run {
     return tileToWorld(this.level, this.level.spawn.x, this.level.spawn.y);
   }
 
-  createPlayer(id: number, name: string): ServerPlayer {
+  createPlayer(id: number, name: string, perks: PerkLevels = {}): ServerPlayer {
     const spawn = this.spawnPoint();
     // Fan players out slightly so four bodies do not start inside each other.
     const angle = (id % 8) * (Math.PI / 4);
@@ -268,7 +279,8 @@ export class Run {
       id,
       name,
       state: createPlayerState(spawn.x + Math.cos(angle) * 0.7, spawn.z + Math.sin(angle) * 0.7),
-      inventory: startingInventory(),
+      inventory: startingInventory(BACKPACK_SLOTS + bonusSlots(perks)),
+      perks,
       activeSlot: 0,
       useCooldown: 0,
       inventoryDirty: true,
@@ -343,7 +355,10 @@ export class Run {
 
       if (active && !player.downed && player.state.noise > 0) {
         const tile = worldToTile(this.level, player.state.x, player.state.z);
-        this.noise.emit(tile.x, tile.y, player.state.noise);
+        // Boots quieten your own footsteps and nothing else — not dropped items, not tools,
+        // not the decoy. Buying silence should reward how you move, not switch the noise
+        // system off.
+        this.noise.emit(tile.x, tile.y, player.state.noise * noiseFactor(player.perks));
       }
       // A downed player screams continuously — reviving is meant to be a real risk.
       if (player.downed && this.isAlive(player)) {
@@ -360,7 +375,7 @@ export class Run {
     // The selected slot arrives with every input and is clamped here rather than trusted.
     // A client that sends slot 200 selects the last slot, not memory past the end of the
     // backpack.
-    const slot = clamp(Math.floor(input.slot), 0, BACKPACK_SLOTS - 1);
+    const slot = clamp(Math.floor(input.slot), 0, player.inventory.length - 1);
     if (slot !== player.activeSlot) {
       player.activeSlot = slot;
       player.inventoryDirty = true;

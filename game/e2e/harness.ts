@@ -100,6 +100,26 @@ export async function debugState(page: Page): Promise<Record<string, unknown>> {
   return page.evaluate(() => window.__debug());
 }
 
+/**
+ * Steps until `predicate` holds, or gives up.
+ *
+ * Anything server-authoritative — a flashlight toggle, a pickup — takes an unknown number of
+ * frames to come back, and a fixed wait turns that into a coin flip the moment the machine
+ * is busy. Waiting for the state itself is both faster and honest about what is being
+ * tested.
+ */
+export async function stepUntil(
+  page: Page,
+  predicate: (state: Record<string, unknown>) => boolean,
+  attempts = 40,
+): Promise<boolean> {
+  for (let i = 0; i < attempts; i++) {
+    if (predicate(await debugState(page))) return true;
+    await stepRealtime(page, 6);
+  }
+  return predicate(await debugState(page));
+}
+
 export async function frameStats(page: Page): Promise<{ mean: number; buckets: number; samples: number }> {
   return page.evaluate(() => window.__frameStats());
 }

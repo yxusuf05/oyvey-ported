@@ -98,6 +98,18 @@ files: wallpaper, carpet and ceiling tiles are painted into canvases at load, an
 sound — footsteps, the drone, the stings, the whispering, the melody — is synthesised with
 the Web Audio API.
 
+## Progress between runs
+
+Surviving pays. Credits bank into a hub where they buy permanent upgrades — a bigger
+backpack, quieter boots, better cells, faster revives — and each of those changes the run
+rather than a number on a screen. A wipe still pays a third, because a run that returns
+nothing turns losing into pure punishment.
+
+There are no accounts. Your progress is tied to a random id stored in your browser, which
+means two things worth knowing: it follows the browser rather than the name you type, and
+**clearing your browser data loses your unlocks.** For a server two friends share that is
+the right trade; anything better would need logins.
+
 ## Controls
 
 | Key | |

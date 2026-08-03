@@ -23,10 +23,13 @@ import {
   type C2S,
   type LobbyPlayer,
   type RoomPhase,
+  type RunStats,
   type S2C,
   type EntitySnapshot,
 } from '@game/shared/protocol';
 import { DEFAULT_THEME_ID } from '@game/shared/levelgen';
+import type { PerkLevels } from '@game/shared/content';
+import type { Profile, ProgressionStore } from '../persist/store';
 import { Run, type ServerPlayer } from '../sim/run';
 
 /** Seconds a disconnected player's body stays in the world before it is removed. */
@@ -42,6 +45,10 @@ export interface RoomPlayer {
   socket: WebSocket | null;
   /** Set while a run is in progress. */
   sim: ServerPlayer | null;
+  /** Meta-progression identity. Empty for a client that never sent one. */
+  profileId: string;
+  /** Perk levels loaded at hello, frozen for the duration of a run. */
+  perks: PerkLevels;
 }
 
 export class GameRoom {
@@ -55,9 +62,15 @@ export class GameRoom {
   private tickAccumulator = 0;
   private stepsSinceSnapshot = 0;
   private seed = '';
+  /** Shared by every room; null in fixtures that do not care about progression. */
+  private store: ProgressionStore | null = null;
 
   constructor(code: string) {
     this.code = code;
+  }
+
+  attachStore(store: ProgressionStore): void {
+    this.store = store;
   }
 
   get connectedCount(): number {
@@ -74,7 +87,7 @@ export class GameRoom {
     // Joining mid-run drops you straight into the level rather than making you wait it
     // out — a friend who reloads the tab should be back in the maze, not in a menu.
     if (this.run && this.phase === 'running') {
-      player.sim = this.run.createPlayer(player.id, player.name);
+      player.sim = this.run.createPlayer(player.id, player.name, player.perks);
       this.sendRunStart(player);
     }
     this.broadcastRoomState();
@@ -195,7 +208,7 @@ export class GameRoom {
     this.run = new Run(this.seed, themeId ?? DEFAULT_THEME_ID);
     this.phase = 'running';
     for (const player of this.players) {
-      player.sim = this.run.createPlayer(player.id, player.name);
+      player.sim = this.run.createPlayer(player.id, player.name, player.perks);
       player.sim.connected = player.socket !== null;
       this.sendRunStart(player);
       this.sendInventory(player);
@@ -222,7 +235,9 @@ export class GameRoom {
   private endRun(outcome: 'extracted' | 'wipe' | 'abandoned'): void {
     if (!this.run) return;
     const sims = this.sims();
-    this.broadcast({ t: 'runEnd', outcome, stats: this.run.stats(sims) });
+    const stats = this.run.stats(sims);
+    this.broadcast({ t: 'runEnd', outcome, stats });
+    this.bankRewards(outcome, stats);
     this.run = null;
     this.phase = 'summary';
     for (const player of this.players) {
@@ -322,6 +337,36 @@ export class GameRoom {
       // `burnLeft` is server-only: how long a glowstick has left is atmosphere, not a
       // number the player should be reading off the floor.
       items: this.run.worldItems.map(({ id, item, x, z, count, lit }) => ({ id, item, x, z, count, lit })),
+    });
+  }
+
+  /**
+   * Books the takings from a finished run.
+   *
+   * A wipe still pays, at a third. A run that returns nothing turns failure into pure
+   * punishment, and this is a game you are meant to lose sometimes — the loss should cost
+   * you the loot you were carrying, not the evening.
+   */
+  private bankRewards(outcome: 'extracted' | 'wipe' | 'abandoned', stats: RunStats): void {
+    if (!this.store || outcome === 'abandoned') return;
+    const share = outcome === 'extracted' ? 1 : 1 / 3;
+    const credits = Math.round(stats.reward * share);
+
+    for (const player of this.players) {
+      if (player.profileId.length === 0) continue;
+      const profile = this.store.award(player.profileId, credits, stats.peakDescent);
+      player.perks = profile.perks;
+      this.sendProfile(player, profile);
+    }
+  }
+
+  sendProfile(player: RoomPlayer, profile: Profile): void {
+    this.send(player, {
+      t: 'profile',
+      credits: profile.credits,
+      runs: profile.runs,
+      deepest: profile.deepest,
+      perks: { ...profile.perks },
     });
   }
 

@@ -49,7 +49,9 @@ export default defineConfig({
   webServer: {
     command: 'pnpm run build && node packages/server/dist/index.js',
     url: `http://127.0.0.1:${PORT}/healthz`,
-    env: { PORT: String(PORT), HOST: '127.0.0.1' },
+    // In-memory progression: the browser tests must not write a database file, and must
+    // not inherit whatever the previous run banked.
+    env: { PORT: String(PORT), HOST: '127.0.0.1', PRISMA_MEMORY_DB: '1' },
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     stdout: 'pipe',

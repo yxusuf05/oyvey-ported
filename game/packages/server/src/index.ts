@@ -23,6 +23,7 @@ import {
   type C2S,
   type S2C,
 } from '@game/shared/protocol';
+import { ProgressionStore } from './persist/store';
 import { RoomManager } from './rooms/manager';
 import type { GameRoom, RoomPlayer } from './rooms/room';
 
@@ -31,7 +32,8 @@ const HOST = process.env.HOST ?? '0.0.0.0';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const CLIENT_DIST = process.env.CLIENT_DIST ?? resolve(here, '../../client/dist');
 
-const manager = new RoomManager();
+const store = new ProgressionStore();
+const manager = new RoomManager(store);
 
 // ---------------------------------------------------------------------------
 // Static file serving
@@ -101,6 +103,8 @@ interface Connection {
   player: RoomPlayer | null;
   name: string;
   helloed: boolean;
+  /** Meta-progression identity, chosen by the client and stored in its localStorage. */
+  profileId: string;
 }
 
 const wss = new WebSocketServer({ noServer: true });
@@ -116,7 +120,7 @@ httpServer.on('upgrade', (req, socket, head) => {
 });
 
 wss.on('connection', (socket: WebSocket) => {
-  const conn: Connection = { socket, room: null, player: null, name: 'Anon', helloed: false };
+  const conn: Connection = { socket, room: null, player: null, name: 'Anon', helloed: false, profileId: '' };
   connections.set(socket, conn);
 
   socket.on('message', (data: Buffer, isBinary: boolean) => {
@@ -162,7 +166,20 @@ function handleJson(conn: Connection, text: string): void {
       return;
     }
     conn.name = msg.name;
+    conn.profileId = (msg.profileId ?? '').slice(0, 64);
     conn.helloed = true;
+    // Tell the client what it owns straight away, so the hub has something to show before
+    // anyone has entered a room.
+    if (conn.profileId.length > 0) {
+      const profile = store.load(conn.profileId);
+      sendRaw(conn.socket, {
+        t: 'profile',
+        credits: profile.credits,
+        runs: profile.runs,
+        deepest: profile.deepest,
+        perks: { ...profile.perks },
+      });
+    }
     return;
   }
 
@@ -173,7 +190,7 @@ function handleJson(conn: Connection, text: string): void {
 
   if (msg.t === 'createRoom') {
     leaveCurrentRoom(conn);
-    const result = manager.host(conn.name, conn.socket);
+    const result = manager.host(conn.name, conn.socket, conn.profileId);
     if (result.ok) {
       conn.room = result.room;
       conn.player = result.player;
@@ -183,13 +200,35 @@ function handleJson(conn: Connection, text: string): void {
 
   if (msg.t === 'joinRoom') {
     leaveCurrentRoom(conn);
-    const result = manager.join(msg.code, conn.name, conn.socket, undefined);
+    const result = manager.join(msg.code, conn.name, conn.socket, undefined, conn.profileId);
     if (!result.ok) {
       sendRaw(conn.socket, { t: 'error', code: result.code, message: result.message });
       return;
     }
     conn.room = result.room;
     conn.player = result.player;
+    return;
+  }
+
+  if (msg.t === 'buyPerk') {
+    // Purchases are server-authoritative: the client sends a wish, and every check about
+    // whether it can happen lives in the store.
+    if (conn.profileId.length === 0) return;
+    const result = store.buyPerk(conn.profileId, msg.perk);
+    const profile = result.ok ? result.profile : store.load(conn.profileId);
+    if (!result.ok) {
+      sendRaw(conn.socket, { t: 'error', code: result.reason, message: 'Purchase refused.' });
+    }
+    // The profile goes back either way, so a refused purchase visibly resyncs rather than
+    // leaving the shop showing a number the server never agreed to.
+    sendRaw(conn.socket, {
+      t: 'profile',
+      credits: profile.credits,
+      runs: profile.runs,
+      deepest: profile.deepest,
+      perks: { ...profile.perks },
+    });
+    if (result.ok && conn.player) conn.player.perks = profile.perks;
     return;
   }
 
