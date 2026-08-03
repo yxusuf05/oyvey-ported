@@ -8,6 +8,7 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
+import { networkInterfaces } from 'node:os';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, type WebSocket } from 'ws';
@@ -241,9 +242,44 @@ setInterval(() => {
   }
 }, STEP_MS);
 
+/**
+ * The address a friend on the same network should type.
+ *
+ * `HOST` is `0.0.0.0`, which is correct for binding and useless to a human — so the banner
+ * resolves the first non-internal IPv4 address instead. Without this, "how does my friend
+ * join?" has no answer anywhere in the output.
+ */
+function lanAddress(): string | null {
+  for (const addresses of Object.values(networkInterfaces())) {
+    for (const address of addresses ?? []) {
+      if (address.family === 'IPv4' && !address.internal) return address.address;
+    }
+  }
+  return null;
+}
+
+httpServer.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`\nPort ${PORT} is already in use — PRISMA is probably already running.`);
+    console.error(`Port ${PORT} ist belegt — PRISMA läuft vermutlich schon.\n`);
+    process.exit(1);
+  }
+  throw error;
+});
+
 httpServer.listen(PORT, HOST, () => {
-  console.log(`PRISMA server listening on http://${HOST}:${PORT}`);
-  console.log(`serving client from ${CLIENT_DIST}${existsSync(CLIENT_DIST) ? '' : ' (not built yet)'}`);
+  const lan = lanAddress();
+  console.log('');
+  console.log('  PRISMA läuft. / PRISMA is running.');
+  console.log('');
+  console.log(`  Du:            http://localhost:${PORT}`);
+  if (lan) console.log(`  Dein Freund:   http://${lan}:${PORT}   (gleiches WLAN / same network)`);
+  console.log('');
+  console.log('  Beenden mit Strg+C. / Stop with Ctrl+C.');
+  console.log('');
+  if (!existsSync(CLIENT_DIST)) {
+    console.warn(`  Warning: no client build at ${CLIENT_DIST} — run \`pnpm run build\`.`);
+  }
 });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

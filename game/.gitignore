@@ -9,3 +9,4 @@ screenshots/
 data/
 *.sqlite
 *.sqlite-journal
+.build-stamp

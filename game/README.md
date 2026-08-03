@@ -8,6 +8,42 @@ Open a link, share a six-character room code, descend.
 
 ---
 
+## Schnellstart / Quick start
+
+**You need Node.js 22 or newer — nothing else.** Get the LTS build from
+[nodejs.org](https://nodejs.org), install it with the default options, and then:
+
+| | |
+| --- | --- |
+| **Windows** | double-click **`SPIEL-STARTEN.bat`** in the repository root — or `start.bat` in this folder, they do the same thing |
+| **macOS, Linux** | run **`./start.sh`** in this folder |
+
+Not `gradlew.bat`. That one belongs to the unrelated Minecraft project in the same
+repository and closes again immediately.
+
+The first start installs and builds, which takes a few minutes. Every start after that is
+immediate — until you `git pull`, when it rebuilds itself once. The launcher opens
+`http://localhost:8787` in your browser when the server is up.
+
+*Auf Deutsch:* Du brauchst nur **Node.js 22 oder neuer** von [nodejs.org](https://nodejs.org).
+Danach unter Windows **`start.bat`** doppelklicken. Der erste Start dauert ein paar Minuten,
+jeder weitere geht sofort. Wenn etwas schiefgeht, bleibt das Fenster offen und sagt, was
+fehlt — es schließt sich nie kommentarlos.
+
+> Wenn du Node gerade erst installiert hast: **schließe alle offenen Konsolenfenster** und
+> öffne ein neues. Windows kennt neu installierte Programme nur in neu geöffneten Fenstern.
+> Das ist der häufigste Grund für „`pnpm` wurde nicht gefunden".
+
+### Playing together
+
+One player clicks **Create room** and reads out the six-character code; the other types it
+into **Join room**. The host presses **Descend**.
+
+On the same network, the second player opens the `http://192.168.x.x:8787` address that the
+server prints on startup. Over the internet, see [DEPLOY.md](DEPLOY.md).
+
+---
+
 ## The idea
 
 Every run begins somewhere pleasant. Pastel striped wallpaper, warm sun haze, fluorescent
@@ -62,21 +98,7 @@ files: wallpaper, carpet and ceiling tiles are painted into canvases at load, an
 sound — footsteps, the drone, the stings, the whispering, the melody — is synthesised with
 the Web Audio API.
 
-## Playing
-
-```bash
-cd game
-pnpm install
-pnpm run build
-pnpm start          # http://localhost:8787
-```
-
-One player clicks **Create room** and reads out the code; the other types it into **Join
-room**. The host presses **Descend**.
-
-To play over the internet, see [DEPLOY.md](DEPLOY.md).
-
-### Controls
+## Controls
 
 | Key | |
 | --- | --- |
@@ -92,7 +114,11 @@ All rebindable in Settings → Controls.
 
 ## Development
 
+The launcher is for playing. To work on the game, drive the workspace directly:
+
 ```bash
+cd game
+pnpm install
 pnpm run dev         # client on :5173, server on :8787
 pnpm run typecheck
 pnpm test            # unit and property tests

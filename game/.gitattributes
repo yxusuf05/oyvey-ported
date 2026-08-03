@@ -1,0 +1,7 @@
+# cmd.exe is the reason this file exists. A .bat checked out with bare LF endings can make
+# `goto` jump to the wrong place, which is exactly the kind of failure that shows up as a
+# window closing without a message. Force CRLF on checkout, and keep the shell script LF so
+# it stays runnable if someone clones on Windows and copies it to a server.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh  text eol=lf

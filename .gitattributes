@@ -1,0 +1,5 @@
+# Batch files must reach Windows with CRLF endings — cmd.exe mis-parses `goto` in an
+# LF-only .bat, and the symptom is a window that closes without a message.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh  text eol=lf
