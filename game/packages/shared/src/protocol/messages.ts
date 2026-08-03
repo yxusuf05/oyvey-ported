@@ -24,6 +24,7 @@ export const EntityKind = {
   Blind: 1,
   Smiler: 2,
   Watcher: 3,
+  Swarm: 4,
 } as const;
 export type EntityKindId = (typeof EntityKind)[keyof typeof EntityKind];
 

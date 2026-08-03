@@ -67,6 +67,14 @@ export interface AiPlayerView {
   focusBeam: boolean;
 }
 
+/** A light in the world an entity can steer toward. Not a renderer light — a destination. */
+export interface AiLight {
+  x: number;
+  z: number;
+  /** Metres of useful reach; bigger wins ties at equal distance. */
+  strength: number;
+}
+
 export interface AiWorld {
   level: Level;
   grid: GridView;
@@ -74,6 +82,8 @@ export interface AiWorld {
   noise: NoiseField;
   lightField: Uint8Array;
   players: AiPlayerView[];
+  /** Everything currently giving off light: cracked glowsticks and lit torches. */
+  lights: AiLight[];
   descent: number;
   director: Director;
   random: () => number;
@@ -275,6 +285,16 @@ function think(entity: ServerEntity, world: AiWorld, dt: number): void {
     }
   }
 
+  // --- Swarms steer toward light, and stop there ---
+  //
+  // Deliberately resolved before the awareness machinery: a swarm has no interest in you,
+  // so running it through "notice the player, escalate, hunt" would give it a chase it is
+  // not supposed to have — and, worse, would spend a director hunter slot per body.
+  if (spec.swarm) {
+    swarmThink(entity, world, dt, tile);
+    return;
+  }
+
   // --- Awareness accumulator with hysteresis ---
   let stimulus = 0;
   if (seenPlayer) stimulus = Math.max(stimulus, seenStrength * 1.6);
@@ -372,6 +392,94 @@ function think(entity: ServerEntity, world: AiWorld, dt: number): void {
     }
     entity.repathCooldown = entity.state === AiState.Hunting ? 0.5 : 1.5;
   }
+}
+
+/**
+ * Swarm behaviour: walk to the brightest thing you can reach, bite whatever is standing
+ * next to it.
+ *
+ * There is no `Hunting` state here and `canHunt` is never called, so a swarm cannot consume
+ * the director's budget. The player's counter falls out of that: drop a glowstick, walk
+ * away from it, and the swarm goes to the light rather than to you.
+ */
+function swarmThink(entity: ServerEntity, world: AiWorld, dt: number, tile: NavTile): void {
+  const spec = entity.spec;
+
+  if (entity.state === AiState.Lunge) {
+    entity.telegraph -= dt;
+    if (entity.telegraph <= 0) {
+      const victim = nearestPlayerWithin(entity, world, spec.attackRange * 1.5);
+      // Small damage, short warning. The threat is the arithmetic of five of them, not any
+      // one bite — but it still telegraphs, because "nothing lethal without warning" has to
+      // hold for the thing that finishes you as much as for the thing that starts it.
+      if (victim) world.damagePlayer(victim.id, spec.attackDamage, entity.id);
+      entity.attackCooldown = spec.attackCooldown;
+      setState(entity, AiState.Cooldown, world);
+    }
+    return;
+  }
+  if (entity.state === AiState.Cooldown) {
+    if (entity.stateTime >= 0.4) setState(entity, AiState.Investigate, world);
+    return;
+  }
+
+  const victim = nearestPlayerWithin(entity, world, spec.attackRange);
+  if (victim && entity.attackCooldown <= 0) {
+    entity.telegraph = spec.telegraphSeconds;
+    entity.targetPlayerId = victim.id;
+    setState(entity, AiState.Lunge, world);
+    return;
+  }
+
+  const light = brightestLight(entity, world);
+  if (light) {
+    entity.targetPlayerId = -1;
+    const lightTile = worldToTile(world.level, light.x, light.z);
+    if (world.nav.passable(lightTile.x, lightTile.y)) entity.target = lightTile;
+    setState(entity, AiState.Investigate, world);
+  } else {
+    setState(entity, AiState.Patrol, world);
+    if (!entity.target || reachedTarget(entity, world)) {
+      entity.target = world.nav.randomReachableTile(world.random, tile, 18);
+      entity.path = [];
+    }
+  }
+
+  const needsPath = entity.path.length === 0 || entity.pathIndex >= entity.path.length || entity.repathCooldown <= 0;
+  if (needsPath && entity.target) {
+    const path = world.nav.findPath(tile, entity.target);
+    if (path && path.length > 0) {
+      entity.path = path;
+      entity.pathIndex = 0;
+    } else {
+      // Keep the light as the goal and try again next second rather than forgetting it.
+      // A swarm that gave up the moment one path lookup failed would drift off the moment
+      // it crossed an awkward threshold, and the bait would stop working for no visible
+      // reason.
+      entity.path = [];
+    }
+    entity.repathCooldown = 1;
+  }
+}
+
+/**
+ * The most attractive light within reach: nearer and stronger wins.
+ *
+ * Range falls off with distance rather than being a hard radius, so a lone glowstick at the
+ * far end of a hall still pulls — that is the whole point of using one as bait.
+ */
+function brightestLight(entity: ServerEntity, world: AiWorld): AiLight | null {
+  let best: AiLight | null = null;
+  let bestScore = 0;
+  for (const light of world.lights) {
+    const distance = Math.hypot(light.x - entity.x, light.z - entity.z);
+    const score = light.strength / (1 + distance * 0.5);
+    if (score > bestScore) {
+      bestScore = score;
+      best = light;
+    }
+  }
+  return best;
 }
 
 function reachedTarget(entity: ServerEntity, world: AiWorld): boolean {

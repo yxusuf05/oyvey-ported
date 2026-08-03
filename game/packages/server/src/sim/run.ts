@@ -73,7 +73,14 @@ import {
 } from '@game/shared/content';
 import { Director, MIN_SPAWN_DISTANCE } from '../ai/director';
 import { Navigator } from '../ai/nav';
-import { createEntity, updateEntity, type AiPlayerView, type AiWorld, type ServerEntity } from '../ai/brains';
+import {
+  createEntity,
+  updateEntity,
+  type AiLight,
+  type AiPlayerView,
+  type AiWorld,
+  type ServerEntity,
+} from '../ai/brains';
 
 /**
  * A dropped item. `burnLeft` is server-only — the client is told what is on the floor, not
@@ -840,6 +847,21 @@ export class Run {
       this.spawnCooldown = 12;
     }
 
+    // Everything currently giving off light, in the swarm's terms. Same `lit` distinction
+    // the renderer uses: a glowstick still in your backpack, or one lying on the floor
+    // uncracked, is not a light and pulls nothing toward it.
+    const lights: AiLight[] = [];
+    for (const item of this.worldItems) {
+      if (!item.lit) continue;
+      const spec = getItemSpec(item.item);
+      if (spec?.lightRange === undefined) continue;
+      lights.push({ x: item.x, z: item.z, strength: spec.lightRange });
+    }
+    for (const player of players) {
+      if (!player.flashlightOn || !this.isAlive(player) || player.escaped) continue;
+      lights.push({ x: player.state.x, z: player.state.z, strength: player.focusBeam ? 9 : 6 });
+    }
+
     const world: AiWorld = {
       level: this.level,
       grid: this.grid,
@@ -847,6 +869,7 @@ export class Run {
       noise: this.noise,
       lightField: this.lightField,
       players: views,
+      lights,
       descent: this.descent,
       director: this.director,
       random: () => this.rng.next(),
@@ -881,7 +904,19 @@ export class Run {
         if (tooClose) continue;
 
         const spec = getEntitySpec(roster.kind);
-        this.entities.push(createEntity(this.nextEntityId++, roster.kind, spec, tile, this.level));
+        // Swarms arrive together. `roster.max` still counts bodies rather than groups, so
+        // the ceiling in the theme file means what it looks like it means.
+        const group = spec.swarm ? Math.min(spec.swarm.group, roster.max - live) : 1;
+        for (let n = 0; n < group; n++) {
+          // Fan them a little so five bodies do not start inside one another; collision
+          // resolution would untangle them, but not before one frame of them overlapping.
+          const spot =
+            n === 0
+              ? tile
+              : { x: tile.x + ((n % 3) - 1), y: tile.y + ((Math.floor(n / 3) % 3) - 1) };
+          const place = this.nav.passable(spot.x, spot.y) ? spot : tile;
+          this.entities.push(createEntity(this.nextEntityId++, roster.kind, spec, place, this.level));
+        }
         return;
       }
     }

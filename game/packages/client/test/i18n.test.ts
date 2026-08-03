@@ -39,6 +39,7 @@ describe('translations', () => {
       'entity.alerted',
       'entity.telegraph',
       'entity.smilerFreeze',
+      'entity.swarmSkitter',
       'entity.watcherShift',
       'item.flashlightClick',
       'item.batteryDead',

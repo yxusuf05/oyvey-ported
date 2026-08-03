@@ -406,6 +406,11 @@ export class AudioEngine {
       case 'entity.alerted':
         this.sting(out, now, 380, 90, 0.5, 0.7);
         break;
+      case 'entity.swarmSkitter':
+        // Fast, dry and high: many small feet on carpet. Short enough that several
+        // overlapping reads as a crowd rather than as one loud thing.
+        this.footstep(out, now, 0.5, 1900, 4.5);
+        break;
       case 'entity.smilerFreeze':
         // A wet, arrested sound: the thing stops mid-stride. Low and short so it reads as
         // a body locking up rather than as a hit.

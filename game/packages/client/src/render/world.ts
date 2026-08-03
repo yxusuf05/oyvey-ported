@@ -53,6 +53,7 @@ import {
   buildBlindOne,
   buildPlayerAvatar,
   buildSmiler,
+  buildSwarmling,
   buildWatcher,
   createActorMaterial,
   type ActorRig,
@@ -155,6 +156,8 @@ function rigFor(kind: number, material: ShaderMaterial): ActorRig {
       return buildSmiler(material);
     case EntityKind.Watcher:
       return buildWatcher(material);
+    case EntityKind.Swarm:
+      return buildSwarmling(material);
     default:
       return buildBlindOne(material);
   }

@@ -10,7 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import { AiState } from '@game/shared/protocol';
 import { bfsDistance, generateLevel, hasLineOfSight, levelGrid, tileToWorld, worldToTile } from '@game/shared/levelgen';
-import { BLIND_ONE, SMILER, WATCHER } from '@game/shared/content';
+import { BLIND_ONE, SMILER, SWARM, WATCHER } from '@game/shared/content';
 import { Buttons, DT, type Input } from '@game/shared/sim';
 import { createEntity } from '../src/ai/brains';
 import { Run, type ServerPlayer } from '../src/sim/run';
@@ -361,5 +361,125 @@ describe('The Watcher', () => {
       moved = Math.max(moved, Math.hypot(entity.x - startX, entity.z - startZ));
     }
     expect(moved).toBeGreaterThan(0.5);
+  });
+});
+
+describe('The Swarm', () => {
+  /** Puts a lit glowstick on a reachable tile a good way from the player. */
+  function dropLight(run: Run, player: ServerPlayer, lit: boolean): { x: number; z: number } {
+    const here = worldToTile(run.level, player.state.x, player.state.z);
+    const spot = tileAtDistance(run, 14);
+    const world = tileToWorld(run.level, spot.x, spot.y);
+    run.worldItems.push({ id: 5000, item: 'glowstick', x: world.x, z: world.z, count: 1, lit, burnLeft: lit ? 999 : 0, pulseIn: 0 });
+    expect(Math.hypot(world.x - player.state.x, world.z - player.state.z)).toBeGreaterThan(4);
+    expect(here).toBeTruthy();
+    return world;
+  }
+
+  function spawnSwarmling(run: Run, tile: { x: number; y: number }, id: number) {
+    const entity = createEntity(id, 'swarm', SWARM, tile, run.level);
+    run.entities.push(entity);
+    return entity;
+  }
+
+  it('goes to a burning glowstick rather than to the player', () => {
+    const run = new Run(SEED, 'level0');
+    const player = run.createPlayer(1, 'Bait');
+    run.worldItems.length = 0;
+    const light = dropLight(run, player, true);
+    const entity = spawnSwarmling(run, tileAtDistance(run, 7), 3000);
+
+    const startToLight = Math.hypot(entity.x - light.x, entity.z - light.z);
+    for (let tick = 0; tick < 60 * 25; tick++) {
+      feed(player, 0, tick + 1);
+      run.step([player], DT);
+    }
+
+    // The whole counter: put the light down, walk away, and it wants the light.
+    expect(Math.hypot(entity.x - light.x, entity.z - light.z)).toBeLessThan(startToLight * 0.5);
+  });
+
+  it('ignores a glowstick nobody has cracked', () => {
+    const run = new Run(SEED, 'level0');
+    const player = run.createPlayer(1, 'Bait');
+    run.worldItems.length = 0;
+    const light = dropLight(run, player, false);
+    const entity = spawnSwarmling(run, tileAtDistance(run, 7), 3000);
+
+    const startToLight = Math.hypot(entity.x - light.x, entity.z - light.z);
+    let closest = startToLight;
+    for (let tick = 0; tick < 60 * 25; tick++) {
+      feed(player, 0, tick + 1);
+      run.step([player], DT);
+      closest = Math.min(closest, Math.hypot(entity.x - light.x, entity.z - light.z));
+    }
+
+    // An item in a cupboard is not a light. If this ever failed, the renderer and the AI
+    // would have stopped agreeing about what "lit" means.
+    expect(closest).toBeGreaterThan(startToLight * 0.5);
+  });
+
+  it('cannot take a player down with a single bite', () => {
+    const run = new Run(SEED, 'level0');
+    const player = run.createPlayer(1, 'Nibbled');
+    run.worldItems.length = 0;
+    const here = worldToTile(run.level, player.state.x, player.state.z);
+    const entity = spawnSwarmling(run, here, 3000);
+    entity.x = player.state.x + 0.6;
+    entity.z = player.state.z;
+
+    // Long enough for exactly one attack to resolve, well short of the cooldown.
+    for (let tick = 0; tick < 45; tick++) {
+      feed(player, 0, tick + 1);
+      run.step([player], DT);
+    }
+
+    expect(player.hp).toBeLessThan(100);
+    expect(player.hp).toBeGreaterThan(100 - SWARM.attackDamage * 2);
+    expect(player.downed).toBe(false);
+  });
+
+  it('never occupies a hunter slot, so the other entities keep working', () => {
+    // The trap this design exists to avoid: five swarm bodies calling canHunt would eat the
+    // director's entire budget and silently switch the Blind One off.
+    const run = new Run(SEED, 'level0');
+    const player = run.createPlayer(1, 'Loud');
+    run.worldItems.length = 0;
+
+    const here = worldToTile(run.level, player.state.x, player.state.z);
+    for (let i = 0; i < 5; i++) spawnSwarmling(run, here, 3000 + i);
+    const blind = spawnBlind(run, tileAtDistance(run, 8), 4000);
+
+    let blindHunted = false;
+    for (let tick = 0; tick < 60 * 30; tick++) {
+      const yaw = Math.floor(tick / 120) % 2 === 0 ? 0 : Math.PI;
+      feed(player, Buttons.Forward | Buttons.Sprint, tick + 1, yaw);
+      run.step([player], DT);
+      if (blind.state === AiState.Hunting || blind.state === AiState.Investigate) blindHunted = true;
+    }
+
+    expect(blindHunted).toBe(true);
+    expect(run.director.activeHunts).toBeLessThanOrEqual(run.director.maxHunters(run.descent));
+  });
+});
+
+describe('navigation', () => {
+  it('can still find a path from a doorway tile', () => {
+    // Doorways belong to no room, so they have no entry in the room graph. An entity that
+    // stopped on one used to be unable to path anywhere ever again — it simply stood in
+    // the door for the rest of the run. This is the cheapest possible guard against that
+    // coming back, and it covers every entity at once.
+    const run = new Run(SEED, 'level0');
+    const goal = tileAtDistance(run, 20);
+
+    let checked = 0;
+    for (const door of run.level.doors.slice(0, 12)) {
+      if (run.nav.roomAt(door.x, door.y) >= 0) continue;
+      checked++;
+      const path = run.nav.findPath({ x: door.x, y: door.y }, goal);
+      expect(path, `no path out of door ${door.id}`).not.toBeNull();
+      expect(path!.length).toBeGreaterThan(0);
+    }
+    expect(checked, 'fixture found no roomless doorways to test').toBeGreaterThan(0);
   });
 });

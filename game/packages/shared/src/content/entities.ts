@@ -54,6 +54,16 @@ export interface EntitySpec {
    * "I am not looking" is exactly the claim a modified client would want to make.
    */
   movesOnlyUnobserved?: boolean;
+  /**
+   * Marks a swarm. One field rather than three flags, because the three properties are one
+   * idea and never occur apart: it steers toward light instead of noise, it arrives as a
+   * group, and the director never sees it.
+   *
+   * That last part is not a detail. The director caps concurrent hunters at one to three;
+   * five bodies all asking to hunt would eat the entire budget and silently switch the
+   * Blind One and the Smiler off. A swarm is ambient pressure, not a chase.
+   */
+  swarm?: { group: number };
 }
 
 export const BLIND_ONE: EntitySpec = {
@@ -150,10 +160,47 @@ export const WATCHER: EntitySpec = {
   movesOnlyUnobserved: true,
 };
 
+/**
+ * The Swarm. Small, many, and interested in light rather than in you.
+ *
+ * It is the first thing in the game that turns an item against its owner: the glowstick
+ * that has been your best way of not getting lost becomes bait, and the counter is to put
+ * one down and walk away from it. Individually one of these is a scratch; the danger is
+ * arithmetic.
+ */
+export const SWARM: EntitySpec = {
+  kind: 'swarm',
+  kindId: EntityKind.Swarm,
+  nameKey: 'entity.swarm',
+  patrolSpeed: 1.9,
+  investigateSpeed: 3.1,
+  // Never actually hunts, so this is only ever used if the spec is reused elsewhere.
+  huntSpeed: 3.4,
+  // It does not see in any useful sense; light is a destination, not a target.
+  sightRange: 0,
+  sightHalfAngle: 0,
+  lightBias: 0,
+  hearingRadius: 8,
+  hearingThreshold: 6,
+  awarenessRise: 0.6,
+  awarenessDecay: 0.4,
+  huntThreshold: 1,
+  attackRange: 1.1,
+  // A scratch on its own. Five of them at this cooldown is forty damage a second, which is
+  // where "individually weak, lethally many" stops being a slogan and becomes a number.
+  attackDamage: 8,
+  telegraphSeconds: 0.5,
+  attackCooldown: 1.1,
+  audibleRange: 12,
+  radius: 0.26,
+  swarm: { group: 5 },
+};
+
 export const ENTITY_SPECS: Record<string, EntitySpec> = {
   blind: BLIND_ONE,
   smiler: SMILER,
   watcher: WATCHER,
+  swarm: SWARM,
 };
 
 export function getEntitySpec(kind: string): EntitySpec {

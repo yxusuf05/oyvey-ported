@@ -286,6 +286,46 @@ export function buildWatcher(material: ShaderMaterial): ActorRig {
   return { group, leftArm, rightArm, leftLeg, rightLeg, head, torso };
 }
 
+/**
+ * One body of the Swarm. Low, wide and legged, so a group of them reads as *many* rather
+ * than as one large thing — the count is the threat, and the silhouette has to say so.
+ */
+export function buildSwarmling(material: ShaderMaterial): ActorRig {
+  const group = new Group();
+
+  const torso = new Mesh(new CapsuleGeometry(0.15, 0.16, 4, 8), material);
+  torso.rotation.z = Math.PI / 2;
+  torso.position.y = 0.28;
+  group.add(torso);
+
+  const head = new Mesh(new BoxGeometry(0.13, 0.1, 0.16), material);
+  head.position.set(0, 0.26, -0.2);
+  group.add(head);
+
+  // Legs splayed out sideways rather than hanging down: it should look like it scuttles.
+  const leftArm = limb(0.045, 0.3, 0.045, material, true);
+  leftArm.position.set(-0.2, 0.24, -0.08);
+  leftArm.rotation.z = 0.6;
+  group.add(leftArm);
+
+  const rightArm = limb(0.045, 0.3, 0.045, material, true);
+  rightArm.position.set(0.2, 0.24, -0.08);
+  rightArm.rotation.z = -0.6;
+  group.add(rightArm);
+
+  const leftLeg = limb(0.045, 0.3, 0.045, material, true);
+  leftLeg.position.set(-0.2, 0.24, 0.1);
+  leftLeg.rotation.z = 0.6;
+  group.add(leftLeg);
+
+  const rightLeg = limb(0.045, 0.3, 0.045, material, true);
+  rightLeg.position.set(0.2, 0.24, 0.1);
+  rightLeg.rotation.z = -0.6;
+  group.add(rightLeg);
+
+  return { group, leftArm, rightArm, leftLeg, rightLeg, head, torso };
+}
+
 /** A remote player: readable at a distance, deliberately unremarkable. */
 export function buildPlayerAvatar(material: ShaderMaterial): ActorRig {
   const group = new Group();

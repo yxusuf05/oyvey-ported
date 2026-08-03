@@ -111,10 +111,17 @@ export class Navigator {
 
     const startRoom = this.roomAt(start.x, start.y);
     const goalRoom = this.roomAt(goal.x, goal.y);
-    const corridor = this.roomPath(startRoom, goalRoom);
-    // A null corridor means the rooms are genuinely disconnected; an unrestricted search
-    // would just burn the node budget confirming it.
-    if (corridor === null && startRoom !== goalRoom) return null;
+
+    // A doorway tile belongs to no room, so it has no entry in the room graph — and an
+    // entity that happens to stop in one would otherwise never find a path again, for the
+    // rest of the run. Falling back to an unrestricted search costs a few hundred extra
+    // nodes on a bounded budget, and is the difference between a monster that walks through
+    // a door and one that stands in it forever.
+    const unroomed = startRoom < 0 || goalRoom < 0;
+    const corridor = unroomed ? null : this.roomPath(startRoom, goalRoom);
+    // A null corridor between two real rooms means they are genuinely disconnected; an
+    // unrestricted search would just burn the node budget confirming it.
+    if (!unroomed && corridor === null && startRoom !== goalRoom) return null;
     const allowed = corridor ? new Set(corridor) : null;
 
     const w = this.level.width;
