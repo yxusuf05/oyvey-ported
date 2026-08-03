@@ -249,6 +249,10 @@ export class GameSession {
         this.renderer.setWorldItems(this.worldItems);
         break;
 
+      case 'marks':
+        this.renderer.setMarks(msg.marks);
+        break;
+
       case 'descentEvent':
         this.applyDescentEvent(msg.index);
         break;
@@ -294,6 +298,7 @@ export class GameSession {
     this.hud.escaped = false;
     this.hud.dead = false;
     this.worldItems = [];
+    this.renderer.setMarks([]);
     this.activeSlot = 0;
     this.hud.activeSlot = 0;
     this.hud.descent = 0;

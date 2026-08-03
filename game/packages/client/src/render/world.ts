@@ -45,7 +45,7 @@ import {
   type PaletteStop,
   type ThemeSpec,
 } from '@game/shared/levelgen';
-import { EntityFlags, EntityKind, type WorldItemState } from '@game/shared/protocol';
+import { EntityFlags, EntityKind, type ChalkMarkState, type WorldItemState } from '@game/shared/protocol';
 import { getItemSpec } from '@game/shared/content';
 import { clamp01, lerp, smoothstep } from '@game/shared/math';
 import { animateRig, buildBlindOne, buildPlayerAvatar, createActorMaterial, type ActorRig } from './actors';
@@ -165,10 +165,12 @@ export class WorldRenderer {
   private actorGroup = new Group();
   private objectiveGroup = new Group();
   private worldItemGroup = new Group();
+  private markGroup = new Group();
   private actors = new Map<number, ActorInstance>();
   private objectiveMeshes = new Map<number, Mesh>();
   /** Shared per colour: a floor of forty glowsticks is still one material. */
   private worldItemMaterials = new Map<number, MeshBasicMaterial>();
+  private markMaterial: MeshBasicMaterial | null = null;
 
   private darkRooms = new Set<number>();
   private lights: DynamicLight[] = [];
@@ -194,7 +196,7 @@ export class WorldRenderer {
     this.renderer.setClearColor(0x000000, 1);
 
     this.camera = new PerspectiveCamera(quality.fov, 1, 0.05, 220);
-    this.scene.add(this.chunkGroup, this.actorGroup, this.objectiveGroup, this.worldItemGroup);
+    this.scene.add(this.chunkGroup, this.actorGroup, this.objectiveGroup, this.worldItemGroup, this.markGroup);
     this.noiseTexture = makeNoiseTexture(1337);
     this.palette = samplePalette(this.theme, 0);
     this.scene.fog = new FogExp2(this.palette.fog, this.palette.fogDensity);
@@ -550,6 +552,31 @@ export class WorldRenderer {
     }
   }
 
+  /**
+   * Draws the chalk. Marks are append-only for a whole run, so this rebuilds from the full
+   * list rather than diffing — a few hundred quads is nothing, and there is no lifecycle to
+   * get wrong.
+   */
+  setMarks(marks: ChalkMarkState[]): void {
+    for (const child of [...this.markGroup.children]) {
+      this.markGroup.remove(child);
+      if (child instanceof Mesh) child.geometry.dispose();
+    }
+    if (marks.length === 0) return;
+
+    this.markMaterial ??= new MeshBasicMaterial({ color: 0xd8d2c0, fog: true, toneMapped: false });
+
+    for (const mark of marks) {
+      const mesh = new Mesh(new BoxGeometry(0.34, 0.34, 0.02), this.markMaterial);
+      mesh.position.set(mark.x, 1.35, mark.z);
+      mesh.rotation.y = mark.yaw;
+      // A deterministic tilt from the id so a corridor of marks looks scrawled by hand
+      // rather than printed. Decoration only.
+      mesh.rotation.z = ((mark.id % 7) - 3) * 0.12;
+      this.markGroup.add(mesh);
+    }
+  }
+
   setObjectiveVisible(id: number, visible: boolean): void {
     const mesh = this.objectiveMeshes.get(id);
     if (mesh) mesh.visible = visible;
@@ -694,6 +721,10 @@ export class WorldRenderer {
       this.worldItemGroup.remove(child);
       if (child instanceof Mesh) child.geometry.dispose();
     }
+    for (const child of [...this.markGroup.children]) {
+      this.markGroup.remove(child);
+      if (child instanceof Mesh) child.geometry.dispose();
+    }
     for (const instance of this.actors.values()) this.actorGroup.remove(instance.rig.group);
     this.actors.clear();
     this.objectiveMeshes.clear();
@@ -704,6 +735,8 @@ export class WorldRenderer {
     for (const material of this.objectiveMaterials) material.dispose();
     for (const material of this.worldItemMaterials.values()) material.dispose();
     this.worldItemMaterials.clear();
+    this.markMaterial?.dispose();
+    this.markMaterial = null;
     this.actorMaterials = [];
     this.objectiveMaterials = [];
     this.worldMaterial = null;

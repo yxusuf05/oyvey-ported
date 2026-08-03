@@ -424,6 +424,28 @@ export class AudioEngine {
       case 'item.useConsumable':
         this.click(out, now, 520, 0.22);
         break;
+      case 'item.chalkMark':
+        // Dry and short, high up: chalk on plaster is almost nothing, and it should be
+        // almost nothing here too.
+        this.footstep(out, now, 0.25, 2600, 5);
+        break;
+      case 'item.wedgeDoor':
+        this.clunk(out, now, 95);
+        break;
+      case 'item.decoyStart':
+        this.click(out, now, 900, 0.12);
+        break;
+      case 'item.decoyBeep':
+        this.click(out, now, 1250, 0.09);
+        break;
+      case 'item.emfClick':
+        this.click(out, now, 1600, 0.05);
+        break;
+      case 'item.emfPing':
+        // Deliberately the same shape as the decoy beep an octave up: both are a machine
+        // shouting, and a player should hear the family resemblance.
+        this.click(out, now, 2500, 0.045);
+        break;
       case 'item.glowstickCrack':
         // A dry snap, not a click: the crack is the moment the light arrives, and it wants
         // to be recognisable through a wall.

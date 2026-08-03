@@ -17,6 +17,7 @@ import {
   type ObjectiveState,
   type RunOutcome,
   type RunStats,
+  type ChalkMarkState,
   type S2C,
   type WorldItemState,
 } from '@game/shared/protocol';
@@ -62,6 +63,9 @@ import { clamp, clamp01 } from '@game/shared/math';
 import {
   BACKPACK_SLOTS,
   DEFAULT_LOADOUT,
+  EMF_PING_FAST,
+  EMF_PING_NOISE,
+  EMF_PING_SLOW,
   LOOT_TABLE,
   getEntitySpec,
   getItemSpec,
@@ -78,6 +82,8 @@ import { createEntity, updateEntity, type AiPlayerView, type AiWorld, type Serve
  */
 export interface WorldItem extends WorldItemState {
   burnLeft: number;
+  /** Decoys only: seconds until the next shout. */
+  pulseIn: number;
 }
 
 /** A fresh backpack: the default loadout laid into fixed slots, the rest left empty. */
@@ -100,6 +106,9 @@ export interface ServerPlayer {
   useCooldown: number;
   /** Set whenever the backpack changes; the room turns it into one message. */
   inventoryDirty: boolean;
+  /** EMF detector: switched on, and seconds until the next ping. */
+  emfOn: boolean;
+  emfPingIn: number;
   /** Inputs received but not yet simulated, ordered by sequence. */
   pending: Input[];
   lastProcessedSeq: number;
@@ -146,6 +155,13 @@ export class Run {
   worldItems: WorldItem[] = [];
   worldItemsDirty = false;
 
+  marks: ChalkMarkState[] = [];
+  marksDirty = false;
+
+  /** Doors jammed shut against entities. Players walk straight through them. */
+  readonly wedgedDoors = new Set<number>();
+
+  private nextMarkId = 1;
   private nextWorldItemId = 1;
   private nextEntityId = 1000;
   private spawnCooldown = 6;
@@ -208,6 +224,7 @@ export class Run {
         count: spec.stack > 1 ? rng.int(1, Math.min(2, spec.stack)) : 1,
         lit: false,
         burnLeft: 0,
+        pulseIn: 0,
       });
     }
     this.worldItemsDirty = true;
@@ -248,6 +265,8 @@ export class Run {
       activeSlot: 0,
       useCooldown: 0,
       inventoryDirty: true,
+      emfOn: false,
+      emfPingIn: 0,
       pending: [],
       lastProcessedSeq: 0,
       lastAckedTick: 0,
@@ -274,6 +293,7 @@ export class Run {
 
     this.stepPlayers(players, dt);
     this.stepItems(dt);
+    this.stepDetectors(players, dt);
     this.stepDescent(players, dt);
     this.stepEntities(players, dt);
     this.stepSurvival(players, dt);
@@ -397,6 +417,34 @@ export class Run {
         this.consumeActive(player, 1);
         break;
       }
+
+      case 'marker': {
+        if (!this.drawMark(player)) return;
+        this.consumeActive(player, 1);
+        break;
+      }
+
+      case 'wedge': {
+        const door = this.doorWithinReach(player);
+        // No door, no wedge — and crucially the stick is not spent. Losing a wedge to a
+        // mistimed keypress in a corridor would make the item feel like a trap.
+        if (door === -1) return;
+        this.wedgedDoors.add(door);
+        // The navigator already knows how to make a door impassable; the descent uses the
+        // same call. The difference is that a wedge does *not* touch the tile grid, so it
+        // stops entities and lets players walk straight through — which is the entire item.
+        this.nav.sealDoor(door);
+        this.consumeActive(player, 1);
+        break;
+      }
+
+      case 'detector': {
+        player.emfOn = !player.emfOn;
+        // Ping straight away rather than after a delay: switching it on and hearing
+        // nothing for a second reads as a broken device, not as an empty corridor.
+        player.emfPingIn = 0;
+        break;
+      }
     }
 
     player.useCooldown = spec.cooldown;
@@ -463,31 +511,152 @@ export class Run {
   }
 
   private spawnWorldItem(item: string, x: number, z: number, count: number, burnSeconds: number): void {
+    const spec = getItemSpec(item);
     this.worldItems.push({
       id: this.nextWorldItemId++,
       item,
       x,
       z,
       count,
-      lit: burnSeconds > 0,
+      // Only something that actually glows counts as lit. A decoy is active for the same
+      // twenty-five seconds and is not a light — it is the opposite kind of beacon.
+      lit: burnSeconds > 0 && spec?.lightRange !== undefined,
       burnLeft: burnSeconds,
+      pulseIn: spec?.noiseEvery ?? 0,
     });
     this.worldItemsDirty = true;
   }
 
-  /** Burns down placeables and clears the ones that have gone out. */
+  /**
+   * The nearest doorway within arm's reach, or -1.
+   *
+   * Doors are single tiles, so this is a scan over the door list rather than a raycast.
+   * There are never more than a few hundred and this runs on a keypress, not per tick.
+   */
+  private doorWithinReach(player: ServerPlayer): number {
+    let best = -1;
+    let bestDistance = INTERACT_RANGE;
+    for (const door of this.level.doors) {
+      if (this.wedgedDoors.has(door.id)) continue;
+      const world = tileToWorld(this.level, door.x, door.y);
+      const distance = Math.hypot(world.x - player.state.x, world.z - player.state.z);
+      if (distance > bestDistance) continue;
+      best = door.id;
+      bestDistance = distance;
+    }
+    return best;
+  }
+
+  /**
+   * Draws a chalk mark on the wall the player is closest to.
+   *
+   * If there is no wall in reach the mark goes on the floor where they stand. Refusing to
+   * draw in the middle of a hall would be technically correct and infuriating: the point of
+   * the item is to answer "have I been here before", and that question gets asked in halls.
+   */
+  private drawMark(player: ServerPlayer): boolean {
+    const tile = worldToTile(this.level, player.state.x, player.state.z);
+    const neighbours: [number, number, number][] = [
+      [1, 0, Math.PI / 2],
+      [-1, 0, -Math.PI / 2],
+      [0, 1, 0],
+      [0, -1, Math.PI],
+    ];
+
+    for (const [dx, dy, yaw] of neighbours) {
+      const nx = tile.x + dx;
+      const ny = tile.y + dy;
+      if (nx < 0 || ny < 0 || nx >= this.level.width || ny >= this.level.height) continue;
+      if (this.grid.tiles[ny * this.grid.width + nx] === FLOOR) continue;
+
+      const wall = tileToWorld(this.level, nx, ny);
+      const here = tileToWorld(this.level, tile.x, tile.y);
+      this.marks.push({
+        id: this.nextMarkId++,
+        // Just short of the wall face, so the mark is on the plaster rather than inside it.
+        x: here.x + (wall.x - here.x) * 0.42,
+        z: here.z + (wall.z - here.z) * 0.42,
+        yaw,
+        by: player.id,
+      });
+      this.marksDirty = true;
+      return true;
+    }
+
+    this.marks.push({ id: this.nextMarkId++, x: player.state.x, z: player.state.z, yaw: 0, by: player.id });
+    this.marksDirty = true;
+    return true;
+  }
+
+  /** Burns down placeables, lets decoys shout, and clears the ones that have gone out. */
   private stepItems(dt: number): void {
     let changed = false;
     for (let i = this.worldItems.length - 1; i >= 0; i--) {
       const world = this.worldItems[i];
       if (world.burnLeft <= 0) continue;
       world.burnLeft -= dt;
+
+      const spec = getItemSpec(world.item);
+      if (spec?.noiseEvery && spec.noisePulse) {
+        world.pulseIn -= dt;
+        if (world.pulseIn <= 0) {
+          world.pulseIn = spec.noiseEvery;
+          // The decoy's whole job: be the loudest thing in the building, somewhere you are
+          // not. It goes into the same field the player's own footsteps do, so an entity
+          // cannot tell the difference — which is the point.
+          const tile = worldToTile(this.level, world.x, world.z);
+          this.noise.emit(tile.x, tile.y, spec.noisePulse);
+          this.emitSound('item.decoyBeep', world.x, world.z, spec.noisePulse);
+        }
+      }
+
       if (world.burnLeft <= 0) {
         this.worldItems.splice(i, 1);
         changed = true;
       }
     }
     if (changed) this.worldItemsDirty = true;
+  }
+
+  /**
+   * The EMF detector: a box that makes noise about noise.
+   *
+   * It never draws a meter. It beeps, faster the closer something is, and every beep is
+   * itself audible in the noise field — so the tool that tells you something is there also
+   * tells the something that you are. That trade is the item.
+   */
+  private stepDetectors(players: ServerPlayer[], dt: number): void {
+    for (const player of players) {
+      if (!player.emfOn) continue;
+      if (!this.isAlive(player) || player.escaped) {
+        player.emfOn = false;
+        continue;
+      }
+
+      const spec = getItemSpec('emf')!;
+      const range = spec.detectRange ?? 20;
+      let nearest = Infinity;
+      for (const entity of this.entities) {
+        nearest = Math.min(nearest, Math.hypot(entity.x - player.state.x, entity.z - player.state.z));
+      }
+
+      player.emfPingIn -= dt;
+      if (player.emfPingIn > 0) continue;
+
+      if (nearest > range) {
+        // Nothing in range still ticks, slowly. Silence would be indistinguishable from a
+        // flat battery, and a player who cannot trust the tool will not carry it.
+        player.emfPingIn = EMF_PING_SLOW * 1.6;
+        this.emitSound('item.emfPing', player.state.x, player.state.z, 1);
+        continue;
+      }
+
+      const closeness = clamp01(1 - nearest / range);
+      player.emfPingIn = EMF_PING_SLOW + (EMF_PING_FAST - EMF_PING_SLOW) * closeness;
+      this.emitSound('item.emfPing', player.state.x, player.state.z, EMF_PING_NOISE);
+      const tile = worldToTile(this.level, player.state.x, player.state.z);
+      this.noise.emit(tile.x, tile.y, EMF_PING_NOISE);
+    }
   }
 
   /** The world item within reach, nearest first, or null. */

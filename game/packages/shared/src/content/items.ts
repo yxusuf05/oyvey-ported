@@ -20,7 +20,13 @@ export type ItemKind =
   /** Using it puts an object into the world that stays there. */
   | 'placeable'
   /** Using it spends one and applies an effect to the user. */
-  | 'consumable';
+  | 'consumable'
+  /** Using it leaves a permanent mark on the level. */
+  | 'marker'
+  /** Using it jams the nearest doorway shut against entities. */
+  | 'wedge'
+  /** Toggled like a tool, but what it does is tell you something. */
+  | 'detector';
 
 export interface ItemSpec {
   id: string;
@@ -47,6 +53,11 @@ export interface ItemSpec {
   /** Placeables that light the room: radius in metres and linear RGB. */
   lightRange?: number;
   lightColor?: [number, number, number];
+  /** Placeables that shout: seconds between noise pulses, and how loud each one is. */
+  noiseEvery?: number;
+  noisePulse?: number;
+  /** Detectors: how far they can feel something, in metres. */
+  detectRange?: number;
 }
 
 export const FLASHLIGHT: ItemSpec = {
@@ -111,12 +122,85 @@ export const MEDKIT: ItemSpec = {
   restoreHp: 55,
 };
 
+export const CHALK: ItemSpec = {
+  id: 'chalk',
+  nameKey: 'item.chalk',
+  descriptionKey: 'item.chalk.desc',
+  slots: 1,
+  usable: true,
+  kind: 'marker',
+  // A stick of chalk is a lot of marks. The scarcity that matters is the backpack slot,
+  // not the number of scrawls, and counting them would make players hoard instead of mark.
+  stack: 12,
+  cooldown: 0.35,
+  // The quietest thing you can do with your hands. Marking your way should never be the
+  // reason something found you.
+  noiseOnUse: 0.8,
+  useSound: 'item.chalkMark',
+};
+
+export const DOOR_WEDGE: ItemSpec = {
+  id: 'wedge',
+  nameKey: 'item.wedge',
+  descriptionKey: 'item.wedge.desc',
+  slots: 1,
+  usable: true,
+  kind: 'wedge',
+  stack: 2,
+  cooldown: 1.5,
+  // Hammering a wedge under a door is not subtle, and doing it with something already
+  // coming down the corridor is the decision the item exists to create.
+  noiseOnUse: 9,
+  useSound: 'item.wedgeDoor',
+};
+
+export const DECOY: ItemSpec = {
+  id: 'decoy',
+  nameKey: 'item.decoy',
+  descriptionKey: 'item.decoy.desc',
+  slots: 1,
+  usable: true,
+  kind: 'placeable',
+  stack: 2,
+  cooldown: 0.6,
+  noiseOnUse: 4,
+  useSound: 'item.decoyStart',
+  // Twenty-five seconds of being somewhere else. Long enough to cross a room the long way
+  // round, short enough that you cannot simply park one and own the floor.
+  burnSeconds: 25,
+  noiseEvery: 0.8,
+  noisePulse: 20,
+};
+
+export const EMF: ItemSpec = {
+  id: 'emf',
+  nameKey: 'item.emf',
+  descriptionKey: 'item.emf.desc',
+  slots: 1,
+  usable: true,
+  kind: 'detector',
+  stack: 1,
+  cooldown: 0.4,
+  noiseOnUse: 2,
+  useSound: 'item.emfClick',
+  detectRange: 22,
+};
+
 export const ITEM_SPECS: Record<string, ItemSpec> = {
   flashlight: FLASHLIGHT,
   glowstick: GLOWSTICK,
   almondWater: ALMOND_WATER,
   medkit: MEDKIT,
+  chalk: CHALK,
+  wedge: DOOR_WEDGE,
+  decoy: DECOY,
+  emf: EMF,
 };
+
+/** How loud one EMF ping is, and how fast it repeats at maximum and minimum proximity. */
+export const EMF_PING_NOISE = 3.2;
+export const EMF_PING_FAST = 0.2;
+export const EMF_PING_SLOW = 1.5;
 
 export function getItemSpec(id: string): ItemSpec | null {
   return ITEM_SPECS[id] ?? null;
@@ -136,7 +220,13 @@ export const DEFAULT_LOADOUT: { item: string; count: number }[] = [
 
 /** What the server scatters through the level as loot, with relative weights. */
 export const LOOT_TABLE: { item: string; weight: number }[] = [
-  { item: 'glowstick', weight: 42 },
-  { item: 'almondWater', weight: 30 },
-  { item: 'medkit', weight: 28 },
+  { item: 'glowstick', weight: 30 },
+  { item: 'almondWater', weight: 20 },
+  { item: 'medkit', weight: 18 },
+  { item: 'chalk', weight: 14 },
+  { item: 'decoy', weight: 10 },
+  { item: 'wedge', weight: 5 },
+  // Rare on purpose. It is the only item that tells you something you could not otherwise
+  // know, and finding one should feel like a turn in the run rather than a restock.
+  { item: 'emf', weight: 3 },
 ];

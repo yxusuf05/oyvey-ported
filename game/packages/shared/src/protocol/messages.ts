@@ -94,6 +94,21 @@ export interface WorldItemState {
   lit: boolean;
 }
 
+/**
+ * A chalk scrawl. Marks never move, never expire and are never picked up, so like world
+ * items they travel on change rather than in the snapshot — and unlike world items there is
+ * no state to keep in sync afterwards at all.
+ */
+export interface ChalkMarkState {
+  id: number;
+  x: number;
+  z: number;
+  /** Facing of the surface it was drawn on, so it lies flat against the wall. */
+  yaw: number;
+  /** Which player drew it. Everyone's chalk is the same colour; this is for the future. */
+  by: number;
+}
+
 export interface RunStats {
   fusesCollected: number;
   fusesTotal: number;
@@ -139,6 +154,8 @@ export type S2C =
   | { t: 'inventory'; slots: (InventorySlotState | null)[]; activeSlot: number }
   /** Everything lying on the floor, resent whenever the set changes. */
   | { t: 'worldItems'; items: WorldItemState[] }
+  /** Every chalk mark drawn so far, resent whenever one is added. */
+  | { t: 'marks'; marks: ChalkMarkState[] }
   /**
    * Determinism fallback. If the client's regenerated maze does not match the server's
    * layout hash it asks for this, and a determinism bug degrades to four kilobytes of

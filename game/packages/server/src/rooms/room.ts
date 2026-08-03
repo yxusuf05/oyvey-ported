@@ -288,6 +288,10 @@ export class GameRoom {
       this.run.worldItemsDirty = false;
       this.broadcastWorldItems();
     }
+    if (this.run.marksDirty) {
+      this.run.marksDirty = false;
+      this.broadcastMarks();
+    }
     // Backpacks go only to their owner. Nobody else has any use for what you are carrying,
     // and a player who can read the others' inventories out of the socket knows things the
     // game never showed them.
@@ -311,6 +315,11 @@ export class GameRoom {
       // number the player should be reading off the floor.
       items: this.run.worldItems.map(({ id, item, x, z, count, lit }) => ({ id, item, x, z, count, lit })),
     });
+  }
+
+  private broadcastMarks(): void {
+    if (!this.run) return;
+    this.broadcast({ t: 'marks', marks: this.run.marks.map((mark) => ({ ...mark })) });
   }
 
   private sendInventory(player: RoomPlayer): void {

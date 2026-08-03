@@ -9,8 +9,9 @@
 
 import { describe, expect, it } from 'vitest';
 import { BLIND_ONE, BACKPACK_SLOTS, GLOWSTICK, MEDKIT } from '@game/shared/content';
-import { Buttons, DT, PLAYER_MAX_HP, SANITY_MAX, type Input } from '@game/shared/sim';
-import { tileToWorld, worldToTile } from '@game/shared/levelgen';
+import { Buttons, DT, INTERACT_RANGE, PLAYER_MAX_HP, SANITY_MAX, type Input } from '@game/shared/sim';
+import { FLOOR, tileToWorld, worldToTile } from '@game/shared/levelgen';
+import { createEntity } from '../src/ai/brains';
 import { Run, type ServerPlayer } from '../src/sim/run';
 
 const SEED = 'inventory-fixture';
@@ -65,6 +66,7 @@ describe('the backpack', () => {
       count: 1,
       lit: false,
       burnLeft: 0,
+      pulseIn: 0,
     });
 
     tap(run, player, Buttons.Interact, 1);
@@ -179,6 +181,112 @@ describe('the backpack', () => {
     expect(player.activeSlot).toBe(0);
   });
 
+  it('marks a wall with chalk and spends one use of the stick', () => {
+    const { run, player } = fresh();
+    const free = player.inventory.findIndex((slot) => slot === null);
+    player.inventory[free] = { item: 'chalk', count: 3 };
+
+    tap(run, player, Buttons.UseItem, 1, free);
+
+    expect(run.marks).toHaveLength(1);
+    expect(player.inventory[free]!.count).toBe(2);
+    // Chalk is the one tool you can use while something is listening.
+    const tile = worldToTile(run.level, player.state.x, player.state.z);
+    expect(run.noise.at(tile.x, tile.y)).toBeLessThan(BLIND_ONE.hearingThreshold);
+  });
+
+  it('lets a wedged door stop entities while the player still walks through it', () => {
+    const { run, player } = fresh();
+    const free = player.inventory.findIndex((slot) => slot === null);
+    player.inventory[free] = { item: 'wedge', count: 1 };
+
+    // Stand in the doorway, so the nearest door is unambiguous.
+    const door = run.level.doors[0];
+    const world = tileToWorld(run.level, door.x, door.y);
+    player.state.x = world.x;
+    player.state.z = world.z;
+
+    tap(run, player, Buttons.UseItem, 1, free);
+
+    expect(run.wedgedDoors.has(door.id)).toBe(true);
+    // The rule in one line: shut for them, open for you.
+    expect(run.nav.passable(door.x, door.y)).toBe(false);
+    expect(run.grid.tiles[door.y * run.grid.width + door.x]).toBe(FLOOR);
+  });
+
+  it('does not spend a wedge when there is no door to wedge', () => {
+    const { run, player } = fresh();
+    const free = player.inventory.findIndex((slot) => slot === null);
+    player.inventory[free] = { item: 'wedge', count: 1 };
+
+    // Far from every doorway. Losing the wedge to a mistimed keypress would make the item
+    // feel like a trap rather than a tool.
+    let far = { x: player.state.x, z: player.state.z };
+    let best = 0;
+    for (const room of run.level.rooms) {
+      const centre = tileToWorld(run.level, room.cx, room.cy);
+      const nearestDoor = Math.min(
+        ...run.level.doors.map((d) => {
+          const w = tileToWorld(run.level, d.x, d.y);
+          return Math.hypot(w.x - centre.x, w.z - centre.z);
+        }),
+      );
+      if (nearestDoor > best) {
+        best = nearestDoor;
+        far = centre;
+      }
+    }
+    expect(best).toBeGreaterThan(INTERACT_RANGE);
+    player.state.x = far.x;
+    player.state.z = far.z;
+
+    tap(run, player, Buttons.UseItem, 1, free);
+
+    expect(run.wedgedDoors.size).toBe(0);
+    expect(player.inventory[free]!.count).toBe(1);
+  });
+
+  it('makes a decoy shout on its own, away from the player', () => {
+    const { run, player } = fresh();
+    const free = player.inventory.findIndex((slot) => slot === null);
+    player.inventory[free] = { item: 'decoy', count: 1 };
+
+    tap(run, player, Buttons.UseItem, 1, free);
+    const decoy = run.worldItems[0];
+    expect(decoy.item).toBe('decoy');
+    expect(decoy.lit).toBe(false);
+
+    run.noise.clear();
+    // Long enough for at least one pulse, short enough that it is still running.
+    for (let tick = 0; tick < 120; tick++) run.step([player], DT);
+
+    const at = worldToTile(run.level, decoy.x, decoy.z);
+    expect(run.noise.at(at.x, at.y)).toBeGreaterThan(BLIND_ONE.hearingThreshold);
+  });
+
+  it('makes the EMF detector announce the player every time it announces an entity', () => {
+    const { run, player } = fresh();
+    const free = player.inventory.findIndex((slot) => slot === null);
+    player.inventory[free] = { item: 'emf', count: 1 };
+
+    // Something to detect, right next to the player.
+    const here = worldToTile(run.level, player.state.x, player.state.z);
+    const entity = createEntity(1000, 'blind', BLIND_ONE, here, run.level);
+    run.entities.push(entity);
+
+    tap(run, player, Buttons.UseItem, 1, free);
+    expect(player.emfOn).toBe(true);
+    // Toggling it is not consuming it — the detector is a tool, not a charge.
+    expect(player.inventory[free]!.count).toBe(1);
+
+    run.noise.clear();
+    for (let tick = 0; tick < 60; tick++) run.step([player], DT);
+
+    // The trade the item is built on: it tells you something is there, and tells the
+    // something that you are.
+    expect(run.noise.at(here.x, here.y)).toBeGreaterThan(BLIND_ONE.hearingThreshold);
+  });
+
   it('gives an objective priority over loot lying on the same tile', () => {
     // A glowstick dropped on top of a fuse must never make the fuse unpickable — that is
     // an unwinnable run caused by tidiness.
@@ -188,7 +296,7 @@ describe('the backpack', () => {
 
     player.state.x = world.x;
     player.state.z = world.z;
-    run.worldItems.push({ id: 7, item: 'medkit', x: world.x, z: world.z, count: 1, lit: false, burnLeft: 0 });
+    run.worldItems.push({ id: 7, item: 'medkit', x: world.x, z: world.z, count: 1, lit: false, burnLeft: 0, pulseIn: 0 });
 
     tap(run, player, Buttons.Interact, 1);
 
