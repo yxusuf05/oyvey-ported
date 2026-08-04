@@ -6,8 +6,9 @@
  * so a player with the sound off must still get that information.
  */
 
-import { BACKPACK_SLOTS, getItemSpec } from '@game/shared/content';
+import { getItemSpec } from '@game/shared/content';
 import { t, subtitleFor, type TranslationKey } from '../i18n';
+import { visibleSlotCount } from '../game/hotbar';
 import type { HudState } from '../game/session';
 import type { Settings } from '../settings';
 import { el } from './dom';
@@ -70,20 +71,12 @@ export class Hud {
     this.debug = el('div', { class: 'hud__debug' });
     this.hint = el('div', { class: 'hud__hint', text: t('hud.clickToPlay') });
 
-    // Four fixed cells rather than a list that grows and shrinks: the slot a number key
-    // selects has to stay in the same place on screen, empty or not.
-    for (let i = 0; i < BACKPACK_SLOTS; i++) {
-      this.hotbarSlots.push(
-        el(
-          'div',
-          { class: 'hotbar__slot' },
-          el('span', { class: 'hotbar__key', text: String(i + 1) }),
-          el('span', { class: 'hotbar__name' }),
-          el('span', { class: 'hotbar__count' }),
-        ),
-      );
-    }
-    this.hotbar = el('div', { class: 'hud__hotbar' }, ...this.hotbarSlots);
+    // Fixed cells rather than a list that grows and shrinks during play: the slot a number
+    // key selects has to stay in the same place on screen, empty or not. The *count* is not
+    // fixed, though — the backpack perk buys real slots, and a slot the player paid for and
+    // cannot see is a perk that only exists in the shop.
+    this.hotbar = el('div', { class: 'hud__hotbar' });
+    this.growHotbar(visibleSlotCount(0));
 
     // The most dramatic moment in the game had no readout at all: a sixty-second timer
     // nobody could see is not tension, it is an unexplained death.
@@ -151,7 +144,26 @@ export class Hud {
     }
   }
 
+  /** Adds cells until there are `count` of them. Backpacks only ever get bigger. */
+  private growHotbar(count: number): void {
+    for (let i = this.hotbarSlots.length; i < count; i++) {
+      const cell = el(
+        'div',
+        { class: 'hotbar__slot' },
+        el('span', { class: 'hotbar__key', text: String(i + 1) }),
+        el('span', { class: 'hotbar__name' }),
+        el('span', { class: 'hotbar__count' }),
+      );
+      this.hotbarSlots.push(cell);
+      this.hotbar.append(cell);
+    }
+  }
+
   private updateHotbar(hud: HudState): void {
+    // The server is the authority on how big this player's backpack is, and it says so with
+    // every inventory message.
+    this.growHotbar(visibleSlotCount(hud.inventory.length));
+
     for (let i = 0; i < this.hotbarSlots.length; i++) {
       const cell = this.hotbarSlots[i];
       const slot = hud.inventory[i] ?? null;

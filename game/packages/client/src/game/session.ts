@@ -41,12 +41,13 @@ import {
   worldToTile,
   type Level,
 } from '@game/shared/levelgen';
-import { BACKPACK_SLOTS, getItemSpec } from '@game/shared/content';
+import { getItemSpec } from '@game/shared/content';
 import { clamp, clamp01, damp, lerp } from '@game/shared/math';
 import type { GridView } from '@game/shared/levelgen';
 import { hash3f } from '@game/shared/prng';
 import { t, type TranslationKey } from '../i18n';
 import { HALLUCINATION_COOLDOWN, decideHallucination } from './hallucinate';
+import { slotForDigit } from './hotbar';
 import type { AudioEngine } from '../audio/engine';
 import type { Connection } from '../net/connection';
 import type { Settings } from '../settings';
@@ -426,13 +427,10 @@ export class GameSession {
       this.keys.add(event.code);
       // The hotbar is not a button in the input mask — the slot rides along with every
       // input as its own field, so selecting one is just changing what the next input says.
-      const digit = /^Digit([1-9])$/.exec(event.code);
-      if (digit) {
-        const slot = Number(digit[1]) - 1;
-        if (slot < BACKPACK_SLOTS) {
-          this.activeSlot = slot;
-          this.hud.activeSlot = slot;
-        }
+      const slot = slotForDigit(event.code, this.hud.inventory.length);
+      if (slot !== null) {
+        this.activeSlot = slot;
+        this.hud.activeSlot = slot;
       }
     };
     const onKeyUp = (event: KeyboardEvent) => this.keys.delete(event.code);
