@@ -3,6 +3,7 @@
  * what it feels like. Adding a level means adding an entry here, not a new algorithm.
  */
 
+import { DEFAULT_HAZARDS, type ThemeHazards } from './descent';
 import type { RoomKind } from './types';
 
 /**
@@ -69,6 +70,8 @@ export interface ThemeSpec {
   audio: ThemeAudioSpec;
   /** Entity kinds allowed to spawn here, with the descent value at which they wake up. */
   entities: { kind: string; wakesAt: number; max: number }[];
+  /** How this place falls apart. See `ThemeHazards`. */
+  hazards: ThemeHazards;
 }
 
 /**
@@ -183,6 +186,7 @@ const LEVEL0: ThemeSpec = {
     footstepQ: 1.2,
     motifBpm: 96,
   },
+  hazards: DEFAULT_HAZARDS,
   entities: [
     { kind: 'blind', wakesAt: 0.18, max: 2 },
     // Staggered on purpose. Each entity gets a stretch of run where it is the only new
@@ -193,8 +197,246 @@ const LEVEL0: ThemeSpec = {
   ],
 };
 
+/**
+ * Level 1 — "Lagerhalle".
+ *
+ * Long racking aisles and cold tubes. It is the theme that lives by its lighting, so the
+ * descent takes the lighting: more blackout waves than anywhere else, and almost no sealing
+ * — the danger is not that the building closes in, it is that you cannot see it any more.
+ * The Swarm wakes early here because a hall full of fixtures is a hall full of destinations.
+ */
+const WAREHOUSE: ThemeSpec = {
+  id: 'warehouse',
+  nameKey: 'theme.warehouse',
+  width: 144,
+  height: 144,
+  // Big leaves: this place is about sightlines down an aisle, not about warrens.
+  minLeaf: 14,
+  maxLeaf: 34,
+  maxDepth: 5,
+  roomKinds: [
+    { kind: 'openHall', weight: 34 },
+    { kind: 'pillarField', weight: 30 },
+    { kind: 'corridorBundle', weight: 18 },
+    { kind: 'cubicleWarren', weight: 10 },
+    { kind: 'atrium', weight: 8 },
+  ],
+  braidFactor: 0.42,
+  fixtureSpacing: 7,
+  fuses: 4,
+  descentSeconds: 17 * 60,
+  palette: [
+    {
+      wallA: 0xd8dcd4,
+      wallB: 0xc2c9c0,
+      carpet: 0x6f7370,
+      ceiling: 0xd2d6cf,
+      trim: 0xa9b0a6,
+      fog: 0xd6dbd4,
+      fogDensity: 0.0065,
+      lightColor: 0xeaf3ff,
+      lightIntensity: 1.0,
+      ambient: 0x3a3f3d,
+      saturation: 0.92,
+      bloom: 0.4,
+      vignette: 0.12,
+      grain: 0.02,
+      aberration: 0.0,
+      rot: 0.0,
+    },
+    {
+      wallA: 0xb9bdb0,
+      wallB: 0x9ca396,
+      carpet: 0x5c5f5a,
+      ceiling: 0xacb2a8,
+      trim: 0x8d9488,
+      fog: 0xa8ada4,
+      fogDensity: 0.022,
+      lightColor: 0xd8e6f2,
+      lightIntensity: 0.74,
+      ambient: 0x2f3432,
+      saturation: 0.72,
+      bloom: 0.42,
+      vignette: 0.28,
+      grain: 0.06,
+      aberration: 0.5,
+      rot: 0.3,
+    },
+    {
+      wallA: 0x6e6a5c,
+      wallB: 0x554f44,
+      carpet: 0x3b3a36,
+      ceiling: 0x565349,
+      trim: 0x4c4840,
+      fog: 0x33352f,
+      fogDensity: 0.052,
+      lightColor: 0x9fa892,
+      lightIntensity: 0.34,
+      ambient: 0x13150f,
+      saturation: 0.42,
+      bloom: 0.2,
+      vignette: 0.48,
+      grain: 0.16,
+      aberration: 1.5,
+      rot: 0.7,
+    },
+    {
+      wallA: 0x1c1d1a,
+      wallB: 0x131412,
+      carpet: 0x0e0f0d,
+      ceiling: 0x101110,
+      trim: 0x161714,
+      fog: 0x040505,
+      fogDensity: 0.125,
+      lightColor: 0x4d5340,
+      lightIntensity: 0.05,
+      ambient: 0x040404,
+      saturation: 0.18,
+      bloom: 0.08,
+      vignette: 0.75,
+      grain: 0.36,
+      aberration: 3.2,
+      rot: 1.0,
+    },
+  ],
+  audio: {
+    droneHz: 48,
+    corridorRt60: 1.6,
+    hallRt60: 3.2,
+    footstepHz: 380,
+    footstepQ: 0.9,
+    motifBpm: 88,
+  },
+  hazards: { sealBias: 0.35, lightsOutBias: 1 },
+  entities: [
+    { kind: 'blind', wakesAt: 0.22, max: 2 },
+    { kind: 'swarm', wakesAt: 0.4, max: 12 },
+    { kind: 'smiler', wakesAt: 0.58, max: 2 },
+  ],
+};
+
+/**
+ * Level 2 — "Rohre".
+ *
+ * Wet concrete and narrow service runs. The opposite hazard profile to the warehouse: the
+ * lights barely matter because there were never many, and instead the maze physically
+ * tightens around you. Sight lines are short, which is why the Watcher belongs here and the
+ * Swarm does not — there is nowhere for a crowd to be a crowd.
+ */
+const PIPES: ThemeSpec = {
+  id: 'pipes',
+  nameKey: 'theme.pipes',
+  width: 112,
+  height: 112,
+  // Small leaves and a low braid factor: claustrophobia by construction.
+  minLeaf: 7,
+  maxLeaf: 16,
+  maxDepth: 7,
+  roomKinds: [
+    { kind: 'corridorBundle', weight: 40 },
+    { kind: 'cubicleWarren', weight: 32 },
+    { kind: 'openHall', weight: 16 },
+    { kind: 'pillarField', weight: 12 },
+  ],
+  braidFactor: 0.28,
+  fixtureSpacing: 6,
+  fuses: 3,
+  descentSeconds: 13 * 60,
+  palette: [
+    {
+      wallA: 0xa8a89e,
+      wallB: 0x8f8f86,
+      carpet: 0x5a5a54,
+      ceiling: 0x9a9a91,
+      trim: 0x7d7d75,
+      fog: 0x9a9c94,
+      fogDensity: 0.011,
+      lightColor: 0xd9e4c8,
+      lightIntensity: 0.8,
+      ambient: 0x30332e,
+      saturation: 0.8,
+      bloom: 0.3,
+      vignette: 0.2,
+      grain: 0.03,
+      aberration: 0.0,
+      rot: 0.0,
+    },
+    {
+      wallA: 0x7e8677,
+      wallB: 0x66705f,
+      carpet: 0x434840,
+      ceiling: 0x6f776a,
+      trim: 0x5a6154,
+      fog: 0x565f52,
+      fogDensity: 0.034,
+      lightColor: 0xb9cba4,
+      lightIntensity: 0.56,
+      ambient: 0x232720,
+      saturation: 0.62,
+      bloom: 0.28,
+      vignette: 0.34,
+      grain: 0.08,
+      aberration: 0.7,
+      rot: 0.35,
+    },
+    {
+      wallA: 0x414a3c,
+      wallB: 0x323a2f,
+      carpet: 0x252923,
+      ceiling: 0x353c31,
+      trim: 0x2c3327,
+      fog: 0x1d221b,
+      fogDensity: 0.068,
+      lightColor: 0x6d7f5c,
+      lightIntensity: 0.26,
+      ambient: 0x0d0f0b,
+      saturation: 0.38,
+      bloom: 0.16,
+      vignette: 0.54,
+      grain: 0.18,
+      aberration: 1.8,
+      rot: 0.75,
+    },
+    {
+      wallA: 0x13160f,
+      wallB: 0x0d0f0a,
+      carpet: 0x080905,
+      ceiling: 0x0b0c08,
+      trim: 0x101208,
+      fog: 0x030403,
+      fogDensity: 0.145,
+      lightColor: 0x2f4526,
+      lightIntensity: 0.04,
+      ambient: 0x030403,
+      saturation: 0.14,
+      bloom: 0.06,
+      vignette: 0.8,
+      grain: 0.4,
+      aberration: 3.4,
+      rot: 1.0,
+    },
+  ],
+  audio: {
+    droneHz: 62,
+    // Tight, slappy reverb: a metre of concrete on both sides.
+    corridorRt60: 0.7,
+    hallRt60: 1.3,
+    footstepHz: 700,
+    footstepQ: 1.8,
+    motifBpm: 104,
+  },
+  hazards: { sealBias: 1, lightsOutBias: 0.5 },
+  entities: [
+    { kind: 'blind', wakesAt: 0.14, max: 2 },
+    { kind: 'watcher', wakesAt: 0.44, max: 2 },
+    { kind: 'smiler', wakesAt: 0.7, max: 1 },
+  ],
+};
+
 export const THEMES: Record<string, ThemeSpec> = {
   level0: LEVEL0,
+  warehouse: WAREHOUSE,
+  pipes: PIPES,
 };
 
 export const DEFAULT_THEME_ID = 'level0';

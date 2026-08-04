@@ -143,6 +143,9 @@ export const de: Record<keyof typeof en, string> = {
   'run.continue': 'Zurück zur Lobby',
 
   'theme.level0': 'Ebene 0 — Sonnenschein-Flure',
+  'theme.warehouse': 'Die Lagerhalle',
+  'theme.pipes': 'Die Rohre',
+  'lobby.floor': 'Ebene',
   'entity.blind': 'Der Blinde',
   'entity.smiler': 'Der Grinsende',
   'entity.watcher': 'Die Beobachterin',

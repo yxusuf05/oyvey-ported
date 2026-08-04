@@ -20,6 +20,7 @@ import {
 } from '../settings';
 import type { LobbyPlayer, RunOutcome, RunStats } from '@game/shared/protocol';
 import { PERK_SPECS, perkCost } from '@game/shared/content';
+import { DEFAULT_THEME_ID, THEMES } from '@game/shared/levelgen';
 import { clear, el, field, toggle } from './dom';
 
 export type ScreenName = 'menu' | 'lobby' | 'settings' | 'howto' | 'hub' | 'summary' | 'game';
@@ -29,7 +30,7 @@ export interface ScreenCallbacks {
   join(name: string, code: string): void;
   leave(): void;
   ready(ready: boolean): void;
-  start(seed: string): void;
+  start(seed: string, themeId: string): void;
   settingsChanged(settings: Settings): void;
   backToLobby(): void;
   buyPerk(perk: string): void;
@@ -58,6 +59,7 @@ export class Screens {
   private current: ScreenName = 'menu';
   private previous: ScreenName = 'menu';
   private settingsTab = 'graphics';
+  private themeId = DEFAULT_THEME_ID;
   private error = '';
   private lobby: LobbyView | null = null;
   private summary: { outcome: RunOutcome; stats: RunStats } | null = null;
@@ -307,6 +309,28 @@ export class Screens {
       list,
       el('h2', { text: t('lobby.seed') }),
       seedInput,
+      ...(isHost
+        ? [
+            el('h2', { text: t('lobby.floor') }),
+            // Only the host picks, because only the host starts. Showing everyone a control
+            // that does nothing for them would be worse than not showing it.
+            el(
+              'div',
+              { class: 'tabs' },
+              ...Object.values(THEMES).map((theme) =>
+                el('button', {
+                  class: 'tab',
+                  'aria-selected': this.themeId === theme.id ? 'true' : 'false',
+                  text: t(theme.nameKey as TranslationKey),
+                  onclick: () => {
+                    this.themeId = theme.id;
+                    this.render();
+                  },
+                }),
+              ),
+            ),
+          ]
+        : []),
       el('div', { style: 'height:14px' }),
       el('button', {
         class: 'btn',
@@ -317,7 +341,7 @@ export class Screens {
         ? el('button', {
             class: 'btn btn--primary',
             text: t('lobby.start'),
-            onclick: () => this.callbacks.start(seedInput.value.trim()),
+            onclick: () => this.callbacks.start(seedInput.value.trim(), this.themeId),
           })
         : el('p', { class: 'hint', text: t('lobby.waitingForHost') }),
       el('button', { class: 'btn', text: t('menu.settings'), onclick: () => this.show('settings') }),

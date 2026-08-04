@@ -37,6 +37,7 @@ export function generateLevel(seed: string, themeId: string): Level {
     doors,
     spawn,
     objectives,
+    spec.hazards,
   );
 
   return {

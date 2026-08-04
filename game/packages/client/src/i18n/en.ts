@@ -145,6 +145,9 @@ export const en = {
   'run.continue': 'Back to lobby',
 
   'theme.level0': 'Level 0 — Sunbeam Halls',
+  'theme.warehouse': 'The Warehouse',
+  'theme.pipes': 'The Pipes',
+  'lobby.floor': 'Floor',
   'entity.blind': 'The Blind One',
   'entity.smiler': 'The Smiler',
   'entity.watcher': 'The Watcher',

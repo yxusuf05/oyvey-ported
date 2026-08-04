@@ -16,6 +16,28 @@ const LIGHTS_OUT_THRESHOLDS = [0.26, 0.38, 0.5, 0.61, 0.72, 0.84, 0.94];
 const THEME_SHIFT_THRESHOLDS = [0.2, 0.48, 0.76];
 const SEAL_THRESHOLDS = [0.45, 0.58, 0.68, 0.78, 0.87, 0.93];
 
+/**
+ * How hard a theme leans on each kind of decay.
+ *
+ * The two are meant to pull in different directions: a place that lives by its lights is
+ * ruined by losing them, and a place that is already narrow is ruined by getting narrower.
+ * One timeline builder, two opposite kinds of dread — and the seal validation below is
+ * untouched either way, so a level stays provably completable however aggressive the bias.
+ */
+export interface ThemeHazards {
+  /** Multiplier on how many doorways the descent is allowed to close. */
+  sealBias: number;
+  /** Multiplier on how many blackout waves are scheduled. */
+  lightsOutBias: number;
+}
+
+export const DEFAULT_HAZARDS: ThemeHazards = { sealBias: 1, lightsOutBias: 1 };
+
+/** Keeps a bias from removing a stage entirely or inventing thresholds that do not exist. */
+function scaleStages(count: number, bias: number): number {
+  return Math.max(1, Math.min(count, Math.round(count * bias)));
+}
+
 export function buildDescentTimeline(
   rng: Rng,
   grid: GridView,
@@ -23,6 +45,7 @@ export function buildDescentTimeline(
   doors: Door[],
   spawn: { x: number; y: number },
   objectives: ObjectivePlacement[],
+  hazards: ThemeHazards = DEFAULT_HAZARDS,
 ): DescentEvent[] {
   const events: DescentEvent[] = [];
   const dist = bfsDistance(grid, [spawn]);
@@ -34,10 +57,14 @@ export function buildDescentTimeline(
   // --- Lights out: sweeps from the far edge inward, so the player walks into darkness
   // rather than watching it arrive. ---
   const byDistanceDesc = [...rooms].sort((a, b) => distOf(b) - distOf(a));
-  const waves = chunk(byDistanceDesc, LIGHTS_OUT_THRESHOLDS.length);
+  const lightWaves = scaleStages(LIGHTS_OUT_THRESHOLDS.length, hazards.lightsOutBias);
+  const waves = chunk(byDistanceDesc, lightWaves);
   waves.forEach((wave, i) => {
     if (wave.length === 0) return;
     const shuffled = rng.derive('descent:lights', i).shuffle(wave.map((r) => r.id));
+    // Fewer, bigger waves on a theme that leans away from darkness; more, smaller ones on
+    // a theme that lives by its lights. The thresholds themselves never move, so the whole
+    // curve still lands inside the same run.
     events.push({ kind: 'lightsOut', at: LIGHTS_OUT_THRESHOLDS[i], rooms: shuffled });
   });
 
@@ -74,7 +101,8 @@ export function buildDescentTimeline(
     return false;
   };
 
-  for (const threshold of SEAL_THRESHOLDS) {
+  const sealStages = scaleStages(SEAL_THRESHOLDS.length, hazards.sealBias);
+  for (const threshold of SEAL_THRESHOLDS.slice(0, sealStages)) {
     for (const id of candidates) {
       if (sealed.has(id)) continue;
       sealed.add(id);

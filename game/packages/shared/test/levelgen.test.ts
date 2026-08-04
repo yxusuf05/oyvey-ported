@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateLevel } from '../src/levelgen';
 import { bfsDistance, levelGrid } from '../src/levelgen/grid';
 import { FLOOR } from '../src/levelgen/types';
-import { DEFAULT_THEME_ID, getTheme, samplePalette } from '../src/levelgen/themes';
+import { DEFAULT_THEME_ID, THEMES, getTheme, samplePalette } from '../src/levelgen/themes';
 import { propagateLight, LIGHT_MAX } from '../src/levelgen/light';
 
 const seeds = (n: number, prefix = 's'): string[] => Array.from({ length: n }, (_, i) => `${prefix}${i}`);
@@ -206,5 +206,65 @@ describe('palette', () => {
       expect(Math.abs(next - prev)).toBeLessThan(0.02);
       prev = next;
     }
+  });
+});
+
+/**
+ * Every theme, not just the first one.
+ *
+ * A new theme is nothing but a table of numbers, which is exactly why it can quietly
+ * produce an unwinnable floor: too small a leaf size, too low a braid factor, a hazard bias
+ * that seals one door too many. This sweep is the only thing standing between a data edit
+ * and a run nobody can finish, and it is the reason adding themes is cheap.
+ */
+describe('every theme', () => {
+  for (const themeId of Object.keys(THEMES)) {
+    it(`${themeId}: generates connected, completable floors that survive the descent`, () => {
+      for (const seed of seeds(60, `themes-${themeId}`)) {
+        const level = generateLevel(seed, themeId);
+        const grid = levelGrid(level);
+        const targets = level.objectives.map((o) => ({ x: o.x, y: o.y }));
+
+        expect(level.objectives.some((o) => o.kind === 'generator'), `${themeId} ${seed}`).toBe(true);
+        expect(level.objectives.some((o) => o.kind === 'exit'), `${themeId} ${seed}`).toBe(true);
+        expect(level.fixtures.length, `${themeId} ${seed} has no lights`).toBeGreaterThan(0);
+
+        const sealedTiles = new Set<number>();
+        const blocked = (x: number, y: number) => sealedTiles.has(y * level.width + x);
+
+        let reach = bfsDistance(grid, [level.spawn]);
+        for (const t of targets) {
+          expect(reach[t.y * level.width + t.x], `${themeId} ${seed} before descent`).toBeGreaterThanOrEqual(0);
+        }
+
+        for (const event of level.descent) {
+          if (event.kind !== 'seal') continue;
+          const door = level.doors[event.door];
+          sealedTiles.add(door.y * level.width + door.x);
+          reach = bfsDistance(grid, [level.spawn], blocked);
+          for (const t of targets) {
+            expect(
+              reach[t.y * level.width + t.x],
+              `${themeId} ${seed} unreachable after sealing door ${event.door}`,
+            ).toBeGreaterThanOrEqual(0);
+          }
+        }
+      }
+    });
+  }
+
+  it('lets the hazard bias actually change how a floor decays', () => {
+    // The warehouse is ruined by losing its lights, the pipes by closing in. If these two
+    // ever came out the same, `hazards` would be decoration.
+    const count = (themeId: string, kind: 'seal' | 'lightsOut'): number => {
+      let total = 0;
+      for (const seed of seeds(25, 'hazard')) {
+        total += generateLevel(seed, themeId).descent.filter((e) => e.kind === kind).length;
+      }
+      return total;
+    };
+
+    expect(count('pipes', 'seal')).toBeGreaterThan(count('warehouse', 'seal'));
+    expect(count('warehouse', 'lightsOut')).toBeGreaterThan(count('pipes', 'lightsOut'));
   });
 });
