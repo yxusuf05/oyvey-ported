@@ -7,7 +7,7 @@
  */
 
 import { beforeAll, describe, expect, it } from 'vitest';
-import { BACKPACK_SLOTS, PERK_SPECS, perkCost } from '@game/shared/content';
+import { BACKPACK_SLOTS, GLOWSTICK, PERK_SPECS, perkCost } from '@game/shared/content';
 import { Buttons, DT, type Input } from '@game/shared/sim';
 import { worldToTile } from '@game/shared/levelgen';
 import { ProgressionStore } from '../src/persist/store';
@@ -166,5 +166,77 @@ describe('perks in a run', () => {
     expect(plain).toBeGreaterThan(0);
     expect(quiet).toBeGreaterThan(0);
     expect(quiet).toBeLessThan(plain * 0.75);
+  });
+});
+
+describe('the remaining perks', () => {
+  it('makes the flashlight last longer with better cells', () => {
+    const burn = (perks: Record<string, number>): number => {
+      const run = new Run(SEED, 'level0');
+      const player = run.createPlayer(1, 'Lamp', perks);
+      player.flashlightOn = true;
+      for (let tick = 0; tick < 600; tick++) {
+        feed(player, 0, tick + 1);
+        run.step([player], DT);
+      }
+      return player.battery;
+    };
+
+    expect(burn({ battery: 3 })).toBeGreaterThan(burn({}));
+  });
+
+  it('speeds a revive up by the *helper*\'s medic perk, not the downed player\'s', () => {
+    // The rule that is easy to build backwards: a medic lying on the floor must not heal
+    // themselves faster. Two runs, the same perk, only whose it is differs.
+    const rescue = (helperPerks: Record<string, number>, downedPerks: Record<string, number>): number => {
+      const run = new Run(SEED, 'level0');
+      const downed = run.createPlayer(1, 'Downed', downedPerks);
+      const helper = run.createPlayer(2, 'Helper', helperPerks);
+      downed.downed = true;
+      downed.hp = 1;
+      helper.state.x = downed.state.x;
+      helper.state.z = downed.state.z;
+
+      for (let tick = 0; tick < 60 * 12; tick++) {
+        feed(downed, 0, tick + 1);
+        feed(helper, tick === 0 ? Buttons.Interact : 0, tick + 1);
+        run.step([downed, helper], DT);
+        if (!downed.downed) return tick;
+      }
+      return Infinity;
+    };
+
+    const plain = rescue({}, {});
+    const skilledHelper = rescue({ medic: 2 }, {});
+    const skilledVictim = rescue({}, { medic: 2 });
+
+    expect(plain).toBeLessThan(Infinity);
+    expect(skilledHelper).toBeLessThan(plain);
+    // The victim's own perk buys them nothing. That is the whole point of the wiring.
+    expect(skilledVictim).toBe(plain);
+  });
+
+  it('makes a chemist get more out of the same bottle', () => {
+    const drink = (perks: Record<string, number>): number => {
+      const run = new Run(SEED, 'level0');
+      const player = run.createPlayer(1, 'Thirsty', perks);
+      const slot = player.inventory.findIndex((s) => s?.item === 'almondWater');
+      player.sanity = 10;
+      player.pending.push({ seq: 1, buttons: Buttons.UseItem, yaw: 0, pitch: 0, slot });
+      run.step([player], DT);
+      return player.sanity;
+    };
+
+    expect(drink({ chemist: 2 })).toBeGreaterThan(drink({}));
+  });
+
+  it('sends a packer off with more supplies, never more than a slot holds', () => {
+    const run = new Run(SEED, 'level0');
+    const plain = run.createPlayer(1, 'Plain');
+    const packed = run.createPlayer(2, 'Packed', { packer: 2 });
+
+    const glow = (p: ServerPlayer): number => p.inventory.find((s) => s?.item === 'glowstick')?.count ?? 0;
+    expect(glow(packed)).toBeGreaterThan(glow(plain));
+    expect(glow(packed)).toBeLessThanOrEqual(GLOWSTICK.stack);
   });
 });

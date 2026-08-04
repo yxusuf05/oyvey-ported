@@ -49,6 +49,22 @@ export const PERK_SPECS: Record<string, PerkSpec> = {
     maxLevel: 2,
     costs: [180, 420],
   },
+  chemist: {
+    id: 'chemist',
+    nameKey: 'perk.chemist',
+    descriptionKey: 'perk.chemist.desc',
+    maxLevel: 2,
+    costs: [160, 380],
+  },
+  packer: {
+    id: 'packer',
+    nameKey: 'perk.packer',
+    descriptionKey: 'perk.packer.desc',
+    // One extra of each stackable is generous already; two turns the first ten minutes of
+    // a run into a formality.
+    maxLevel: 2,
+    costs: [200, 480],
+  },
 };
 
 export type PerkLevels = Record<string, number>;
@@ -91,4 +107,14 @@ export function batteryFactor(perks: PerkLevels): number {
 /** Multiplier on how long picking a teammate up takes. */
 export function reviveFactor(perks: PerkLevels): number {
   return 0.75 ** perkLevel(perks, 'medic');
+}
+
+/** Multiplier on what one almond water or medkit restores. */
+export function consumableFactor(perks: PerkLevels): number {
+  return 1 + 0.35 * perkLevel(perks, 'chemist');
+}
+
+/** Extra count of each stackable item in the starting loadout. */
+export function bonusSupplies(perks: PerkLevels): number {
+  return perkLevel(perks, 'packer');
 }

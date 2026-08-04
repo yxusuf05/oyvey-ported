@@ -67,10 +67,14 @@ import {
   EMF_PING_NOISE,
   EMF_PING_SLOW,
   LOOT_TABLE,
+  batteryFactor,
   bonusSlots,
+  bonusSupplies,
+  consumableFactor,
   getEntitySpec,
   getItemSpec,
   noiseFactor,
+  reviveFactor,
   type ItemSpec,
   type PerkLevels,
 } from '@game/shared/content';
@@ -103,10 +107,16 @@ export interface WorldItem extends WorldItemState {
  * of the backpack perk — but the extra room always lands at the end, so slot 1 is the
  * flashlight for everyone regardless of what they have bought.
  */
-function startingInventory(size: number): (InventorySlotState | null)[] {
+function startingInventory(size: number, perks: PerkLevels): (InventorySlotState | null)[] {
   const slots: (InventorySlotState | null)[] = new Array(size).fill(null);
+  const extra = bonusSupplies(perks);
   for (let i = 0; i < DEFAULT_LOADOUT.length && i < size; i++) {
-    slots[i] = { item: DEFAULT_LOADOUT[i].item, count: DEFAULT_LOADOUT[i].count };
+    const entry = DEFAULT_LOADOUT[i];
+    const spec = getItemSpec(entry.item);
+    // The packer perk tops up what stacks, capped by the stack itself — a perk cannot make
+    // a slot hold more than a slot holds.
+    const count = spec && spec.stack > 1 ? Math.min(spec.stack, entry.count + extra) : entry.count;
+    slots[i] = { item: entry.item, count };
   }
   return slots;
 }
@@ -279,7 +289,7 @@ export class Run {
       id,
       name,
       state: createPlayerState(spawn.x + Math.cos(angle) * 0.7, spawn.z + Math.sin(angle) * 0.7),
-      inventory: startingInventory(BACKPACK_SLOTS + bonusSlots(perks)),
+      inventory: startingInventory(BACKPACK_SLOTS + bonusSlots(perks), perks),
       perks,
       activeSlot: 0,
       useCooldown: 0,
@@ -430,11 +440,12 @@ export class Run {
       }
 
       case 'consumable': {
+        const potency = consumableFactor(player.perks);
         if (spec.restoreSanity !== undefined) {
-          player.sanity = clamp(player.sanity + spec.restoreSanity, 0, SANITY_MAX);
+          player.sanity = clamp(player.sanity + spec.restoreSanity * potency, 0, SANITY_MAX);
         }
         if (spec.restoreHp !== undefined) {
-          player.hp = clamp(player.hp + spec.restoreHp, 0, PLAYER_MAX_HP);
+          player.hp = clamp(player.hp + spec.restoreHp * potency, 0, PLAYER_MAX_HP);
         }
         this.consumeActive(player, 1);
         break;
@@ -948,7 +959,8 @@ export class Run {
       if (player.useCooldown > 0) player.useCooldown = Math.max(0, player.useCooldown - dt);
 
       if (player.flashlightOn) {
-        const drain = player.focusBeam ? FLASHLIGHT_DRAIN_FOCUS : FLASHLIGHT_DRAIN_WIDE;
+        const drain =
+          (player.focusBeam ? FLASHLIGHT_DRAIN_FOCUS : FLASHLIGHT_DRAIN_WIDE) * batteryFactor(player.perks);
         player.battery = Math.max(0, player.battery - drain * dt);
         if (player.battery <= 0) {
           player.flashlightOn = false;
@@ -980,7 +992,15 @@ export class Run {
 
       if (player.downed) {
         if (player.reviveProgress > 0) {
-          player.reviveProgress += dt / REVIVE_SECONDS;
+          // The medic perk belongs to whoever is doing the lifting, not to the body on the
+          // floor. Reading `player.perks` here would be silently backwards: a medic who went
+          // down would heal *themselves* faster, which is the one situation the perk is not
+          // about. Fall back to the plain duration when nobody is in reach — the lapse check
+          // further down will end the channel on the next pass anyway.
+          const helper = players.find(
+            (p) => p.id !== player.id && !p.downed && this.isAlive(p) && this.distance(player, p) <= INTERACT_RANGE,
+          );
+          player.reviveProgress += dt / (REVIVE_SECONDS * reviveFactor(helper?.perks ?? {}));
           if (player.reviveProgress >= 1) {
             player.downed = false;
             player.reviveProgress = 0;

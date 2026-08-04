@@ -554,7 +554,10 @@ export class Screens {
       stat(t('run.peakDescent'), `${Math.round(stats.peakDescent * 100)}%`),
       stat(t('run.reward'), String(stats.reward)),
       el('div', { style: 'height:18px' }),
-      el('button', { class: 'btn btn--primary', text: t('run.continue'), onclick: () => this.callbacks.backToLobby() }),
+      // Straight into the shop from here. The moment a player most wants to spend what they
+      // just earned is the moment they are looking at the number they earned.
+      el('button', { class: 'btn btn--primary', text: t('run.spend'), onclick: () => this.show('hub') }),
+      el('button', { class: 'btn', text: t('run.continue'), onclick: () => this.callbacks.backToLobby() }),
     );
   }
 }
