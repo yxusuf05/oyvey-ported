@@ -35,6 +35,150 @@ public class RenderUtil implements Util {
         context.fill(Math.round(x1), Math.round(y1), Math.round(x1) + w, Math.round(y2), color);
     }
 
+    /**
+     * Filled rectangle with rounded corners, drawn entirely with {@link GuiGraphics#fill} so it
+     * works on the 1.21 GUI render pipeline without any custom shader. Regions never overlap, so
+     * translucent colours blend cleanly (no double-blended seams).
+     */
+    public static void roundedRect(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int color) {
+        roundedRect(g, x1, y1, x2, y2, radius, color, true, true);
+    }
+
+    public static void roundedRectTop(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int color) {
+        roundedRect(g, x1, y1, x2, y2, radius, color, true, false);
+    }
+
+    public static void roundedRectBottom(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int color) {
+        roundedRect(g, x1, y1, x2, y2, radius, color, false, true);
+    }
+
+    private static void roundedRect(GuiGraphics g, float fx1, float fy1, float fx2, float fy2, float radius, int color, boolean roundTop, boolean roundBottom) {
+        int x1 = Math.round(fx1), y1 = Math.round(fy1), x2 = Math.round(fx2), y2 = Math.round(fy2);
+        if (x2 < x1) { int t = x1; x1 = x2; x2 = t; }
+        if (y2 < y1) { int t = y1; y1 = y2; y2 = t; }
+
+        int r = Math.round(radius);
+        int maxR = Math.min((x2 - x1) / 2, (y2 - y1) / 2);
+        if (r > maxR) r = maxR;
+        if (r <= 0) { g.fill(x1, y1, x2, y2, color); return; }
+
+        int top = roundTop ? r : 0;
+        int bottom = roundBottom ? r : 0;
+
+        g.fill(x1, y1 + top, x2, y2 - bottom, color);
+        for (int i = 0; i < top; i++) {
+            int inset = cornerInset(r, i);
+            g.fill(x1 + inset, y1 + i, x2 - inset, y1 + i + 1, color);
+        }
+        for (int i = 0; i < bottom; i++) {
+            int inset = cornerInset(r, i);
+            g.fill(x1 + inset, y2 - 1 - i, x2 - inset, y2 - i, color);
+        }
+    }
+
+    private static int cornerInset(int r, int row) {
+        double dv = (r - row) - 0.5;
+        return r - (int) Math.round(Math.sqrt(Math.max(0.0, r * r - dv * dv)));
+    }
+
+    /** Small filled dot (used as the category icon / enabled indicator in the ClickGui). */
+    public static void dot(GuiGraphics g, float cx, float cy, float radius, int color) {
+        roundedRect(g, cx - radius, cy - radius, cx + radius, cy + radius, radius, color);
+    }
+
+    /** Bresenham line drawn from square pixels — good enough for tiny check / cross glyphs. */
+    public static void line(GuiGraphics g, int x1, int y1, int x2, int y2, int thickness, int color) {
+        int dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
+        int sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1;
+        int err = dx - dy;
+        while (true) {
+            g.fill(x1, y1, x1 + thickness, y1 + thickness, color);
+            if (x1 == x2 && y1 == y2) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x1 += sx; }
+            if (e2 < dx) { err += dx; y1 += sy; }
+        }
+    }
+
+    /**
+     * Category glyph drawn from primitives (no texture atlas needed), sized into an 8x8 box whose
+     * top-left is (x, y). Approximates the icon set of the reference design.
+     */
+    public static void categoryIcon(GuiGraphics g, String category, int x, int y, int color) {
+        switch (category) {
+            case "Combat" -> { // crossed swords
+                line(g, x, y + 7, x + 7, y, 1, color);
+                line(g, x, y, x + 7, y + 7, 1, color);
+            }
+            case "Movement" -> { // two wheels + frame
+                ring(g, x + 2, y + 5, 2, color);
+                ring(g, x + 7, y + 5, 2, color);
+                line(g, x + 2, y + 5, x + 5, y + 1, 1, color);
+                line(g, x + 5, y + 1, x + 7, y + 5, 1, color);
+            }
+            case "Render" -> { // eye: ring + pupil
+                ring(g, x + 4, y + 4, 4, color);
+                dot(g, x + 4, y + 4, 1.4f, color);
+            }
+            case "Player" -> { // head + shoulders
+                dot(g, x + 4, y + 2, 2f, color);
+                roundedRect(g, x + 1, y + 5, x + 8, y + 9, 2f, color);
+            }
+            case "Misc" -> { // gear: ring + teeth
+                ring(g, x + 4, y + 4, 3, color);
+                g.fill(x + 3, y - 1, x + 6, y + 1, color);
+                g.fill(x + 3, y + 8, x + 6, y + 10, color);
+                g.fill(x - 1, y + 3, x + 1, y + 6, color);
+                g.fill(x + 8, y + 3, x + 10, y + 6, color);
+            }
+            default -> dot(g, x + 4, y + 4, 2.2f, color); // Client and anything new
+        }
+    }
+
+    /**
+     * Draws text centred in [x1, x2], shrinking it just enough to fit when it would otherwise
+     * overflow the card (module names like "AutoShieldBreaker" are wider than a panel column).
+     */
+    public static void centeredFittedText(GuiGraphics g, String text, float x1, float x2, float y, int color) {
+        float available = x2 - x1 - 4f;
+        int textWidth = mc.font.width(text);
+        if (textWidth <= available) {
+            g.drawString(mc.font, text, (int) (x1 + (x2 - x1) / 2f - textWidth / 2f), (int) y, color);
+            return;
+        }
+
+        float scale = available / textWidth;
+        g.pose().pushMatrix();
+        g.pose().translate(x1 + (x2 - x1) / 2f, y + 4f);
+        g.pose().scale(scale, scale);
+        g.drawString(mc.font, text, -textWidth / 2, -4, color);
+        g.pose().popMatrix();
+    }
+
+    /** Hollow circle approximated by sampling the perimeter. */
+    public static void ring(GuiGraphics g, float cx, float cy, float radius, int color) {
+        int steps = Math.max(10, (int) (radius * 8));
+        for (int i = 0; i < steps; i++) {
+            double a = (Math.PI * 2 * i) / steps;
+            int px = (int) Math.round(cx + Math.cos(a) * radius);
+            int py = (int) Math.round(cy + Math.sin(a) * radius);
+            g.fill(px, py, px + 1, py + 1, color);
+        }
+    }
+
+    /** Green check / red cross toggle glyph at the given top-left, drawn with {@link #line}. */
+    public static void checkGlyph(GuiGraphics g, int x, int y, boolean checked) {
+        if (checked) {
+            int color = new Color(80, 220, 120).getRGB();
+            line(g, x, y + 3, x + 2, y + 5, 1, color);
+            line(g, x + 2, y + 5, x + 6, y, 1, color);
+        } else {
+            int color = new Color(225, 80, 90).getRGB();
+            line(g, x, y, x + 5, y + 5, 1, color);
+            line(g, x + 5, y, x, y + 5, 1, color);
+        }
+    }
+
     public static void horizontalGradient(GuiGraphics context, float x1, float y1, float x2, float y2, Color left, Color right) {
         int ix1 = Math.round(x1);
         int iy1 = Math.round(y1);

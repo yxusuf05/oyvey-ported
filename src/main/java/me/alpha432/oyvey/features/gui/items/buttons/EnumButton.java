@@ -6,10 +6,11 @@ import me.alpha432.oyvey.features.gui.OyVeyGui;
 import me.alpha432.oyvey.features.modules.client.ClickGuiModule;
 import me.alpha432.oyvey.features.settings.Setting;
 import me.alpha432.oyvey.util.render.RenderUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
+
+import java.awt.Color;
 
 public class EnumButton
         extends Button {
@@ -23,8 +24,15 @@ public class EnumButton
 
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
-        RenderUtil.rect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, this.getState() ? (!this.isHovering(mouseX, mouseY) ? OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().color.getValue().getAlpha()) : OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().topColor.getValue().getAlpha())) : (!this.isHovering(mouseX, mouseY) ? 0x11555555 : -2007673515));
-        drawString(this.setting.getName() + " " + ChatFormatting.GRAY + (this.setting.currentEnumName().equalsIgnoreCase("ABC") ? "ABC" : this.setting.currentEnumName()), this.x + 2.3f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), this.getState() ? -1 : -5592406);
+        if (this.isHovering(mouseX, mouseY)) {
+            float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.4f;
+            RenderUtil.roundedRect(context, this.x - 2, this.y, this.x + (float) this.width + 8f, this.y + (float) this.height, rad, new Color(255, 255, 255, 26).getRGB());
+        }
+        float right = this.x + (float) this.width + 8f;
+        float textY = this.y + this.height / 2f - 4f;
+        drawString(this.setting.getName() + ":", this.x, textY, new Color(0xC8, 0xC8, 0xD2).getRGB());
+        String value = this.setting.currentEnumName();
+        drawString(value, right - mc.font.width(value), textY, OyVey.colorManager.getColorWithAlpha(y, 255));
     }
 
     @Override

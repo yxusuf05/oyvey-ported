@@ -5,10 +5,13 @@ import me.alpha432.oyvey.features.gui.OyVeyGui;
 import me.alpha432.oyvey.features.gui.Widget;
 import me.alpha432.oyvey.features.modules.client.ClickGuiModule;
 import me.alpha432.oyvey.features.settings.Setting;
+import me.alpha432.oyvey.util.MathUtil;
 import me.alpha432.oyvey.util.render.RenderUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
+
+import java.awt.Color;
 
 public class Slider
         extends Button {
@@ -24,14 +27,34 @@ public class Slider
         this.max = setting.getMax();
         this.difference = this.max.intValue() - this.min.intValue();
         this.width = 15;
+        this.height = 18; // label row + track
+    }
+
+    @Override
+    public int getHeight() {
+        return 18;
     }
 
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
         this.dragSetting(mouseX, mouseY);
-        RenderUtil.rect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, !this.isHovering(mouseX, mouseY) ? 0x11555555 : -2007673515);
-        RenderUtil.rect(context, this.x, this.y, (this.setting.getValue()).floatValue() <= this.min.floatValue() ? this.x : this.x + ((float) this.width + 7.4f) * this.partialMultiplier(), this.y + (float) this.height - 0.5f, !this.isHovering(mouseX, mouseY) ? OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().color.getValue().getAlpha()) : OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().topColor.getValue().getAlpha()));
-        drawString(this.getName() + " " + ChatFormatting.GRAY + (this.setting.getValue() instanceof Float ? this.setting.getValue() : Double.valueOf((this.setting.getValue()).doubleValue())), this.x + 2.3f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
+        int accent = OyVey.colorManager.getColorWithAlpha(y, 255);
+        float left = this.x;
+        float right = this.x + (float) this.width + 8f;
+        float trackY = this.y + (float) this.height - 3.5f;
+
+        // Label left, value right, thin filled track underneath — as in the reference design.
+        drawString(this.getName() + ":", left, this.y, new Color(0xC8, 0xC8, 0xD2).getRGB());
+        String value = this.setting.getValue() instanceof Integer
+                ? String.valueOf(this.setting.getValue())
+                : String.valueOf(MathUtil.round(this.setting.getValue().floatValue(), 1));
+        drawString(value, right - mc.font.width(value), this.y, new Color(0x9A, 0x9A, 0xA6).getRGB());
+
+        RenderUtil.roundedRect(context, left, trackY, right, trackY + 2f, 1f, new Color(255, 255, 255, 32).getRGB());
+        float pct = Mth.clamp(this.partialMultiplier(), 0f, 1f);
+        if (pct > 0f) {
+            RenderUtil.roundedRect(context, left, trackY, left + (right - left) * pct, trackY + 2f, 1f, accent);
+        }
     }
 
     @Override

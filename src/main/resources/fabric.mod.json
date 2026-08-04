@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "oyvey",
   "version": "${version}",
-  "name": "oyvey-ported",
-  "description": "free and opensource client base",
+  "name": "Ghost Client",
+  "description": "Ghost Client - a modern Fabric performance & utility client (FPS boost, animated HUD) for Minecraft 1.21+",
   "authors": [
     "3arthqu4ke",
     "alpha432",
@@ -29,6 +29,6 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
-    "minecraft": "${minecraft_version}"
+    "minecraft": ">=1.21 <=1.21.11"
   }
 }

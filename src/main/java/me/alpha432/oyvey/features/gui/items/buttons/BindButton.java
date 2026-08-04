@@ -7,8 +7,9 @@ import me.alpha432.oyvey.features.settings.Bind;
 import me.alpha432.oyvey.features.settings.Setting;
 import me.alpha432.oyvey.util.KeyboardUtil;
 import me.alpha432.oyvey.util.render.RenderUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+
+import java.awt.Color;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
@@ -26,14 +27,16 @@ public class BindButton
 
     @Override
     public void drawScreen(GuiGraphics context, int mouseX, int mouseY, float partialTicks) {
-        int color = ClickGuiModule.getInstance().color.getValue().getRGB();
-        RenderUtil.rect(context, this.x, this.y, this.x + (float) this.width + 7.4f, this.y + (float) this.height - 0.5f, this.getState() ? (!this.isHovering(mouseX, mouseY) ? 0x11555555 : -2007673515) : (!this.isHovering(mouseX, mouseY) ? OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().color.getValue().getAlpha()) : OyVey.colorManager.getColorWithAlpha(y, ClickGuiModule.getInstance().topColor.getValue().getAlpha())));
-        if (this.isListening) {
-            drawString("Press a Key...", this.x + 2.3f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), -1);
-        } else {
-            String str = KeyboardUtil.getKeyName(setting.getValue());
-            drawString(this.setting.getName() + " " + ChatFormatting.GRAY + str, this.x + 2.3f, this.y - 1.7f - (float) OyVeyGui.getClickGui().getTextOffset(), this.getState() ? -1 : -5592406);
+        if (this.isHovering(mouseX, mouseY) || this.isListening) {
+            float rad = ClickGuiModule.getInstance().rounding.getValue() * 0.4f;
+            RenderUtil.roundedRect(context, this.x - 2, this.y, this.x + (float) this.width + 8f, this.y + (float) this.height, rad, new Color(255, 255, 255, 26).getRGB());
         }
+        float right = this.x + (float) this.width + 8f;
+        float textY = this.y + this.height / 2f - 4f;
+        drawString("Bind:", this.x, textY, new Color(0xC8, 0xC8, 0xD2).getRGB());
+        String str = this.isListening ? "..." : KeyboardUtil.getKeyName(setting.getValue());
+        drawString(str, right - mc.font.width(str), textY,
+                this.isListening ? OyVey.colorManager.getColorWithAlpha(y, 255) : new Color(0x9A, 0x9A, 0xA6).getRGB());
     }
 
     @Override

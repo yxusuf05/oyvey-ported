@@ -48,10 +48,12 @@ public class OyVeyGui extends Screen {
     }
 
     private void load() {
-        int x = -84;
+        // Six panels of 102px must fit a 640px-wide GUI (1280px at scale 2) without the last one
+        // running off the right edge.
+        int x = -102;
         for (Module.Category category : OyVey.moduleManager.getCategories()) {
             if (category == Module.Category.HUD) continue;
-            Widget panel = new Widget(category.getName(), x += 90, 4, true);
+            Widget panel = new Widget(category.getName(), x += 106, 4, true);
             OyVey.moduleManager.stream()
                     .filter(m -> m.getCategory() == category && !m.hidden)
                     .map(ModuleButton::new)

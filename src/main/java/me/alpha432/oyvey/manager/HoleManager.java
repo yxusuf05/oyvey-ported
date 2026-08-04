@@ -61,7 +61,7 @@ public class HoleManager extends Feature {
     public record Hole(BlockPos pos, HoleType holeType) {
     }
 
-    private enum HoleType {
+    public enum HoleType {
         BEDROCK,
         UNSAFE
     }
