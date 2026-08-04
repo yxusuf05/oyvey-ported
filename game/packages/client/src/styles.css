@@ -48,6 +48,15 @@ body {
   pointer-events: auto;
 }
 
+/* ...with one exception. The hud spans the whole viewport, so the rule above hands it
+   every click meant for the world — including the one that grabs the mouse for looking
+   around. `.hud` sets `pointer-events: none` itself, but a class loses to an id, so the
+   override has to carry `#ui` to win. Without this the game renders fine and the mouse
+   simply does nothing, which reads as a broken camera rather than a CSS problem. */
+#ui > .hud {
+  pointer-events: none;
+}
+
 button,
 input,
 select {

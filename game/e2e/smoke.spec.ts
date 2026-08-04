@@ -74,6 +74,26 @@ test.describe('single player', () => {
     expect(Number.isFinite(Number(after.x))).toBe(true);
   });
 
+  test('a click in the middle of the screen reaches the world, not the hud', async ({ page }) => {
+    await openClient(page);
+    await setName(page, 'Looker');
+    await hostRoom(page);
+    await startRun(page);
+    await step(page, 20);
+
+    // Turning the mouse into a camera means pointer lock, and pointer lock is only granted
+    // to the element that was actually clicked. The hud spans the whole viewport, so if it
+    // takes the click instead, the view simply never turns — no error, no console message,
+    // nothing to search for. This asserts the rule the player cares about: clicking the
+    // world hits the world.
+    const hit = await page.evaluate(() => {
+      const element = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return element ? `${element.tagName.toLowerCase()}#${element.id}` : 'nothing';
+    });
+
+    expect(hit).toBe('canvas#viewport');
+  });
+
   test('the descent darkens the world', async ({ page }) => {
     await openClient(page);
     await setName(page, 'Descender');

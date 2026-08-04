@@ -12,6 +12,13 @@ rem  Optional:  start.bat rebuild   erzwingt neues Installieren und Bauen.
 rem ===========================================================================
 
 setlocal
+
+rem Den eigenen Pfad merken, BEVOR irgendwo hin gewechselt wird. %~f0 wird gegen
+rem das AKTUELLE Verzeichnis aufgeloest, nicht gegen den Skriptort. Wer diese
+rem Datei ueber  call "game\start.bat"  startet, hat in %0 den relativen Pfad
+rem stehen - und nach dem cd unten wuerde daraus  ...\game\game\start.bat.
+set "SELF=%~f0"
+
 cd /d "%~dp0"
 
 if not defined PORT set "PORT=8787"
@@ -105,7 +112,7 @@ echo   Fertig gebaut.
 
 rem --- 4. Browser ----------------------------------------------------------
 
-start "" /min "%~f0" --open-browser
+start "" /min "%SELF%" --open-browser
 
 rem --- 5. Starten ----------------------------------------------------------
 
