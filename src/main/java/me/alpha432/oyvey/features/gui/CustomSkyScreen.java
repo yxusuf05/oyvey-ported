@@ -3,6 +3,7 @@ package me.alpha432.oyvey.features.gui;
 import me.alpha432.oyvey.features.modules.client.ClickGuiModule;
 import me.alpha432.oyvey.features.modules.render.CustomSkyModule;
 import me.alpha432.oyvey.features.settings.Bind;
+import me.alpha432.oyvey.features.settings.Setting;
 import me.alpha432.oyvey.features.sky.SkyLoader;
 import me.alpha432.oyvey.features.sky.SkyPack;
 import me.alpha432.oyvey.features.sky.SkyRegistry;
@@ -57,6 +58,10 @@ public class CustomSkyScreen extends Screen {
     private final List<Hotspot> hotspots = new ArrayList<>();
     private final Map<String, Float> hovers = new HashMap<>();
 
+    private final Map<String, SliderTrack> sliders = new HashMap<>();
+
+    private Tab tab = Tab.SKIES;
+    private String draggingSlider;
     private String category = ALL_CATEGORIES;
     private String search = "";
     private String hoveredDescription;
@@ -123,9 +128,13 @@ public class CustomSkyScreen extends Screen {
         int bodyTop = contentTop + 54;
         int bodyBottom = footerTop - 16;
 
-        List<SkyPack> visible = getVisibleSkies();
+        int paneLeft = contentLeft + RAIL_WIDTH + 18;
         renderRail(context, mouseX, mouseY, contentLeft, bodyTop, bodyBottom);
-        renderGrid(context, mouseX, mouseY, visible, contentLeft + RAIL_WIDTH + 18, bodyTop, contentRight, bodyBottom);
+        if (this.tab == Tab.SKIES) {
+            renderGrid(context, mouseX, mouseY, getVisibleSkies(), paneLeft, bodyTop, contentRight, bodyBottom);
+        } else {
+            renderSettings(context, mouseX, mouseY, paneLeft, bodyTop, contentRight, bodyBottom);
+        }
         renderHeader(context, mouseX, mouseY, contentLeft, contentTop, contentRight);
         renderFooter(context, mouseX, mouseY, contentLeft, footerTop, contentRight);
 
@@ -140,9 +149,12 @@ public class CustomSkyScreen extends Screen {
 
         SkyPack active = SkyRegistry.getActive();
         String subtitle = this.hoveredDescription != null ? this.hoveredDescription
+                : this.tab == Tab.SETTINGS ? "Trim the sky down to what you want to see"
                 : active != null ? "Active: " + active.getName()
                 : "Pick a sky, or keep the vanilla one";
         context.drawString(this.font, this.font.plainSubstrByWidth(subtitle, right - left - 230), left, top + 22, fade(MUTED), false);
+
+        if (this.tab != Tab.SKIES) return;
 
         int searchWidth = Math.min(210, (right - left) / 3);
         int searchX = right - searchWidth;
@@ -155,6 +167,9 @@ public class CustomSkyScreen extends Screen {
     }
 
     private void renderRail(GuiGraphics context, int mouseX, int mouseY, int left, int top, int bottom) {
+        top = renderTabs(context, mouseX, mouseY, left, top) + 14;
+        if (this.tab != Tab.SKIES) return;
+
         List<String> categories = new ArrayList<>();
         categories.add(ALL_CATEGORIES);
         categories.addAll(SkyRegistry.categories());
@@ -184,6 +199,178 @@ public class CustomSkyScreen extends Screen {
             }));
             y += 32;
         }
+    }
+
+    /**
+     * Segmented control at the top of the rail. The selected pill slides between the two
+     * segments instead of blinking over, which is what sells it as a switch.
+     *
+     * @return the bottom edge of the control
+     */
+    private int renderTabs(GuiGraphics context, int mouseX, int mouseY, int left, int top) {
+        int height = 26;
+        int half = RAIL_WIDTH / 2;
+        roundedRect(context, left, top, RAIL_WIDTH, height, 8, fade(0x18FFFFFF));
+
+        float slide = slide("tab", this.tab == Tab.SETTINGS ? 1.0f : 0.0f);
+        int pillX = left + 2 + Math.round(slide * (RAIL_WIDTH - half - 2));
+        roundedRect(context, pillX, top + 2, half, height - 4, 7, fade(accent(0xFF)));
+
+        for (Tab value : Tab.values()) {
+            int segmentX = left + value.ordinal() * (RAIL_WIDTH - half);
+            boolean selected = this.tab == value;
+            float hover = hover("tab:" + value, contains(mouseX, mouseY, segmentX, top, half, height));
+            int textX = segmentX + (half - this.font.width(value.label)) / 2;
+            context.drawString(this.font, value.label, textX, top + 9,
+                    fade(selected ? 0xFFFFFFFF : mix(MUTED, TEXT, hover)), false);
+            this.hotspots.add(new Hotspot(segmentX, top, half, height, () -> {
+                this.tab = value;
+                this.scroll = 0.0f;
+                this.targetScroll = 0.0f;
+            }));
+        }
+        return top + height;
+    }
+
+    private void renderSettings(GuiGraphics context, int mouseX, int mouseY, int left, int top, int right, int bottom) {
+        CustomSkyModule module = CustomSkyModule.getInstance();
+        if (module == null) return;
+
+        this.sliders.clear();
+        int width = right - left;
+        int viewHeight = bottom - top;
+
+        context.enableScissor(left, top, right + 12, bottom);
+        int y = top - Math.round(this.scroll);
+
+        y = section(context, left, y, "Celestial");
+        y = toggle(context, mouseX, mouseY, left, y, width, "Sun", "The vanilla sun disc", module.hideSun);
+        y = toggle(context, mouseX, mouseY, left, y, width, "Moon", "The moon and its phases", module.hideMoon);
+        y = toggle(context, mouseX, mouseY, left, y, width, "Stars", "The vanilla star field at night", module.hideStars);
+        y = toggle(context, mouseX, mouseY, left, y, width, "Sunrise glow", "The orange band at dawn and dusk", module.hideSunrise);
+
+        y = section(context, left, y + 10, "Atmosphere");
+        y = toggle(context, mouseX, mouseY, left, y, width, "Clouds", "Every cloud layer", module.hideClouds);
+        y = toggle(context, mouseX, mouseY, left, y, width, "Rain and snow", "Falling weather, the sound stays", module.hideWeather);
+
+        y = section(context, left, y + 10, "Skybox");
+        y = slider(context, mouseX, mouseY, left, y, width, "Brightness", "Dims the picked sky", module.brightness, "brightness", "%.0f%%", 100.0f);
+        y = toggle(context, mouseX, mouseY, left, y, width, "Turn with the day", "Let the sky follow the sun", module.rotate, false);
+        if (module.rotate.getValue()) {
+            y = slider(context, mouseX, mouseY, left, y, width, "Turn speed", "Multiplier on that rotation", module.speed, "speed", "%.1fx", 1.0f);
+        }
+        y = toggle(context, mouseX, mouseY, left, y, width, "Overworld only", "Keep custom skies out of other dimensions", module.overworldOnly, false);
+
+        context.disableScissor();
+
+        int contentHeight = y + Math.round(this.scroll) - top;
+        float maxScroll = Math.max(0.0f, contentHeight - viewHeight);
+        this.targetScroll = Mth.clamp(this.targetScroll, 0.0f, maxScroll);
+        this.scroll = Mth.clamp(this.scroll, 0.0f, maxScroll);
+        if (maxScroll > 0.0f) {
+            int barHeight = Math.max(28, Math.round(viewHeight * (viewHeight / (float) contentHeight)));
+            int barY = top + Math.round((viewHeight - barHeight) * (this.scroll / maxScroll));
+            roundedRect(context, right + 8, top, 3, viewHeight, 2, fade(0x14FFFFFF));
+            roundedRect(context, right + 8, barY, 3, barHeight, 2, fade(accent(0xC0)));
+        }
+    }
+
+    private int section(GuiGraphics context, int left, int y, String title) {
+        context.pose().pushMatrix();
+        context.pose().scale(0.8f, 0.8f);
+        context.drawString(this.font, title.toUpperCase(Locale.ROOT), Math.round(left / 0.8f), Math.round((y + 4) / 0.8f),
+                fade(0xFF6E6E7A), false);
+        context.pose().popMatrix();
+        return y + 18;
+    }
+
+    private int toggle(GuiGraphics context, int mouseX, int mouseY, int left, int y, int width,
+                       String label, String description, Setting<Boolean> setting) {
+        return toggle(context, mouseX, mouseY, left, y, width, label, description, setting, true);
+    }
+
+    /**
+     * @param inverted true for "hide x" settings, so the switch reads as "x is shown"
+     */
+    private int toggle(GuiGraphics context, int mouseX, int mouseY, int left, int y, int width,
+                       String label, String description, Setting<Boolean> setting, boolean inverted) {
+        int height = 36;
+        boolean on = inverted != setting.getValue();
+        float hover = hover("row:" + label, contains(mouseX, mouseY, left, y, width, height));
+        if (hover > 0.01f) {
+            roundedRect(context, left - 6, y, width + 12, height, 8, fade(ARGB.color(Math.round(hover * 16.0f), 0xFFFFFF)));
+        }
+
+        context.drawString(this.font, label, left, y + 8, fade(TEXT), false);
+        context.pose().pushMatrix();
+        context.pose().scale(0.8f, 0.8f);
+        context.drawString(this.font, description, Math.round(left / 0.8f), Math.round((y + 21) / 0.8f), fade(0xFF6E6E7A), false);
+        context.pose().popMatrix();
+
+        int trackWidth = 32;
+        int trackHeight = 18;
+        int trackX = left + width - trackWidth;
+        int trackY = y + (height - trackHeight) / 2;
+        float progress = slide("switch:" + label, on ? 1.0f : 0.0f);
+
+        roundedRect(context, trackX, trackY, trackWidth, trackHeight, 9,
+                fade(mix(0x33FFFFFF, accent(0xFF), progress)));
+        int knob = trackHeight - 4;
+        int knobX = trackX + 2 + Math.round(progress * (trackWidth - knob - 4));
+        roundedRect(context, knobX, trackY + 2, knob, knob, knob / 2, fade(0xFFFFFFFF));
+
+        this.hotspots.add(new Hotspot(left - 6, y, width + 12, height, () -> setting.setValue(!setting.getValue())));
+        return y + height;
+    }
+
+    private int slider(GuiGraphics context, int mouseX, int mouseY, int left, int y, int width,
+                       String label, String description, Setting<Float> setting, String key, String format, float displayScale) {
+        int height = 36;
+        float hover = hover("row:" + label, contains(mouseX, mouseY, left, y, width, height));
+        if (hover > 0.01f) {
+            roundedRect(context, left - 6, y, width + 12, height, 8, fade(ARGB.color(Math.round(hover * 16.0f), 0xFFFFFF)));
+        }
+
+        context.drawString(this.font, label, left, y + 8, fade(TEXT), false);
+        context.pose().pushMatrix();
+        context.pose().scale(0.8f, 0.8f);
+        context.drawString(this.font, description, Math.round(left / 0.8f), Math.round((y + 21) / 0.8f), fade(0xFF6E6E7A), false);
+        context.pose().popMatrix();
+
+        int trackWidth = Math.min(96, Math.max(48, width / 3));
+        int trackX = left + width - trackWidth;
+        int trackY = y + height / 2 - 1;
+        float min = setting.getMin();
+        float max = setting.getMax();
+        float progress = max <= min ? 0.0f : Mth.clamp((setting.getValue() - min) / (max - min), 0.0f, 1.0f);
+
+        roundedRect(context, trackX, trackY, trackWidth, 4, 2, fade(0x33FFFFFF));
+        roundedRect(context, trackX, trackY, Math.max(4, Math.round(trackWidth * progress)), 4, 2, fade(accent(0xFF)));
+        int knobX = trackX + Math.round((trackWidth - 10) * progress);
+        roundedRect(context, knobX, trackY - 3, 10, 10, 5, fade(0xFFFFFFFF));
+
+        String value = String.format(Locale.ROOT, format, setting.getValue() * displayScale);
+        context.pose().pushMatrix();
+        context.pose().scale(0.8f, 0.8f);
+        context.drawString(this.font, value, Math.round((trackX - 8 - this.font.width(value) * 0.8f) / 0.8f),
+                Math.round((y + 13) / 0.8f), fade(MUTED), false);
+        context.pose().popMatrix();
+
+        this.sliders.put(key, new SliderTrack(trackX, trackWidth, setting));
+        this.hotspots.add(new Hotspot(trackX - 6, y, trackWidth + 12, height, () -> {
+            this.draggingSlider = key;
+            applySlider(key, mouseX);
+        }));
+        return y + height;
+    }
+
+    private void applySlider(String key, int mouseX) {
+        SliderTrack track = this.sliders.get(key);
+        if (track == null) return;
+        float min = track.setting().getMin();
+        float max = track.setting().getMax();
+        float progress = Mth.clamp((mouseX - track.x()) / (float) track.width(), 0.0f, 1.0f);
+        track.setting().setValue(min + (max - min) * progress);
     }
 
     private void renderGrid(GuiGraphics context, int mouseX, int mouseY, List<SkyPack> skies,
@@ -330,6 +517,21 @@ public class CustomSkyScreen extends Screen {
     }
 
     @Override
+    public boolean mouseDragged(MouseButtonEvent click, double dragX, double dragY) {
+        if (this.draggingSlider != null) {
+            applySlider(this.draggingSlider, Math.round((float) click.x() / this.uiScale));
+            return true;
+        }
+        return super.mouseDragged(click, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent click) {
+        this.draggingSlider = null;
+        return super.mouseReleased(click);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         this.targetScroll -= (float) verticalAmount * 46.0f;
         return true;
@@ -362,6 +564,7 @@ public class CustomSkyScreen extends Screen {
     @Override
     public boolean charTyped(CharacterEvent input) {
         if (this.listeningForBind) return true;
+        if (this.tab != Tab.SKIES) return true;
         this.search += input.codepointAsString();
         this.targetScroll = 0.0f;
         return true;
@@ -397,9 +600,20 @@ public class CustomSkyScreen extends Screen {
     }
 
     private float hover(String key, boolean hovered) {
-        float current = this.hovers.getOrDefault(key, 0.0f);
-        float target = hovered ? 1.0f : 0.0f;
-        float next = current + (target - current) * Math.min(1.0f, this.frameSeconds * 14.0f);
+        return ease(key, hovered ? 1.0f : 0.0f, 14.0f);
+    }
+
+    /**
+     * Slower than a hover so the travel of a switch knob or a tab pill is actually readable.
+     */
+    private float slide(String key, float target) {
+        return ease(key, target, 11.0f);
+    }
+
+    private float ease(String key, float target, float speed) {
+        float current = this.hovers.getOrDefault(key, target);
+        float next = current + (target - current) * Math.min(1.0f, this.frameSeconds * speed);
+        if (Math.abs(target - next) < 0.001f) next = target;
         this.hovers.put(key, next);
         return next;
     }
@@ -525,6 +739,20 @@ public class CustomSkyScreen extends Screen {
 
     private static boolean contains(int mouseX, int mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
+
+    private enum Tab {
+        SKIES("Skies"),
+        SETTINGS("Settings");
+
+        private final String label;
+
+        Tab(String label) {
+            this.label = label;
+        }
+    }
+
+    private record SliderTrack(int x, int width, Setting<Float> setting) {
     }
 
     private record Hotspot(int x, int y, int width, int height, Runnable action) {

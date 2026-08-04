@@ -12,16 +12,29 @@ changes the moment you click one.
 * Click a sky to turn it on, click it again or hit **Turn off** to go back to the vanilla sky.
 * The choice is stored in `modules.json` and comes back after a restart.
 * Categories are on the left, the search box in the top right filters by name and category.
+* The **Settings** tab next to them holds the clean up switches, see below.
 
-Module settings (ClickGui or `.customsky <setting> <value>`):
+## Settings
 
-| Setting | What it does |
-| --- | --- |
-| `Brightness` | Dims the whole skybox, `1` is the texture as authored |
-| `Rotate` | Whether skies that ask for it turn with the day |
-| `Speed` | Multiplier on that rotation |
-| `HideSun` / `HideMoon` / `HideStars` | Removes the vanilla celestial bodies |
-| `OverworldOnly` | Keeps the custom sky out of other dimensions |
+The **Settings** tab of the picker holds everything else. The same values are also reachable in
+the ClickGui or with `.customsky <setting> <value>`.
+
+| Setting | Tab label | What it does |
+| --- | --- | --- |
+| `HideSun` | Sun | Removes the vanilla sun disc |
+| `HideMoon` | Moon | Removes the moon and its phases |
+| `HideStars` | Stars | Removes the vanilla star field |
+| `HideSunrise` | Sunrise glow | Removes the orange band at dawn and dusk |
+| `HideClouds` | Clouds | Removes every cloud layer |
+| `HideWeather` | Rain and snow | Removes falling weather, the sound stays |
+| `Brightness` | Brightness | Dims the picked sky, `1` is the texture as authored |
+| `Rotate` | Turn with the day | Whether skies that ask for it turn with the sun |
+| `Speed` | Turn speed | Multiplier on that rotation |
+| `OverworldOnly` | Overworld only | Keeps the custom sky out of other dimensions |
+
+The switches in the tab read as "this is shown", so turning **Sun** off is what sets `HideSun`.
+They work on their own and do not need a sky to be picked, so the vanilla sky can be cleaned up
+without replacing it.
 
 ## Adding skies to the mod itself
 

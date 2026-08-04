@@ -21,6 +21,9 @@ public class CustomSkyModule extends Module {
     public final Setting<Boolean> hideSun = bool("HideSun", false);
     public final Setting<Boolean> hideMoon = bool("HideMoon", false);
     public final Setting<Boolean> hideStars = bool("HideStars", false);
+    public final Setting<Boolean> hideSunrise = bool("HideSunrise", false);
+    public final Setting<Boolean> hideClouds = bool("HideClouds", false);
+    public final Setting<Boolean> hideWeather = bool("HideWeather", false);
     public final Setting<Boolean> overworldOnly = bool("OverworldOnly", true);
 
     public CustomSkyModule() {

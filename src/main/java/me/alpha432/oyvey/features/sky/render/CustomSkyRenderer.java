@@ -23,6 +23,8 @@ import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.function.Predicate;
+
 /**
  * Draws the selected sky as a cube around the camera, from inside vanillas sky pass so that
  * everything behind it (the sky colour) is already there and everything after it (sun, moon,
@@ -43,18 +45,35 @@ public final class CustomSkyRenderer implements Util {
     }
 
     public static boolean shouldHideSun() {
-        CustomSkyModule module = getModule();
-        return module != null && module.hideSun.getValue() && getRenderedSky() != null;
+        return isSet(module -> module.hideSun.getValue());
     }
 
     public static boolean shouldHideMoon() {
-        CustomSkyModule module = getModule();
-        return module != null && module.hideMoon.getValue() && getRenderedSky() != null;
+        return isSet(module -> module.hideMoon.getValue());
     }
 
     public static boolean shouldHideStars() {
+        return isSet(module -> module.hideStars.getValue());
+    }
+
+    public static boolean shouldHideSunrise() {
+        return isSet(module -> module.hideSunrise.getValue());
+    }
+
+    public static boolean shouldHideClouds() {
+        return isSet(module -> module.hideClouds.getValue());
+    }
+
+    public static boolean shouldHideWeather() {
+        return isSet(module -> module.hideWeather.getValue());
+    }
+
+    /**
+     * The clean up toggles stand on their own, they do not need a custom sky to be picked.
+     */
+    private static boolean isSet(Predicate<CustomSkyModule> flag) {
         CustomSkyModule module = getModule();
-        return module != null && module.hideStars.getValue() && getRenderedSky() != null;
+        return module != null && flag.test(module);
     }
 
     /**

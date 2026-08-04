@@ -2,17 +2,21 @@ package me.alpha432.oyvey.mixin.render;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import me.alpha432.oyvey.event.impl.render.Render3DEvent;
 import me.alpha432.oyvey.event.impl.render.RenderBlockOutlineEvent;
+import me.alpha432.oyvey.features.sky.render.CustomSkyRenderer;
 import net.minecraft.client.Camera;
+import net.minecraft.client.CloudStatus;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,6 +34,17 @@ public class MixinLevelRenderer {
         if (EVENT_BUS.post(new RenderBlockOutlineEvent())) {
             ci.cancel();
         }
+    }
+
+    @Inject(method = "addCloudsPass", at = @At("HEAD"), cancellable = true)
+    private void addCloudsPass(FrameGraphBuilder frameGraphBuilder, CloudStatus cloudStatus, Vec3 cameraPosition,
+                               long ticks, float partialTick, int color, float height, CallbackInfo ci) {
+        if (CustomSkyRenderer.shouldHideClouds()) ci.cancel();
+    }
+
+    @Inject(method = "addWeatherPass", at = @At("HEAD"), cancellable = true)
+    private void addWeatherPass(FrameGraphBuilder frameGraphBuilder, GpuBufferSlice fogBuffer, CallbackInfo ci) {
+        if (CustomSkyRenderer.shouldHideWeather()) ci.cancel();
     }
 
     @Inject(method = "renderLevel", at = @At("RETURN"))

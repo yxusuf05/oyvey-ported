@@ -32,4 +32,9 @@ public class MixinSkyRenderer {
     private void hideStars(float brightness, PoseStack poseStack, CallbackInfo ci) {
         if (CustomSkyRenderer.shouldHideStars()) ci.cancel();
     }
+
+    @Inject(method = "renderSunriseAndSunset", at = @At("HEAD"), cancellable = true)
+    private void hideSunrise(PoseStack poseStack, float sunAngle, int color, CallbackInfo ci) {
+        if (CustomSkyRenderer.shouldHideSunrise()) ci.cancel();
+    }
 }
