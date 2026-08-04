@@ -1,0 +1,54 @@
+{
+  "_comment": [
+    "Skies that ship inside the mod jar. Add an entry here and drop the sheet into",
+    "assets/oyvey/textures/sky to hand out a new sky with the next build.",
+    "Sheets use the OptiFine layout: three columns by two rows,",
+    "top row bottom/top/east, bottom row south/west/north.",
+    "Per layer keys: texture, blend, rotate, speed, axis,",
+    "startFadeIn, endFadeIn, startFadeOut, endFadeOut, weather."
+  ],
+  "skies": [
+    {
+      "id": "midnight",
+      "name": "Midnight",
+      "category": "Night",
+      "description": "Deep blue night with the milky way arching overhead.",
+      "layers": [
+        {
+          "texture": "oyvey:textures/sky/midnight.png",
+          "blend": "replace",
+          "rotate": true,
+          "speed": 1.0
+        }
+      ]
+    },
+    {
+      "id": "nebula",
+      "name": "Nebula",
+      "category": "Space",
+      "description": "Coloured gas clouds and a dense star field.",
+      "layers": [
+        {
+          "texture": "oyvey:textures/sky/nebula.png",
+          "blend": "replace",
+          "rotate": true,
+          "speed": 1.0
+        }
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "category": "Night",
+      "description": "Northern lights over a quiet star field.",
+      "layers": [
+        {
+          "texture": "oyvey:textures/sky/aurora.png",
+          "blend": "replace",
+          "rotate": true,
+          "speed": 1.0
+        }
+      ]
+    }
+  ]
+}

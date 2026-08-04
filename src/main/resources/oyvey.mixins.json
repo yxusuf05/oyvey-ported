@@ -13,6 +13,7 @@
     "network.MixinClientPacketListener",
     "render.MixinChatComponent",
     "render.MixinLevelRenderer",
+    "render.MixinSkyRenderer",
     "render.MixinDeltaTrackerTimer",
     "render.gui.MixinCommandSuggestions",
     "render.gui.MixinGui"
