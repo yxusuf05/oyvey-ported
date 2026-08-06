@@ -61,6 +61,22 @@ Keep ids lowercase and use dashes. Bundled sheets grow the jar, so keep them few
 Anything inside `.minecraft/skyloom/skies` is picked up as well, as a folder or as a zip. Hit
 **Reload** in the picker after dropping something in. Three shapes are understood:
 
+**0. A folder holding several packs**
+
+You can drop a whole downloaded collection in as one folder or zip. Every sky definition found
+inside becomes its own entry, named after the folder it sits in, so nothing has to be renamed or
+pulled apart by hand:
+
+```
+skies/
+└── Downloads/
+    ├── Absol/assets/minecraft/optifine/sky/world0/...   -> "Absol"
+    ├── Nebula/assets/minecraft/optifine/sky/world0/...  -> "Nebula"
+    └── Sunset/assets/minecraft/optifine/sky/world0/...  -> "Sunset"
+```
+
+Identical file names inside those packs do not clash, they are only read within their own folder.
+
 **1. A folder or zip with a `sky.json`**
 
 ```

@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -44,6 +45,7 @@ public final class SkyLoader {
     private static final String BUILTIN_INDEX = "/assets/skyloom/skies/index.json";
     private static final String PACK_MANIFEST = "sky.json";
 
+    private static final Set<String> SCAFFOLDING = Set.of("assets", "minecraft", "optifine", "mcpatcher", "sky", "world0");
     private static final Pattern OTHER_WORLD = Pattern.compile("/world-?(?!0/)\\d+/");
 
     private SkyLoader() {
@@ -124,22 +126,38 @@ public final class SkyLoader {
             if (!Files.isDirectory(candidate) && !zip) continue;
 
             try (PackSource source = zip ? new ZipSource(candidate) : new DirectorySource(candidate)) {
-                SkyPack pack = readExternal(source, uniqueId(out, packId(stripExtension(candidate.getFileName().toString()))));
-                if (pack != null && !pack.getLayers().isEmpty()) out.put(pack.getId(), pack);
+                for (SkyPack pack : readExternal(source, out)) {
+                    if (!pack.getLayers().isEmpty()) out.put(pack.getId(), pack);
+                }
             } catch (Throwable throwable) {
                 LOGGER.error("Failed to load sky pack {}", candidate.getFileName(), throwable);
             }
         }
     }
 
-    private static SkyPack readExternal(PackSource source, String id) throws IOException {
-        String manifest = source.find(PACK_MANIFEST);
-        if (manifest != null) {
+    /**
+     * A folder or zip may hold one pack or a whole downloaded collection of them, so every
+     * sky definition inside it becomes its own entry rather than one pile of layers.
+     */
+    private static List<SkyPack> readExternal(PackSource source, Map<String, SkyPack> out) throws IOException {
+        List<SkyPack> packs = new ArrayList<>();
+
+        List<String> manifests = new ArrayList<>();
+        for (String entry : source.entries()) {
+            if (fileName(entry).equalsIgnoreCase(PACK_MANIFEST)) manifests.add(entry);
+        }
+        manifests.sort(Comparator.naturalOrder());
+        for (String manifest : manifests) {
+            String id = uniqueId(out, packs, packId(nameFor(source, parentOf(manifest))));
             byte[] data = source.read(manifest);
             JsonObject object = JsonParser.parseString(new String(data, StandardCharsets.UTF_8)).getAsJsonObject();
-            return readManifest(object, id, true, path -> sheetTexture(source, id, resolveSibling(manifest, path)));
+            SkyPack pack = readManifest(object, id, true, path -> sheetTexture(source, id, resolveSibling(manifest, path)));
+            if (pack != null) packs.add(pack);
         }
-        return readOptiFine(source, id);
+        if (!packs.isEmpty()) return packs;
+
+        packs.addAll(readOptiFine(source, out));
+        return packs;
     }
 
     /**
@@ -205,34 +223,71 @@ public final class SkyLoader {
     // OptiFine / MCPatcher packs
     // -----------------------------------------------------------------------------------------
 
-    private static SkyPack readOptiFine(PackSource source, String id) throws IOException {
-        List<String> properties = new ArrayList<>();
+    private static List<SkyPack> readOptiFine(PackSource source, Map<String, SkyPack> out) throws IOException {
+        // properties sitting in the same folder belong to the same sky, a second folder is a second sky
+        Map<String, List<String>> byFolder = new LinkedHashMap<>();
         for (String entry : source.entries()) {
             String lower = entry.toLowerCase(Locale.ROOT);
             if (!lower.endsWith(".properties")) continue;
             if (!lower.contains("sky/") && !fileName(lower).startsWith("sky")) continue;
             if (OTHER_WORLD.matcher(lower).find()) continue; // world1 is the End, vanilla keeps its own sky there
-            properties.add(entry);
-        }
-        properties.sort(Comparator.comparingInt(SkyLoader::layerNumber).thenComparing(entry -> entry));
-
-        List<SkyLayer> layers = new ArrayList<>();
-        for (String entry : properties) {
-            SkyLayer layer = readOptiFineLayer(source, id, entry);
-            if (layer != null) layers.add(layer);
+            byFolder.computeIfAbsent(parentOf(entry), key -> new ArrayList<>()).add(entry);
         }
 
-        if (layers.isEmpty()) {
-            // a bare folder holding nothing but a skybox sheet is still a perfectly good sky
-            for (String entry : source.entries()) {
-                if (!entry.toLowerCase(Locale.ROOT).endsWith(".png") || entry.contains("/")) continue;
-                SkyTexture texture = sheetTexture(source, id, entry);
-                if (texture != null) layers.add(SkyLayer.builder(texture).blend(BlendMode.REPLACE).build());
+        List<SkyPack> packs = new ArrayList<>();
+        for (Map.Entry<String, List<String>> folder : byFolder.entrySet()) {
+            String name = nameFor(source, folder.getKey());
+            String id = uniqueId(out, packs, packId(name));
+            List<String> properties = folder.getValue();
+            properties.sort(Comparator.comparingInt(SkyLoader::layerNumber).thenComparing(entry -> entry));
+
+            List<SkyLayer> layers = new ArrayList<>();
+            for (String entry : properties) {
+                SkyLayer layer = readOptiFineLayer(source, id, entry);
+                if (layer != null) layers.add(layer);
+            }
+            if (layers.isEmpty()) continue;
+            packs.add(new SkyPack(id, prettify(name), "OptiFine", "Loaded from " + source.name(),
+                    layers, thumbnailOf(layers), true));
+        }
+        if (!packs.isEmpty()) return packs;
+
+        // nothing configured at all, so every sheet lying around counts as a sky of its own
+        for (String entry : source.entries()) {
+            if (!entry.toLowerCase(Locale.ROOT).endsWith(".png")) continue;
+            String name = stripExtension(fileName(entry));
+            String id = uniqueId(out, packs, packId(name));
+            SkyTexture texture = sheetTexture(source, id, entry);
+            if (texture == null) continue;
+            List<SkyLayer> layers = List.of(SkyLayer.builder(texture).blend(BlendMode.REPLACE).build());
+            packs.add(new SkyPack(id, prettify(name), "Sheets", "Loaded from " + source.name(),
+                    layers, thumbnailOf(layers), true));
+        }
+        return packs;
+    }
+
+    /**
+     * Names a sky after the folder its definition sits in, skipping the resource pack scaffolding
+     * so {@code MySky/assets/minecraft/optifine/sky/world0} simply reads as "MySky".
+     */
+    private static String nameFor(PackSource source, String folder) {
+        String path = folder;
+        for (String tail : new String[]{"/sky/world0", "/sky", "/optifine", "/mcpatcher", "/minecraft", "/assets"}) {
+            while (path.toLowerCase(Locale.ROOT).endsWith(tail)) {
+                path = path.substring(0, path.length() - tail.length());
             }
         }
+        String name = fileName(path);
+        // nothing but scaffolding left means the pack root is the folder the user dropped in
+        if (name.isBlank() || SCAFFOLDING.contains(name.toLowerCase(Locale.ROOT))) {
+            return stripExtension(source.name());
+        }
+        return name;
+    }
 
-        if (layers.isEmpty()) return null;
-        return new SkyPack(id, prettify(id), "OptiFine", "Loaded from " + source.name(), layers, thumbnailOf(layers), true);
+    private static String parentOf(String entry) {
+        int slash = entry.lastIndexOf('/');
+        return slash < 0 ? "" : entry.substring(0, slash);
     }
 
     private static SkyLayer readOptiFineLayer(PackSource source, String id, String entry) throws IOException {
@@ -375,11 +430,19 @@ public final class SkyLoader {
         return id.isBlank() ? "pack" : id;
     }
 
-    private static String uniqueId(Map<String, SkyPack> out, String id) {
+    private static String uniqueId(Map<String, SkyPack> out, List<SkyPack> pending, String id) {
         String unique = id;
         int suffix = 2;
-        while (out.containsKey(unique)) unique = id + "-" + suffix++;
+        while (taken(out, pending, unique)) unique = id + "-" + suffix++;
         return unique;
+    }
+
+    private static boolean taken(Map<String, SkyPack> out, List<SkyPack> pending, String id) {
+        if (out.containsKey(id)) return true;
+        for (SkyPack pack : pending) {
+            if (pack.getId().equals(id)) return true;
+        }
+        return false;
     }
 
     private static String prettify(String id) {
