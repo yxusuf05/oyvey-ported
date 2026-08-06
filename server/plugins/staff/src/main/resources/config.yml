@@ -1,0 +1,27 @@
+# NetworkStaff — moderation.
+
+# Used when a punishment command is issued without a reason.
+default-reason: "Kein Grund angegeben"
+
+# Announce bans, kicks and mutes to everyone (warns are always staff only).
+broadcast-punishments: true
+
+# How many entries /history and /banlist show.
+history-size: 15
+banlist-size: 25
+
+# How often expired bans and mutes are marked as inactive.
+expiry-check-minutes: 5
+
+# Commands a muted player may not use.
+muted-blocked-commands:
+  - msg
+  - w
+  - tell
+  - whisper
+  - m
+  - reply
+  - r
+  - me
+  - broadcast
+  - bc

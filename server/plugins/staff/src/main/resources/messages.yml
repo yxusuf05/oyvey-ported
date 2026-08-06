@@ -1,0 +1,71 @@
+prefix: "<dark_gray>[<red>Team<dark_gray>] <gray>"
+
+type:
+  kick: "Kick"
+  ban: "Bann"
+  mute: "Mute"
+  warn: "Verwarnung"
+
+punish:
+  usage: "<prefix><yellow>Verwendung: <white>/<command> <spieler> [grund]"
+  usage-timed: "<prefix><yellow>Verwendung: <white>/<command> <spieler> <dauer> [grund] <gray>— Dauer z.B. 30m, 6h, 7d"
+  bad-duration: "<prefix><red><white><input></white> ist keine gültige Dauer. Beispiele: 30m, 6h, 7d, 2w"
+  unknown-player: "<prefix><red><white><name></white> war noch nie auf dem Server."
+  protected: "<prefix><red>Gegen <white><player></white> kannst du nicht vorgehen."
+  already-active: "<prefix><red><white><player></white> hat bereits einen aktiven <type>."
+  done: "<prefix><green><type> <gray>gegen <white><player></white> <dark_gray>(<duration>) <gray>— <white><reason></white>"
+  broadcast-staff: "<dark_gray>[<red>Team<dark_gray>] <white><actor></white> <gray>→ <type> <white><player></white> <dark_gray>(<duration>) <gray><reason>"
+  broadcast-public: "<dark_gray>[<red>!<dark_gray>] <white><player></white> <gray>wurde bestraft <dark_gray>(<type>, <duration>) <gray>— <white><reason></white>"
+  warn-notify: "<prefix><red>Du wurdest von <white><actor></white> verwarnt: <white><reason></white>"
+  muted-permanent: "<prefix><red>Du bist dauerhaft stummgeschaltet. <gray>Grund: <white><reason></white>"
+  muted-temporary: "<prefix><red>Du bist noch <white><time></white> stummgeschaltet. <gray>Grund: <white><reason></white>"
+
+lift:
+  usage: "<prefix><yellow>Verwendung: <white>/<command> <spieler>"
+  nothing-active: "<prefix><red><white><player></white> hat keinen aktiven <type>."
+  done: "<prefix><green><type> von <white><player></white> aufgehoben."
+  broadcast: "<dark_gray>[<red>Team<dark_gray>] <white><actor></white> <gray>hat den <type> von <white><player></white> aufgehoben."
+  notify-unmute: "<prefix><green>Du darfst wieder schreiben."
+
+history:
+  usage: "<prefix><yellow>Verwendung: <white>/history <spieler>"
+  empty: "<prefix><gray><white><player></white> hat eine saubere Weste."
+  header: "<prefix><yellow>Strafen von <white><player></white> <dark_gray>(<count>)<yellow>:"
+  line: "<gray>  <white><type></white> <dark_gray>| <gray><reason> <dark_gray>| <gray>von <white><actor></white> <dark_gray>| <gray><date> <dark_gray>| <state>"
+  state-active: "<red>aktiv, noch <time>"
+  state-permanent: "<dark_red>permanent"
+  state-expired: "<gray>abgelaufen"
+  state-lifted: "<green>aufgehoben"
+
+banlist:
+  empty: "<prefix><gray>Es gibt keine aktiven Banns."
+  header: "<prefix><yellow>Aktive Banns <dark_gray>(<count>)<yellow>:"
+  line: "<gray>  <white><player></white> <dark_gray>| <gray><reason> <dark_gray>| <gray>von <white><actor></white> <dark_gray>| <red><time></red>"
+
+staffchat:
+  usage: "<prefix><yellow>Verwendung: <white>/staffchat <nachricht>"
+  enabled: "<prefix><green>Staff-Chat aktiviert — alles was du schreibst geht ins Team."
+  disabled: "<prefix><gray>Staff-Chat deaktiviert."
+  format: "<dark_gray>[<red>Team<dark_gray>] <white><player></white> <dark_gray>» <gray><message>"
+
+screen:
+  ban-permanent:
+    - "<red><bold>Du wurdest permanent gebannt"
+    - ""
+    - "<gray>Grund: <white><reason>"
+    - "<gray>Von: <white><actor>"
+    - ""
+    - "<dark_gray>Du meinst, das war ein Fehler? Melde dich beim Team."
+  ban-temporary:
+    - "<red><bold>Du wurdest temporär gebannt"
+    - ""
+    - "<gray>Grund: <white><reason>"
+    - "<gray>Von: <white><actor>"
+    - "<gray>Verbleibend: <white><time>"
+    - ""
+    - "<dark_gray>Du meinst, das war ein Fehler? Melde dich beim Team."
+  kick:
+    - "<red><bold>Du wurdest vom Server geworfen"
+    - ""
+    - "<gray>Grund: <white><reason>"
+    - "<gray>Von: <white><actor>"

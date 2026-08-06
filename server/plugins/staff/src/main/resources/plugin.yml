@@ -1,0 +1,80 @@
+name: NetworkStaff
+version: '${version}'
+main: me.alpha432.network.staff.StaffPlugin
+api-version: '1.21'
+author: alpha432
+description: 'Moderation - kick, ban, mute, warn, punishment history and staff chat.'
+depend: [NetworkCore]
+commands:
+  kick:
+    description: Kick a player.
+    usage: /kick <player> [reason]
+  ban:
+    description: Ban a player permanently.
+    usage: /ban <player> [reason]
+  tempban:
+    description: Ban a player for a while.
+    usage: /tempban <player> <duration> [reason]
+  unban:
+    description: Lift a ban.
+    usage: /unban <player>
+    aliases: [pardon]
+  mute:
+    description: Mute a player permanently.
+    usage: /mute <player> [reason]
+  tempmute:
+    description: Mute a player for a while.
+    usage: /tempmute <player> <duration> [reason]
+  unmute:
+    description: Lift a mute.
+    usage: /unmute <player>
+  warn:
+    description: Warn a player.
+    usage: /warn <player> [reason]
+  history:
+    description: Show the punishment history of a player.
+    usage: /history <player>
+    aliases: [punishments]
+  banlist:
+    description: List the active bans.
+    usage: /banlist
+  staffchat:
+    description: Talk in the staff channel.
+    usage: /staffchat [message]
+    aliases: [sc]
+permissions:
+  network.staff:
+    description: Marks a player as staff.
+    default: op
+  network.staff.kick:
+    default: op
+  network.staff.mute:
+    default: op
+  network.staff.tempmute:
+    default: op
+  network.staff.unmute:
+    default: op
+  network.staff.warn:
+    default: op
+  network.staff.tempban:
+    default: op
+  network.staff.ban:
+    default: op
+  network.staff.unban:
+    default: op
+  network.staff.banlist:
+    default: op
+  network.staff.history:
+    description: See your own punishments given to others.
+    default: op
+  network.staff.history.all:
+    description: See every punishment of a player.
+    default: op
+  network.staff.staffchat:
+    default: op
+  network.staff.clear:
+    description: Delete punishments from the history.
+    default: op
+  network.staff.bypass:
+    description: Cannot be punished by other staff.
+    default: op
