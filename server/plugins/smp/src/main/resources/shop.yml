@@ -1,0 +1,140 @@
+# Shop of the SMP.
+# buy = price the player pays, sell = payout the player receives. 0 disables that direction.
+# amount = how many items one purchase or sale covers.
+# The sell payout is increased by the rank perk network.smp.sellbonus.<percent>.
+
+categories:
+
+  bloecke:
+    display-name: "<gray>Blöcke"
+    icon: STONE
+    slot: 10
+    items:
+      stone:
+        material: STONE
+        buy: 4.0
+        sell: 1.0
+        amount: 16
+      cobblestone:
+        material: COBBLESTONE
+        buy: 2.0
+        sell: 0.5
+        amount: 32
+      dirt:
+        material: DIRT
+        buy: 2.0
+        sell: 0.4
+        amount: 32
+      sand:
+        material: SAND
+        buy: 3.0
+        sell: 0.8
+        amount: 16
+      glass:
+        material: GLASS
+        buy: 8.0
+        sell: 2.0
+        amount: 16
+
+  rohstoffe:
+    display-name: "<aqua>Rohstoffe"
+    icon: IRON_INGOT
+    slot: 12
+    items:
+      coal:
+        material: COAL
+        buy: 6.0
+        sell: 2.0
+        amount: 8
+      iron:
+        material: IRON_INGOT
+        buy: 25.0
+        sell: 9.0
+        amount: 4
+      gold:
+        material: GOLD_INGOT
+        buy: 40.0
+        sell: 15.0
+        amount: 4
+      redstone:
+        material: REDSTONE
+        buy: 15.0
+        sell: 5.0
+        amount: 16
+      lapis:
+        material: LAPIS_LAZULI
+        buy: 18.0
+        sell: 6.0
+        amount: 16
+      diamond:
+        material: DIAMOND
+        buy: 250.0
+        sell: 90.0
+        amount: 1
+      emerald:
+        material: EMERALD
+        buy: 200.0
+        sell: 75.0
+        amount: 1
+      netherite_scrap:
+        material: NETHERITE_SCRAP
+        buy: 1200.0
+        sell: 450.0
+        amount: 1
+
+  essen:
+    display-name: "<gold>Essen"
+    icon: COOKED_BEEF
+    slot: 14
+    items:
+      bread:
+        material: BREAD
+        buy: 6.0
+        sell: 1.5
+        amount: 16
+      cooked_beef:
+        material: COOKED_BEEF
+        buy: 12.0
+        sell: 4.0
+        amount: 16
+      golden_apple:
+        material: GOLDEN_APPLE
+        buy: 180.0
+        sell: 60.0
+        amount: 1
+      wheat:
+        material: WHEAT
+        buy: 0.0
+        sell: 1.0
+        amount: 16
+      carrot:
+        material: CARROT
+        buy: 0.0
+        sell: 1.0
+        amount: 16
+
+  kampf:
+    display-name: "<red>Kampf"
+    icon: DIAMOND_SWORD
+    slot: 16
+    items:
+      arrow:
+        material: ARROW
+        buy: 10.0
+        sell: 2.0
+        amount: 32
+      ender_pearl:
+        material: ENDER_PEARL
+        buy: 90.0
+        sell: 30.0
+        amount: 2
+      tnt:
+        material: TNT
+        buy: 150.0
+        sell: 0.0
+        amount: 4
+      shield:
+        material: SHIELD
+        buy: 120.0
+        sell: 0.0
+        amount: 1

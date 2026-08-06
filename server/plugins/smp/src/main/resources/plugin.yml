@@ -1,0 +1,96 @@
+name: NetworkSMP
+version: '${version}'
+main: me.alpha432.network.smp.SmpPlugin
+api-version: '1.21'
+author: alpha432
+description: 'Survival area - spawn, homes, warps, teleport requests, kits, economy and shop.'
+depend: [NetworkCore]
+commands:
+  spawn:
+    description: Teleport to the SMP spawn.
+    usage: /spawn
+  setspawn:
+    description: Set the SMP spawn.
+    usage: /setspawn
+  home:
+    description: Teleport to one of your homes.
+    usage: /home [name]
+    aliases: [h]
+  sethome:
+    description: Save your position as a home.
+    usage: /sethome [name]
+  delhome:
+    description: Delete one of your homes.
+    usage: /delhome <name>
+  homes:
+    description: List your homes.
+    usage: /homes
+  warp:
+    description: Teleport to a warp.
+    usage: /warp [name]
+  setwarp:
+    description: Create a warp at your position.
+    usage: /setwarp <name>
+  delwarp:
+    description: Delete a warp.
+    usage: /delwarp <name>
+  warps:
+    description: List all warps.
+    usage: /warps
+  tpa:
+    description: Ask a player to teleport to them.
+    usage: /tpa <player>
+  tpahere:
+    description: Ask a player to teleport to you.
+    usage: /tpahere <player>
+  tpaccept:
+    description: Accept a teleport request.
+    usage: /tpaccept [player]
+    aliases: [tpyes]
+  tpdeny:
+    description: Deny a teleport request.
+    usage: /tpdeny [player]
+    aliases: [tpno]
+  back:
+    description: Return to your previous position.
+    usage: /back
+  rtp:
+    description: Teleport to a random position.
+    usage: /rtp
+    aliases: [wild]
+  kit:
+    description: Claim a kit.
+    usage: /kit [name]
+    aliases: [kits]
+  balance:
+    description: Show a balance.
+    usage: /balance [player]
+    aliases: [bal, money]
+  pay:
+    description: Send money to a player.
+    usage: /pay <player> <amount>
+  baltop:
+    description: Show the richest players.
+    usage: /baltop
+  eco:
+    description: Administrate balances.
+    usage: /eco <give|take|set> <player> <amount>
+  shop:
+    description: Open the shop.
+    usage: /shop
+  sell:
+    description: Sell the item in your hand or your whole inventory.
+    usage: /sell <hand|all>
+permissions:
+  network.smp.admin:
+    description: Manage spawn, warps, kits and balances.
+    default: op
+  network.smp.tp.bypass-cooldown:
+    description: Ignore teleport cooldowns.
+    default: op
+  network.smp.rtp:
+    description: Access to /rtp.
+    default: true
+  network.smp.back:
+    description: Access to /back.
+    default: true

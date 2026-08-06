@@ -1,0 +1,35 @@
+# NetworkSMP — the survival area.
+
+# Primary SMP world, must exist in NetworkCore's worlds.yml.
+world: smp
+# Every world that counts as SMP (nether, end, ...).
+worlds:
+  - smp
+  - smp_nether
+  - smp_the_end
+
+homes:
+  # Used when a player has no network.smp.homes.<n> permission at all.
+  default-limit: 2
+
+teleport:
+  warmup-seconds: 3
+  cooldown-seconds: 10
+  request-timeout-seconds: 60
+
+rtp:
+  min-radius: 500
+  radius: 5000
+
+economy:
+  minimum-payment: 1.0
+  baltop-size: 10
+
+kit:
+  claim-sound: entity.player.levelup
+
+shop:
+  rows: 3
+  buy-sound: entity.experience_orb.pickup
+  sell-sound: block.note_block.pling
+  deny-sound: entity.villager.no

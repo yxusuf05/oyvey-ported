@@ -1,0 +1,162 @@
+# Kits of the SMP.
+#
+# Items accept the short form ("BREAD:16") or the long form with name, lore and enchantments.
+# cooldown-seconds: 0 means the kit can only ever be claimed once.
+# first-join: true hands the kit out automatically the first time the player enters the SMP.
+# The permissions match the purchasable ranks in NetworkCore's ranks.yml.
+
+kits:
+
+  starter:
+    display-name: "<green>Starter-Kit"
+    icon: WOODEN_SWORD
+    permission: network.smp.kit.starter
+    cooldown-seconds: 0
+    first-join: true
+    items:
+      - material: STONE_SWORD
+        name: "<gray>Starter-Schwert"
+      - "STONE_PICKAXE"
+      - "STONE_AXE"
+      - "STONE_SHOVEL"
+      - "BREAD:16"
+      - "TORCH:32"
+      - "OAK_LOG:16"
+    armor:
+      helmet: LEATHER_HELMET
+      chestplate: LEATHER_CHESTPLATE
+      leggings: LEATHER_LEGGINGS
+      boots: LEATHER_BOOTS
+
+  taeglich:
+    display-name: "<yellow>Tages-Kit"
+    icon: BREAD
+    cooldown-seconds: 86400
+    items:
+      - "COOKED_BEEF:32"
+      - "IRON_INGOT:8"
+      - "TORCH:64"
+
+  silber:
+    display-name: "<white>Silber-Kit"
+    icon: IRON_INGOT
+    permission: network.smp.kit.silber
+    cooldown-seconds: 21600
+    items:
+      - material: IRON_SWORD
+        enchantments:
+          sharpness: 1
+      - "IRON_PICKAXE"
+      - "COOKED_BEEF:32"
+      - "IRON_INGOT:16"
+    armor:
+      helmet: IRON_HELMET
+      chestplate: IRON_CHESTPLATE
+      leggings: IRON_LEGGINGS
+      boots: IRON_BOOTS
+
+  emerald:
+    display-name: "<green>Emerald-Kit"
+    icon: EMERALD
+    permission: network.smp.kit.emerald
+    cooldown-seconds: 14400
+    items:
+      - material: IRON_SWORD
+        enchantments:
+          sharpness: 2
+          unbreaking: 2
+      - material: IRON_PICKAXE
+        enchantments:
+          efficiency: 3
+          unbreaking: 2
+      - "GOLDEN_APPLE:2"
+      - "EMERALD:8"
+      - "COOKED_BEEF:48"
+    armor:
+      helmet:
+        material: IRON_HELMET
+        enchantments:
+          protection: 1
+      chestplate:
+        material: IRON_CHESTPLATE
+        enchantments:
+          protection: 1
+      leggings: IRON_LEGGINGS
+      boots: IRON_BOOTS
+
+  diamant:
+    display-name: "<aqua>Diamant-Kit"
+    icon: DIAMOND
+    permission: network.smp.kit.diamant
+    cooldown-seconds: 10800
+    items:
+      - material: DIAMOND_SWORD
+        enchantments:
+          sharpness: 3
+          unbreaking: 3
+      - material: DIAMOND_PICKAXE
+        enchantments:
+          efficiency: 4
+          unbreaking: 3
+      - "GOLDEN_APPLE:4"
+      - "DIAMOND:8"
+      - "ENDER_PEARL:8"
+    armor:
+      helmet:
+        material: DIAMOND_HELMET
+        enchantments:
+          protection: 2
+      chestplate:
+        material: DIAMOND_CHESTPLATE
+        enchantments:
+          protection: 2
+      leggings:
+        material: DIAMOND_LEGGINGS
+        enchantments:
+          protection: 2
+      boots:
+        material: DIAMOND_BOOTS
+        enchantments:
+          protection: 2
+          feather_falling: 2
+
+  netherite:
+    display-name: "<red>Netherite-Kit"
+    icon: NETHERITE_INGOT
+    permission: network.smp.kit.netherite
+    cooldown-seconds: 7200
+    items:
+      - material: NETHERITE_SWORD
+        enchantments:
+          sharpness: 4
+          unbreaking: 3
+          fire_aspect: 1
+      - material: NETHERITE_PICKAXE
+        enchantments:
+          efficiency: 5
+          unbreaking: 3
+          fortune: 2
+      - "ENCHANTED_GOLDEN_APPLE:2"
+      - "GOLDEN_APPLE:8"
+      - "NETHERITE_INGOT:2"
+      - "ENDER_PEARL:16"
+    armor:
+      helmet:
+        material: NETHERITE_HELMET
+        enchantments:
+          protection: 3
+      chestplate:
+        material: NETHERITE_CHESTPLATE
+        enchantments:
+          protection: 3
+      leggings:
+        material: NETHERITE_LEGGINGS
+        enchantments:
+          protection: 3
+      boots:
+        material: NETHERITE_BOOTS
+        enchantments:
+          protection: 3
+          feather_falling: 3
+    effects:
+      - "regeneration:1:30"

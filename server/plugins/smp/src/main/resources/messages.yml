@@ -1,0 +1,115 @@
+prefix: "<dark_gray>[<green>SMP<dark_gray>] <gray>"
+
+spawn:
+  missing: "<prefix><red>Der SMP-Spawn wurde noch nicht gesetzt."
+  set: "<prefix><green>SMP-Spawn gesetzt <dark_gray>(<location>)"
+  wrong-world: "<prefix><red>Dafür musst du in der Welt <white><world></white> stehen."
+
+teleport:
+  cooldown: "<prefix><red>Warte noch <white><time></white>, bevor du dich erneut teleportierst."
+
+home:
+  none: "<prefix><gray>Du hast noch kein Home. Setze eins mit <white>/sethome</white>."
+  unknown: "<prefix><red>Du hast kein Home namens <white><name></white>."
+  teleporting: "<prefix><gray>Teleport zu Home <white><name></white>…"
+  set: "<prefix><green>Home <white><name></white> gesetzt <dark_gray>(<location>) <gray>— <white><used></white> belegt."
+  deleted: "<prefix><green>Home <white><name></white> gelöscht."
+  delete-usage: "<prefix><yellow>Verwendung: <white>/delhome <name>"
+  invalid-name: "<prefix><red>Erlaubt sind Buchstaben, Zahlen, _ und - (max. 16 Zeichen)."
+  limit-reached: "<prefix><red>Du hast dein Limit von <white><limit></white> Homes erreicht. <gray>Mehr gibt es mit einem höheren Rang."
+  wrong-world: "<prefix><red>Homes kannst du nur im SMP setzen."
+  list-header: "<prefix><yellow>Deine Homes <dark_gray>(<used>)<yellow>:"
+  list-line: "<gray>  <white><name></white> <dark_gray>— <gray><location>"
+
+warp:
+  unknown: "<prefix><red>Den Warp <white><name></white> gibt es nicht."
+  teleporting: "<prefix><gray>Teleport zu Warp <white><name></white>…"
+  set: "<prefix><green>Warp <white><name></white> erstellt <dark_gray>(<location>)"
+  set-usage: "<prefix><yellow>Verwendung: <white>/setwarp <name>"
+  delete-usage: "<prefix><yellow>Verwendung: <white>/delwarp <name>"
+  deleted: "<prefix><green>Warp <white><name></white> gelöscht."
+  no-permission: "<prefix><red>Der Warp <white><name></white> ist für dich gesperrt."
+  menu-title: "<dark_gray>Warps"
+  menu-location: "<dark_gray><location>"
+  menu-click: "<yellow>Klicke zum Teleportieren"
+
+tpa:
+  usage: "<prefix><yellow>Verwendung: <white>/tpa <spieler>"
+  not-found: "<prefix><red><white><name></white> ist nicht online."
+  self: "<prefix><red>Zu dir selbst geht nicht."
+  already-pending: "<prefix><red>Du hast <white><player></white> bereits angefragt."
+  sent: "<prefix><green>Anfrage an <white><player></white> gesendet."
+  received: "<prefix><white><player></white> <gray>möchte zu dir teleportieren. <green>/tpaccept <gray>| <red>/tpdeny"
+  received-here: "<prefix><white><player></white> <gray>möchte, dass du zu ihnen kommst. <green>/tpaccept <gray>| <red>/tpdeny"
+  nothing-pending: "<prefix><red>Es liegt keine Anfrage vor."
+  sender-offline: "<prefix><red>Der Anfragende ist nicht mehr online."
+  accepted-sender: "<prefix><green><white><player></white> hat deine Anfrage angenommen."
+  accepted-target: "<prefix><green>Anfrage von <white><player></white> angenommen."
+  denied-sender: "<prefix><red><white><player></white> hat deine Anfrage abgelehnt."
+  denied-target: "<prefix><gray>Anfrage abgelehnt."
+
+back:
+  nothing: "<prefix><red>Es gibt keinen Ort, zu dem du zurückkehren könntest."
+  teleporting: "<prefix><gray>Zurück zu <white><location></white>…"
+
+rtp:
+  wrong-world: "<prefix><red>Das geht nur im SMP."
+  searching: "<prefix><gray>Suche einen zufälligen Ort…"
+  done: "<prefix><green>Angekommen bei <white><location></white>."
+
+kit:
+  unknown: "<prefix><red>Das Kit <white><name></white> gibt es nicht."
+  no-permission: "<prefix><red>Für <white><name></white> brauchst du einen höheren Rang."
+  cooldown: "<prefix><red><name> <gray>ist wieder in <white><time></white> verfügbar."
+  already-claimed: "<prefix><red><name> <gray>kann nur einmal geholt werden."
+  too-expensive: "<prefix><red>Dieses Kit kostet <gold><price></gold>."
+  claimed: "<prefix><green>Kit <white><name></white> erhalten."
+  first-join: "<prefix><green>Willkommen im SMP! Du hast das <white><name></white> bekommen."
+  menu-title: "<dark_gray>Kits"
+  menu-contents: "<gray>Inhalt: <white><count></white> Gegenstände"
+  menu-price: "<gray>Preis: <gold><price></gold>"
+  menu-ready: "<green>✔ Verfügbar — klicke zum Holen"
+  menu-cooldown: "<red>✖ Wieder in <white><time></white>"
+  menu-claimed: "<red>✖ Bereits abgeholt"
+  menu-locked: "<red>✖ Höherer Rang nötig"
+
+economy:
+  balance-self: "<prefix><gray>Dein Guthaben: <gold><balance></gold>"
+  balance-other: "<prefix><gray>Guthaben von <white><player></white>: <gold><balance></gold>"
+  unknown-player: "<prefix><red><white><name></white> ist unbekannt."
+  target-offline: "<prefix><red><white><name></white> ist nicht online."
+  pay-usage: "<prefix><yellow>Verwendung: <white>/pay <spieler> <betrag>"
+  pay-self: "<prefix><red>An dich selbst geht nicht."
+  pay-too-small: "<prefix><red>Der kleinste Betrag ist <gold><minimum></gold>."
+  not-enough: "<prefix><red>Dir fehlen <gold><amount></gold>."
+  pay-sent: "<prefix><green><gold><amount></gold> an <white><player></white> gesendet."
+  pay-received: "<prefix><green><gold><amount></gold> von <white><player></white> erhalten."
+  baltop-header: "<prefix><yellow>Reichste Spieler:"
+  baltop-line: "<gray>  <white><place>.</white> <white><player></white> <dark_gray>— <gold><balance></gold>"
+  baltop-empty: "<gray>  Noch keine Daten."
+  eco-usage: "<prefix><yellow>Verwendung: <white>/eco <give|take|set> <spieler> <betrag>"
+  eco-done: "<prefix><green><action> <gold><amount></gold> <gray>bei <white><player></white> <dark_gray>— neues Guthaben: <gold><balance></gold>"
+
+shop:
+  title: "<dark_gray>Shop"
+  category-title: "<dark_gray>Shop <dark_gray>» <reset><category>"
+  category-lore:
+    - "<gray><count> Angebote"
+    - "<yellow>Klicke zum Öffnen"
+  lore-buy: "<gray>Kaufen: <gold><price></gold> <dark_gray>für <amount> Stück"
+  lore-sell: "<gray>Verkaufen: <green><price></green> <dark_gray>für <amount> Stück"
+  lore-hint: "<yellow>Links kaufen <dark_gray>| <yellow>Rechts verkaufen <dark_gray>| <yellow>Shift = Stapel"
+  bought: "<prefix><green><amount>x <item> <gray>gekauft für <gold><price></gold>."
+  sold: "<prefix><green><amount>x <item> <gray>verkauft für <green><price></green>."
+  too-expensive: "<prefix><red>Dir fehlen <gold><price></gold>."
+  not-buyable: "<prefix><red>Dieser Gegenstand ist nicht käuflich."
+  not-sellable: "<prefix><red>Dieser Gegenstand wird nicht angekauft."
+  nothing-to-sell: "<prefix><red>Du hast kein <white><item></white> dabei."
+
+sell:
+  usage: "<prefix><yellow>Verwendung: <white>/sell <hand|all>"
+  empty-hand: "<prefix><red>Du hast nichts in der Hand."
+  not-sellable: "<prefix><red><white><item></white> wird nicht angekauft."
+  nothing: "<prefix><red>In deinem Inventar ist nichts Verkäufliches."
+  sold: "<prefix><green><amount>x <item> <gray>verkauft für <green><price></green>."
+  sold-all: "<prefix><green><amount> Gegenstände verkauft für <green><price></green>."
