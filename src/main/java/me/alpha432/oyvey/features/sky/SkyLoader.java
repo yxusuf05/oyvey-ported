@@ -317,9 +317,14 @@ public final class SkyLoader {
     private static Fade readFade(String startFadeIn, String endFadeIn, String startFadeOut, String endFadeOut) {
         int in0 = Fade.parseTime(startFadeIn);
         int in1 = Fade.parseTime(endFadeIn);
-        int out0 = Fade.parseTime(startFadeOut);
         int out1 = Fade.parseTime(endFadeOut);
-        if (in0 < 0 || in1 < 0 || out0 < 0 || out1 < 0) return Fade.ALWAYS;
+        if (in0 < 0 || in1 < 0 || out1 < 0) return Fade.ALWAYS;
+
+        int out0 = Fade.parseTime(startFadeOut);
+        if (out0 < 0) {
+            // OptiFine leaves startFadeOut optional, the fade out then mirrors the fade in
+            out0 = out1 - Math.floorMod(in1 - in0, Fade.DAY_LENGTH);
+        }
         return Fade.of(in0, in1, out0, out1);
     }
 
