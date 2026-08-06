@@ -10,53 +10,49 @@
 # Discord: https://discord.gg/papermc
 # Website: https://papermc.io/
 
-messages:
-  whitelist: You are not whitelisted on this server!
-  unknown-command: Unknown command. Type "/help" for help.
-  server-full: The server is full!
-  outdated-client: Outdated client! Please use {0}
-  outdated-server: Outdated server! I'm still on {0}
-  restart: Server is restarting
 advancements:
   disable-saving: false
   disabled:
   - minecraft:story/disabled
+players:
+  disable-saving: false
 settings:
-  bungeecord: false
-  save-user-cache-on-stop-only: false
   sample-count: 12
   player-shuffle: 0
   user-cache-size: 1000
+  restart-script: ./start.sh
+  log-villager-deaths: true
+  log-named-deaths: true
+  debug: false
+  bungeecord: false
+  save-user-cache-on-stop-only: false
   moved-wrongly-threshold: 0.0625
   moved-too-quickly-multiplier: 10.0
   timeout-time: 60
-  restart-on-crash: true
-  restart-script: ./start.sh
+  restart-on-crash: false
   netty-threads: 4
   attribute:
     maxAbsorption:
       max: 2048.0
     maxHealth:
-      max: 1024.0
+      max: 2048.0
     movementSpeed:
-      max: 1024.0
+      max: 2048.0
     attackDamage:
       max: 2048.0
-  log-villager-deaths: true
-  log-named-deaths: true
-  debug: false
+
+messages:
+  whitelist: §cDu stehst nicht auf der Whitelist.
+  unknown-command: §cDiesen Befehl gibt es nicht. Tippe §f/help§c für eine Übersicht.
+  server-full: §cDer Server ist voll.
+  outdated-client: §cDein Client ist zu alt. Nutze Version {0}.
+  outdated-server: §cDer Server läuft noch auf Version {0}.
+  restart: §cDer Server startet neu, komm gleich wieder.
+
 world-settings:
   default:
     below-zero-generation-in-existing-chunks: true
-    view-distance: default
-    simulation-distance: default
     thunder-chance: 100000
-    merge-radius:
-      item: 0.5
-      exp: -1.0
-    mob-spawn-range: 8
-    item-despawn-rate: 6000
-    arrow-despawn-rate: 1200
     trident-despawn-rate: 1200
     zombie-aggressive-towards-villager: true
     nerf-spawner-mobs: false
@@ -88,32 +84,6 @@ world-settings:
       cavevines-modifier: 100
       glowberry-modifier: 100
       pitcherplant-modifier: 100
-    entity-activation-range:
-      animals: 32
-      monsters: 32
-      raiders: 64
-      misc: 16
-      water: 16
-      villagers: 32
-      flying-monsters: 32
-      wake-up-inactive:
-        animals-max-per-tick: 4
-        animals-every: 1200
-        animals-for: 100
-        monsters-max-per-tick: 8
-        monsters-every: 400
-        monsters-for: 100
-        villagers-max-per-tick: 4
-        villagers-every: 600
-        villagers-for: 100
-        flying-monsters-max-per-tick: 8
-        flying-monsters-every: 200
-        flying-monsters-for: 100
-      villagers-work-immunity-after: 100
-      villagers-work-immunity-for: 20
-      villagers-active-for-panic: true
-      tick-inactive-villagers: true
-      ignore-spectators: false
     entity-tracking-range:
       players: 128
       animals: 96
@@ -148,21 +118,69 @@ world-settings:
     seed-buriedtreasure: 10387320
     seed-mineshaft: default
     seed-stronghold: default
-    hunger:
-      jump-walk-exhaustion: 0.05
-      jump-sprint-exhaustion: 0.2
-      combat-exhaustion: 0.1
-      regen-exhaustion: 6.0
-      swim-multiplier: 0.01
-      sprint-multiplier: 0.1
-      other-multiplier: 0.0
     max-tnt-per-tick: 100
     max-tick-time:
       tile: 50
       entity: 50
     verbose: false
-players:
-  disable-saving: false
+    view-distance: default
+    simulation-distance: default
+    mob-spawn-range: 6
+    item-despawn-rate: 6000
+    arrow-despawn-rate: 1200
+    merge-radius:
+      item: 2.5
+      exp: 3.0
+    entity-activation-range:
+      water: 16
+      villagers: 32
+      flying-monsters: 32
+      wake-up-inactive:
+        animals-max-per-tick: 4
+        animals-every: 1200
+        animals-for: 100
+        monsters-max-per-tick: 8
+        monsters-every: 400
+        monsters-for: 100
+        villagers-max-per-tick: 4
+        villagers-every: 600
+        villagers-for: 100
+        flying-monsters-max-per-tick: 8
+        flying-monsters-every: 200
+        flying-monsters-for: 100
+      villagers-work-immunity-after: 100
+      villagers-work-immunity-for: 20
+      villagers-active-for-panic: true
+      tick-inactive-villagers: true
+      ignore-spectators: false
+      animals: 24
+      monsters: 24
+      raiders: 48
+      misc: 8
+    hunger:
+      swim-multiplier: 0.01
+      sprint-multiplier: 0.1
+      other-multiplier: 0.0
+      jump-walk-exhaustion: 0.05
+      jump-sprint-exhaustion: 0.2
+      combat-exhaustion: 0.1
+      regen-exhaustion: 6.0
+      other-exhaustion: 0.0
+  
+  # The lobby and the practice world are void worlds with no natural mobs at all.
+  lobby:
+    mob-spawn-range: 0
+    entity-activation-range:
+      animals: 8
+      monsters: 8
+      misc: 4
+  practice:
+    mob-spawn-range: 0
+    item-despawn-rate: 200
+    entity-activation-range:
+      animals: 8
+      monsters: 8
+      misc: 4
 config-version: 12
 stats:
   disable-saving: false
