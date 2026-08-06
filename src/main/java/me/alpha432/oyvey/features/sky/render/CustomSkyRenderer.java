@@ -15,6 +15,7 @@ import me.alpha432.oyvey.features.sky.SkyRegistry;
 import me.alpha432.oyvey.util.traits.Util;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -97,21 +98,24 @@ public final class CustomSkyRenderer implements Util {
             float alpha = layer.getAlpha(level);
             if (alpha <= 0.001f) continue;
 
+            Identifier texture = layer.getTexture().resolve();
+            if (texture == null) continue; // still decoding, the vanilla sky carries this frame
+
             modelView.pushMatrix();
             if (layer.isRotating() && module.rotate.getValue()) {
                 Vector3f axis = layer.getAxis();
                 float angle = sunAngle * layer.getSpeed() * module.speed.getValue();
                 modelView.rotate(new Quaternionf().rotationAxis(angle, axis.x(), axis.y(), axis.z()));
             }
-            drawCube(layer, ARGB.colorFromFloat(alpha, brightness, brightness, brightness));
+            drawCube(texture, layer, ARGB.colorFromFloat(alpha, brightness, brightness, brightness));
             modelView.popMatrix();
         }
 
         modelView.popMatrix();
     }
 
-    private static void drawCube(SkyLayer layer, int color) {
-        RenderType type = SkyPipelines.get(layer.getTexture(), layer.getBlend());
+    private static void drawCube(Identifier texture, SkyLayer layer, int color) {
+        RenderType type = SkyPipelines.get(texture, layer.getBlend());
         BufferBuilder builder = Tesselator.getInstance()
                 .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 

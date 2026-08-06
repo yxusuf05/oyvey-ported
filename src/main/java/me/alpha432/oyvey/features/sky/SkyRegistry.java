@@ -19,6 +19,7 @@ public final class SkyRegistry {
 
     private static final Map<String, SkyPack> PACKS = new LinkedHashMap<>();
     private static boolean loaded;
+    private static SkyPack resident;
 
     private SkyRegistry() {
     }
@@ -30,6 +31,8 @@ public final class SkyRegistry {
     }
 
     public static void reload() {
+        for (SkyPack pack : PACKS.values()) pack.release();
+        resident = null;
         SkyLoader.unload();
         PACKS.clear();
         loaded = false;
@@ -59,10 +62,19 @@ public final class SkyRegistry {
     /**
      * @return the sky that should be rendered right now, or null when custom skies are off
      */
+    /**
+     * Also keeps the video memory honest: only the sky being rendered holds onto its sheets,
+     * so a collection of a hundred packs costs no more than a single one.
+     */
     public static SkyPack getActive() {
         CustomSkyModule module = getModule();
         if (module == null) return null;
-        return byId(module.sky.getValue());
+        SkyPack pack = byId(module.sky.getValue());
+        if (pack != resident) {
+            if (resident != null) resident.release();
+            resident = pack;
+        }
+        return pack;
     }
 
     public static void setActive(SkyPack pack) {

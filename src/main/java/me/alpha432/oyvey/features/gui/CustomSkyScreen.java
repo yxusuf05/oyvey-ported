@@ -424,11 +424,16 @@ public class CustomSkyScreen extends Screen {
 
         roundedRect(context, x, y, width, height, 8, fade(SURFACE_RAISED));
 
-        Identifier preview = pack.getPreview();
-        if (preview != null) {
-            // the north face reads like a horizon shot, which is what a thumbnail wants to be
-            context.blit(preview, x, y, x + width, y + height,
-                    SkyFace.NORTH.getMinU(), SkyFace.NORTH.getMaxU(), SkyFace.NORTH.getMinV(), SkyFace.NORTH.getMaxV());
+        // the north face reads like a horizon shot, which is what a thumbnail wants to be
+        SkyPack.Preview preview = pack.getPreview();
+        Identifier previewTexture = preview == null ? null : preview.texture().resolve();
+        if (previewTexture != null) {
+            context.blit(previewTexture, x, y, x + width, y + height,
+                    preview.minU(), preview.maxU(), preview.minV(), preview.maxV());
+        } else {
+            // still decoding in the background, a pulse reads better than an empty hole
+            float pulse = 0.5f + 0.5f * Mth.sin((System.currentTimeMillis() % 1400L) / 1400.0f * Mth.TWO_PI);
+            context.fill(x, y, x + width, y + height, fade(ARGB.color(Math.round(8.0f + pulse * 12.0f), 0xFFFFFF)));
         }
 
         int scrimTop = y + height - 46;

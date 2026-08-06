@@ -1,6 +1,5 @@
 package me.alpha432.oyvey.features.sky;
 
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import org.joml.Vector3f;
 
@@ -12,7 +11,7 @@ import java.util.Set;
  * MCPatcher use: three columns by two rows, see {@link me.alpha432.oyvey.features.sky.render.SkyFace}.
  */
 public final class SkyLayer {
-    private final Identifier texture;
+    private final SkyTexture texture;
     private final BlendMode blend;
     private final boolean rotate;
     private final float speed;
@@ -30,11 +29,11 @@ public final class SkyLayer {
         this.weather = builder.weather;
     }
 
-    public static Builder builder(Identifier texture) {
+    public static Builder builder(SkyTexture texture) {
         return new Builder(texture);
     }
 
-    public Identifier getTexture() {
+    public SkyTexture getTexture() {
         return this.texture;
     }
 
@@ -63,7 +62,7 @@ public final class SkyLayer {
     }
 
     public static class Builder {
-        private final Identifier texture;
+        private final SkyTexture texture;
         private BlendMode blend = BlendMode.ADD;
         private boolean rotate = true;
         private float speed = 1.0f;
@@ -71,7 +70,7 @@ public final class SkyLayer {
         private Fade fade = Fade.ALWAYS;
         private Set<WeatherCondition> weather = EnumSet.allOf(WeatherCondition.class);
 
-        private Builder(Identifier texture) {
+        private Builder(SkyTexture texture) {
             this.texture = texture;
         }
 

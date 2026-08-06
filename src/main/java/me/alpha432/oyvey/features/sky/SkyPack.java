@@ -1,6 +1,6 @@
 package me.alpha432.oyvey.features.sky;
 
-import net.minecraft.resources.Identifier;
+import me.alpha432.oyvey.features.sky.render.SkyFace;
 
 import java.util.List;
 
@@ -15,14 +15,17 @@ public final class SkyPack {
     private final String category;
     private final String description;
     private final List<SkyLayer> layers;
+    private final SkyTexture thumbnail;
     private final boolean external;
 
-    public SkyPack(String id, String name, String category, String description, List<SkyLayer> layers, boolean external) {
+    public SkyPack(String id, String name, String category, String description,
+                   List<SkyLayer> layers, SkyTexture thumbnail, boolean external) {
         this.id = id;
         this.name = name;
         this.category = category == null || category.isBlank() ? DEFAULT_CATEGORY : category;
         this.description = description == null ? "" : description;
         this.layers = List.copyOf(layers);
+        this.thumbnail = thumbnail;
         this.external = external;
     }
 
@@ -54,9 +57,27 @@ public final class SkyPack {
     }
 
     /**
-     * @return the texture the picker shows as a thumbnail
+     * The picker thumbnail. External packs get a small pre cut crop so the grid never has to
+     * touch a full sheet, packs from the jar are small enough to sample in place.
      */
-    public Identifier getPreview() {
-        return this.layers.isEmpty() ? null : this.layers.getFirst().getTexture();
+    public Preview getPreview() {
+        if (this.thumbnail != null) {
+            return new Preview(this.thumbnail, 0.0f, 1.0f, 0.0f, 1.0f);
+        }
+        if (this.layers.isEmpty()) return null;
+        return new Preview(this.layers.getFirst().getTexture(),
+                SkyFace.NORTH.getMinU(), SkyFace.NORTH.getMaxU(), SkyFace.NORTH.getMinV(), SkyFace.NORTH.getMaxV());
+    }
+
+    /**
+     * Drops the video memory of every layer. The picker thumbnail stays.
+     */
+    public void release() {
+        for (SkyLayer layer : this.layers) {
+            layer.getTexture().release();
+        }
+    }
+
+    public record Preview(SkyTexture texture, float minU, float maxU, float minV, float maxV) {
     }
 }

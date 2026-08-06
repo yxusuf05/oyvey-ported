@@ -4,10 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mojang.blaze3d.platform.NativeImage;
-import me.alpha432.oyvey.util.traits.Util;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -48,7 +45,6 @@ public final class SkyLoader {
     private static final String PACK_MANIFEST = "sky.json";
 
     private static final Pattern OTHER_WORLD = Pattern.compile("/world-?(?!0/)\\d+/");
-    private static final List<Identifier> LOADED_TEXTURES = new ArrayList<>();
 
     private SkyLoader() {
     }
@@ -64,10 +60,17 @@ public final class SkyLoader {
     }
 
     static void unload() {
-        for (Identifier texture : LOADED_TEXTURES) {
-            Util.mc.getTextureManager().release(texture);
+    }
+
+    /**
+     * Reads one file out of a pack, reopening the folder or zip each time. Called from the
+     * texture loading thread, long after the pack itself was scanned.
+     */
+    static byte[] readEntry(Path packPath, String entry) throws IOException {
+        boolean zip = Files.isRegularFile(packPath);
+        try (PackSource source = zip ? new ZipSource(packPath) : new DirectorySource(packPath)) {
+            return source.read(entry);
         }
-        LOADED_TEXTURES.clear();
     }
 
     // -----------------------------------------------------------------------------------------
@@ -83,7 +86,7 @@ public final class SkyLoader {
                 try {
                     JsonObject object = element.getAsJsonObject();
                     String id = object.get("id").getAsString();
-                    SkyPack pack = readManifest(object, id, false, path -> Identifier.parse(path));
+                    SkyPack pack = readManifest(object, id, false, path -> SkyTexture.ofResource(Identifier.parse(path)));
                     if (pack != null) out.put(pack.getId(), pack);
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to read a built in sky", throwable);
@@ -134,7 +137,7 @@ public final class SkyLoader {
         if (manifest != null) {
             byte[] data = source.read(manifest);
             JsonObject object = JsonParser.parseString(new String(data, StandardCharsets.UTF_8)).getAsJsonObject();
-            return readManifest(object, id, true, path -> loadTexture(source, id, resolveSibling(manifest, path)));
+            return readManifest(object, id, true, path -> sheetTexture(source, id, resolveSibling(manifest, path)));
         }
         return readOptiFine(source, id);
     }
@@ -163,12 +166,12 @@ public final class SkyLoader {
             LOGGER.warn("Sky {} has no usable layers", id);
             return null;
         }
-        return new SkyPack(id, name, category, description, layers, external);
+        return new SkyPack(id, name, category, description, layers, thumbnailOf(layers), external);
     }
 
     private static SkyLayer readLayer(JsonObject object, TextureResolver textures) {
         if (!object.has("texture")) return null;
-        Identifier texture = textures.resolve(object.get("texture").getAsString());
+        SkyTexture texture = textures.resolve(object.get("texture").getAsString());
         if (texture == null) return null;
 
         SkyLayer.Builder builder = SkyLayer.builder(texture)
@@ -223,13 +226,13 @@ public final class SkyLoader {
             // a bare folder holding nothing but a skybox sheet is still a perfectly good sky
             for (String entry : source.entries()) {
                 if (!entry.toLowerCase(Locale.ROOT).endsWith(".png") || entry.contains("/")) continue;
-                Identifier texture = loadTexture(source, id, entry);
+                SkyTexture texture = sheetTexture(source, id, entry);
                 if (texture != null) layers.add(SkyLayer.builder(texture).blend(BlendMode.REPLACE).build());
             }
         }
 
         if (layers.isEmpty()) return null;
-        return new SkyPack(id, prettify(id), "OptiFine", "Loaded from " + source.name(), layers, true);
+        return new SkyPack(id, prettify(id), "OptiFine", "Loaded from " + source.name(), layers, thumbnailOf(layers), true);
     }
 
     private static SkyLayer readOptiFineLayer(PackSource source, String id, String entry) throws IOException {
@@ -245,7 +248,7 @@ public final class SkyLoader {
             return null;
         }
 
-        Identifier texture = loadTexture(source, id, resolved);
+        SkyTexture texture = sheetTexture(source, id, resolved);
         if (texture == null) return null;
 
         SkyLayer.Builder builder = SkyLayer.builder(texture)
@@ -328,21 +331,13 @@ public final class SkyLoader {
         return Fade.of(in0, in1, out0, out1);
     }
 
-    private static Identifier loadTexture(PackSource source, String packId, String entry) {
-        if (entry == null) return null;
-        Identifier identifier = Identifier.fromNamespaceAndPath("oyvey", "skies/" + packId + "/" + sanitise(entry));
-        if (LOADED_TEXTURES.contains(identifier)) return identifier;
-        try {
-            byte[] data = source.read(entry);
-            if (data == null) return null;
-            NativeImage image = NativeImage.read(new ByteArrayInputStream(data));
-            Util.mc.getTextureManager().register(identifier, new DynamicTexture(identifier::toString, image));
-            LOADED_TEXTURES.add(identifier);
-            return identifier;
-        } catch (Throwable throwable) {
-            LOGGER.error("Failed to load sky texture {}", entry, throwable);
-            return null;
-        }
+    private static SkyTexture sheetTexture(PackSource source, String packId, String entry) {
+        if (entry == null || source.find(entry) == null) return null;
+        return SkyTexture.ofSheet(textureId(packId, entry), source.path(), entry);
+    }
+
+    private static Identifier textureId(String packId, String entry) {
+        return Identifier.fromNamespaceAndPath("oyvey", "skies/" + packId + "/" + sanitise(entry));
     }
 
     private static String resolveSibling(String entry, String relative) {
@@ -414,9 +409,16 @@ public final class SkyLoader {
         }
     }
 
+    /**
+     * @return a small crop of the first layer for the picker grid, null for packs in the jar
+     */
+    private static SkyTexture thumbnailOf(List<SkyLayer> layers) {
+        return layers.isEmpty() ? null : layers.getFirst().getTexture().toThumbnail();
+    }
+
     @FunctionalInterface
     private interface TextureResolver {
-        Identifier resolve(String path);
+        SkyTexture resolve(String path);
     }
 
     // -----------------------------------------------------------------------------------------
@@ -425,6 +427,8 @@ public final class SkyLoader {
 
     private interface PackSource extends Closeable {
         String name();
+
+        Path path();
 
         List<String> entries();
 
@@ -461,6 +465,11 @@ public final class SkyLoader {
         }
 
         @Override
+        public Path path() {
+            return this.root;
+        }
+
+        @Override
         public List<String> entries() {
             return this.entries;
         }
@@ -491,6 +500,11 @@ public final class SkyLoader {
         @Override
         public String name() {
             return this.path.getFileName().toString();
+        }
+
+        @Override
+        public Path path() {
+            return this.path;
         }
 
         @Override
