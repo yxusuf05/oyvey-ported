@@ -1,0 +1,36 @@
+# NetworkCore — shared configuration for every plugin of the network.
+
+storage:
+  # sqlite works out of the box, mysql needs a driver on the classpath.
+  type: sqlite
+  file: data.db
+  autosave-minutes: 5
+  connection-timeout: 10000
+  pool-size: 8
+  mysql:
+    host: localhost
+    port: 3306
+    database: network
+    user: root
+    password: ""
+    properties: "?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8"
+
+economy:
+  symbol: "$"
+  format: "#,##0.00"
+  starting-balance: 250.0
+
+ranks:
+  default: member
+
+teleport:
+  # How many previous positions /back remembers.
+  back-history: 5
+
+board:
+  # Sidebar refresh interval in ticks.
+  update-ticks: 20
+
+tab:
+  # Tab list header/footer refresh interval in ticks.
+  update-ticks: 40

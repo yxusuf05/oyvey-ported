@@ -1,0 +1,58 @@
+# NetworkCore messages. MiniMessage formatting, <prefix> inserts the prefix below.
+
+prefix: "<dark_gray>[<aqua>Netzwerk<dark_gray>] <gray>"
+
+error:
+  no-permission: "<prefix><red>Dafür fehlt dir die Berechtigung."
+  player-only: "<prefix><red>Diesen Befehl kann nur ein Spieler ausführen."
+  player-not-found: "<prefix><red>Spieler <white><name></white> wurde nicht gefunden."
+  invalid-number: "<prefix><red><white><input></white> ist keine gültige Zahl."
+
+command:
+  usage-header: "<prefix><yellow>Verwendung von <white>/<command></white>:"
+  usage-line: "<gray>  /<command> <white><sub></white> <dark_gray><usage></dark_gray> <gray>— <description>"
+
+network:
+  reloaded: "<prefix><green>Konfiguration neu geladen."
+  saved: "<prefix><green>Profile und Regionen gespeichert."
+  info: "<prefix><gray>NetworkCore <white><version></white> <dark_gray>| <gray>Speicher: <white><storage></white> <dark_gray>| <gray>Spieler: <white><players></white> <dark_gray>| <gray>Profile: <white><profiles></white> <dark_gray>| <gray>Welten: <white><worlds></white> <dark_gray>| <gray>Regionen: <white><regions></white>"
+
+rank:
+  list-header: "<prefix><yellow>Ränge:"
+  list-line: "<gray>  <white><id></white> <dark_gray>(<display>) <gray>Gewicht: <white><weight></white><gray>, Rechte: <white><permissions></white>"
+  info: "<prefix><white><player></white> <gray>hat den Rang <white><display></white> <dark_gray>(<id>, Gewicht <weight>)"
+  unknown: "<prefix><red>Den Rang <white><rank></white> gibt es nicht."
+  set-usage: "<prefix><yellow>Verwendung: <white>/rank set <player> <rank>"
+  set-failed: "<prefix><red>Der Rang von <white><player></white> konnte nicht gesetzt werden."
+  set-success: "<prefix><green><white><player></white> hat jetzt den Rang <white><rank></white>."
+  set-notify: "<prefix><green>Du hast jetzt den Rang <white><rank></white>."
+
+teleport:
+  invalid-target: "<prefix><red>Dieses Ziel existiert nicht mehr."
+  warmup-start: "<prefix><gray>Teleport in <white><seconds></white> Sekunden — nicht bewegen."
+  warmup-tick: "<gray>Teleport in <white><seconds></white>…"
+  done: "<prefix><green>Teleportiert."
+  cancelled: "<prefix><red>Teleport abgebrochen."
+  cancelled-move: "<prefix><red>Teleport abgebrochen — du hast dich bewegt."
+  cancelled-damage: "<prefix><red>Teleport abgebrochen — du hast Schaden bekommen."
+
+region:
+  denied: "<red>Das ist hier nicht erlaubt."
+  pos-set: "<prefix><green>Position <white><index></white> gesetzt <dark_gray>(<location>)"
+  no-selection: "<prefix><red>Setze zuerst beide Positionen mit <white>/region pos1</white> und <white>/region pos2</white>."
+  different-worlds: "<prefix><red>Beide Positionen müssen in derselben Welt liegen."
+  exists: "<prefix><red>Eine Region namens <white><name></white> gibt es bereits."
+  unknown: "<prefix><red>Die Region <white><name></white> gibt es nicht."
+  unknown-flag: "<prefix><red>Das Flag <white><flag></white> gibt es nicht."
+  created: "<prefix><green>Region <white><name></white> erstellt <dark_gray>(<volume> Blöcke)"
+  create-usage: "<prefix><yellow>Verwendung: <white>/region create <name> [priorität]"
+  delete-usage: "<prefix><yellow>Verwendung: <white>/region delete <name>"
+  deleted: "<prefix><green>Region <white><name></white> gelöscht."
+  flag-usage: "<prefix><yellow>Verwendung: <white>/region flag <name> <flag> <true|false|unset>"
+  flag-set: "<prefix><green><name> <gray>→ <white><flag></white> = <white><value></white>"
+  flag-unset: "<prefix><green><name> <gray>→ <white><flag></white> zurückgesetzt."
+  priority-usage: "<prefix><yellow>Verwendung: <white>/region priority <name> <wert>"
+  priority-set: "<prefix><green><name> <gray>hat jetzt Priorität <white><priority></white>."
+  list-header: "<prefix><yellow>Regionen <dark_gray>(<count>)<yellow>:"
+  list-line: "<gray>  <white><name></white> <dark_gray>| <gray>Welt: <white><world></white> <dark_gray>| <gray>Prio: <white><priority></white> <dark_gray>| <gray>Flags: <white><flags></white>"
+  none-here: "<prefix><gray>Hier gibt es keine Region."

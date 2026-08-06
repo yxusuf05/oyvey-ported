@@ -1,0 +1,17 @@
+[versions]
+paper = "1.21.11-R0.1-SNAPSHOT"
+shadow = "9.6.1"
+hikari = "7.1.0"
+sqlite = "3.53.2.1"
+junit = "5.11.4"
+
+[libraries]
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
+hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

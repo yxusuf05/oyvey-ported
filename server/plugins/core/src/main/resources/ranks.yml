@@ -1,0 +1,48 @@
+# Ranks of the network. One rank per player, inheritance by id.
+# prefix/suffix/name-color use MiniMessage.
+
+default-rank: member
+
+ranks:
+  member:
+    display-name: "Member"
+    prefix: "<gray>[Member] "
+    suffix: ""
+    name-color: "<gray>"
+    weight: 0
+    permissions: []
+
+  vip:
+    display-name: "VIP"
+    prefix: "<green>[VIP] "
+    suffix: ""
+    name-color: "<green>"
+    weight: 10
+    inherits: [member]
+    permissions:
+      - network.smp.homes.5
+      - network.smp.kit.vip
+
+  mod:
+    display-name: "Moderator"
+    prefix: "<aqua>[Mod] "
+    suffix: ""
+    name-color: "<aqua>"
+    weight: 50
+    inherits: [vip]
+    permissions:
+      - network.command.rank
+      - network.region.bypass
+      - network.chat.bypass-cooldown
+      - network.chat.broadcast
+      - network.smp.homes.10
+
+  admin:
+    display-name: "Admin"
+    prefix: "<red>[Admin] "
+    suffix: ""
+    name-color: "<red>"
+    weight: 100
+    inherits: [mod]
+    permissions:
+      - "*"

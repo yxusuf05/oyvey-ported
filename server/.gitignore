@@ -1,0 +1,12 @@
+# Local test server. Configs and start scripts are tracked, everything the server
+# generates at runtime is not.
+runtime/*
+!runtime/start.sh
+!runtime/start.bat
+!runtime/server.properties
+!runtime/bukkit.yml
+!runtime/spigot.yml
+!runtime/config/
+runtime/config/*
+!runtime/config/paper-global.yml
+!runtime/config/paper-world-defaults.yml

@@ -1,0 +1,42 @@
+name: NetworkCore
+version: '${version}'
+main: me.alpha432.network.core.CorePlugin
+api-version: '1.21'
+author: alpha432
+description: Shared services (storage, profiles, ranks, economy, menus, worlds, regions, boards) for the network plugins.
+commands:
+  rank:
+    description: Manage player ranks.
+    usage: /rank <list|info|set> [player] [rank]
+  network:
+    description: Administrate the network core.
+    usage: /network <reload|save|info>
+  region:
+    description: Create and edit protected regions.
+    usage: /region <pos1|pos2|create|delete|flag|priority|list|here>
+    aliases: [rg]
+permissions:
+  network.command.rank:
+    description: Access to /rank.
+    default: op
+  network.command.network:
+    description: Access to /network.
+    default: op
+  network.command.region:
+    description: Access to /region.
+    default: op
+  network.region.bypass:
+    description: Ignore every region flag.
+    default: op
+  network.teleport.instant:
+    description: Skip teleport warmups.
+    default: op
+  network.admin:
+    description: Umbrella permission for network staff.
+    default: op
+    children:
+      network.command.rank: true
+      network.command.network: true
+      network.command.region: true
+      network.region.bypass: true
+      network.teleport.instant: true

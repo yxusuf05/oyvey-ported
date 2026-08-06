@@ -1,0 +1,56 @@
+# Worlds the network creates on startup.
+# The world named in server.properties (level-name) is created by the server itself; every
+# other world here is created by NetworkCore.
+
+worlds:
+  lobby:
+    environment: NORMAL
+    void: true
+    difficulty: PEACEFUL
+    pvp: false
+    platform:
+      enabled: true
+      material: SMOOTH_QUARTZ
+      radius: 12
+      y: 64
+    gamerules:
+      doDaylightCycle: false
+      doWeatherCycle: false
+      doMobSpawning: false
+      doFireTick: false
+      keepInventory: true
+      announceAdvancements: false
+
+  smp:
+    environment: NORMAL
+    void: false
+    difficulty: NORMAL
+    pvp: true
+    gamerules:
+      doMobSpawning: true
+      keepInventory: false
+
+  smp_nether:
+    environment: NETHER
+    void: false
+    difficulty: NORMAL
+    pvp: true
+
+  practice:
+    environment: NORMAL
+    void: true
+    difficulty: PEACEFUL
+    pvp: true
+    platform:
+      enabled: true
+      material: SMOOTH_QUARTZ
+      radius: 10
+      y: 100
+    gamerules:
+      doDaylightCycle: false
+      doWeatherCycle: false
+      doMobSpawning: false
+      doFireTick: false
+      keepInventory: true
+      naturalRegeneration: false
+      announceAdvancements: false
