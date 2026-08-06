@@ -1,0 +1,18 @@
+{
+  "_comment": [
+    "Skies shipped inside the mod jar. Empty by default so the jar stays small and the",
+    "users own packs in .minecraft/skyloom/skies are the content.",
+    "To ship one: drop the sheet into assets/skyloom/textures/sky and add an entry below.",
+    "Sheets use the OptiFine layout, three columns by two rows,",
+    "top row bottom/top/east, bottom row south/west/north.",
+    "Per layer keys: texture, blend, rotate, speed, axis,",
+    "startFadeIn, endFadeIn, startFadeOut, endFadeOut, weather.",
+    "",
+    "{",
+    "  \"id\": \"my-sky\", \"name\": \"My Sky\", \"category\": \"Space\",",
+    "  \"description\": \"Shown as the subtitle while hovering the card.\",",
+    "  \"layers\": [ { \"texture\": \"skyloom:textures/sky/my-sky.png\", \"blend\": \"replace\" } ]",
+    "}"
+  ],
+  "skies": []
+}

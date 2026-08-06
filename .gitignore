@@ -31,3 +31,7 @@ forge*changelog.txt
 /HeadlessMC/
 /logs/
 /plugins/
+
+# skyloom subproject build output
+skyloom/build/
+skyloom/.gradle/

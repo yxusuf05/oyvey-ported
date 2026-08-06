@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.yxusuf05.skyloom.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MixinLevelRenderer",
+    "MixinSkyRenderer"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
