@@ -1,0 +1,18 @@
+# Free-for-all arenas. Set the spawn in game with /arena setffa <name>.
+# The kit has to exist in kits.yml.
+
+arenas:
+  nodebuff:
+    display-name: "<red>NoDebuff FFA"
+    icon: POTION
+    kit: nodebuff
+
+  classic:
+    display-name: "<gray>Classic FFA"
+    icon: IRON_SWORD
+    kit: classic
+
+  archer:
+    display-name: "<green>Archer FFA"
+    icon: BOW
+    kit: archer

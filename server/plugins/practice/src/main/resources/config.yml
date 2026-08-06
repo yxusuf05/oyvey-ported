@@ -1,0 +1,80 @@
+# NetworkPractice — duels, ranked, FFA.
+
+# Practice world, must exist in NetworkCore's worlds.yml.
+world: practice
+# Where /leave sends players that are not in a queue or a fight.
+lobby-world: lobby
+# Kit used by /duel when no kit is given.
+default-kit: nodebuff
+
+leaderboard-size: 25
+
+match:
+  countdown-seconds: 5
+  # How long the result stays on screen before both players return to the hub.
+  end-delay-ticks: 60
+  countdown-sound: block.note_block.hat
+  start-sound: block.note_block.pling
+
+ranked:
+  starting-elo: 1000
+  k-factor: 32
+  # Allowed rating gap at the start of the search…
+  elo-window: 200
+  # …and how much it widens per second of waiting.
+  elo-window-growth-per-second: 20
+
+queue:
+  match-interval-ticks: 20
+  prune-interval-ticks: 200
+
+ffa:
+  # Announce every n-th kill of a streak to the arena; 0 disables it.
+  killstreak-announce: 5
+
+sounds:
+  deny: entity.villager.no
+
+hub-items:
+  unranked:
+    slot: 0
+    material: IRON_SWORD
+    action: unranked
+    name: "<green><bold>Unranked <gray>(Rechtsklick)"
+    lore:
+      - "<gray>Duelle ohne Wertung."
+  ranked:
+    slot: 1
+    material: DIAMOND_SWORD
+    action: ranked
+    name: "<aqua><bold>Ranked <gray>(Rechtsklick)"
+    lore:
+      - "<gray>Duelle mit ELO-Wertung."
+  ffa:
+    slot: 2
+    material: NETHERITE_AXE
+    action: ffa
+    name: "<red><bold>FFA <gray>(Rechtsklick)"
+    lore:
+      - "<gray>Jeder gegen jeden."
+  editor:
+    slot: 4
+    material: ANVIL
+    action: editor
+    name: "<yellow><bold>Kit-Editor"
+    lore:
+      - "<gray>Ordne deine Kits neu."
+  menu:
+    slot: 7
+    material: NETHER_STAR
+    action: menu
+    name: "<light_purple><bold>Practice-Menü"
+    lore:
+      - "<gray>Alles auf einen Blick."
+  leave:
+    slot: 8
+    material: RED_BED
+    action: leave
+    name: "<red>Zurück zur Lobby"
+    lore:
+      - "<gray>Verlässt den Practice-Bereich."

@@ -1,0 +1,48 @@
+name: NetworkPractice
+version: '${version}'
+main: me.alpha432.network.practice.PracticePlugin
+api-version: '1.21'
+author: alpha432
+description: 'Practice area - duels, ranked queues with Elo, FFA arenas, kit editor and leaderboards.'
+depend: [NetworkCore]
+commands:
+  practice:
+    description: Open the practice menu.
+    usage: /practice
+    aliases: [p]
+  duel:
+    description: Challenge a player directly.
+    usage: /duel <player> [kit]
+  accept:
+    description: Accept a duel invitation.
+    usage: /accept [player]
+  leave:
+    description: Leave the queue, a fight, FFA or the practice area.
+    usage: /leave
+  spectate:
+    description: Watch a running match.
+    usage: /spectate <player>
+    aliases: [spec]
+  stats:
+    description: Show practice statistics.
+    usage: /stats [player]
+  leaderboard:
+    description: Show the best players per kit.
+    usage: /leaderboard
+    aliases: [lb, top]
+  ffa:
+    description: Join a free-for-all arena.
+    usage: /ffa [arena]
+  arena:
+    description: Build and maintain the arenas.
+    usage: /arena <create|spawn1|spawn2|pos1|pos2|bounds|kit|toggle|delete|list|teleport|sethub|setffa|reload>
+permissions:
+  network.practice.admin:
+    description: Build arenas and reload the practice configuration.
+    default: op
+  network.practice.spectate:
+    description: Access to /spectate.
+    default: true
+  network.practice.queue.priority:
+    description: Preferred matchmaking.
+    default: false

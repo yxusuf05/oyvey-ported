@@ -1,0 +1,178 @@
+# Practice kits.
+#
+# build          players may place and break blocks inside the arena bounds
+# hunger         hunger drains during the fight
+# damage-ticks   invulnerability ticks after a hit; 20 is vanilla, 0 is 1.8 style
+# boxing         first to hits-to-win landed hits wins, damage is ignored
+# sumo           no damage, whoever drops below void-level loses
+# void-level     Y below which a player counts as dead; leave out to disable
+#
+# Items use the same syntax as the SMP kits: "MATERIAL:amount" or the long form.
+
+kits:
+
+  nodebuff:
+    display-name: "<red>NoDebuff"
+    icon: POTION
+    slot: 0
+    ranked: true
+    damage-ticks: 20
+    items:
+      - material: DIAMOND_SWORD
+        enchantments:
+          sharpness: 3
+          unbreaking: 3
+      - material: ENDER_PEARL
+        amount: 16
+      - "COOKED_BEEF:64"
+    armor:
+      helmet:
+        material: DIAMOND_HELMET
+        enchantments:
+          protection: 2
+      chestplate:
+        material: DIAMOND_CHESTPLATE
+        enchantments:
+          protection: 2
+      leggings:
+        material: DIAMOND_LEGGINGS
+        enchantments:
+          protection: 2
+      boots:
+        material: DIAMOND_BOOTS
+        enchantments:
+          protection: 2
+          feather_falling: 3
+
+  gapple:
+    display-name: "<gold>Gapple"
+    icon: ENCHANTED_GOLDEN_APPLE
+    slot: 1
+    ranked: true
+    damage-ticks: 20
+    items:
+      - material: DIAMOND_SWORD
+        enchantments:
+          sharpness: 4
+          unbreaking: 3
+      - "ENCHANTED_GOLDEN_APPLE:8"
+      - "GOLDEN_APPLE:32"
+      - "COOKED_BEEF:32"
+    armor:
+      helmet:
+        material: DIAMOND_HELMET
+        enchantments:
+          protection: 3
+      chestplate:
+        material: DIAMOND_CHESTPLATE
+        enchantments:
+          protection: 3
+      leggings:
+        material: DIAMOND_LEGGINGS
+        enchantments:
+          protection: 3
+      boots:
+        material: DIAMOND_BOOTS
+        enchantments:
+          protection: 3
+
+  sumo:
+    display-name: "<white>Sumo"
+    icon: LEATHER_BOOTS
+    slot: 2
+    ranked: true
+    sumo: true
+    void-level: 60
+    damage-ticks: 20
+    items: []
+
+  boxing:
+    display-name: "<light_purple>Boxing"
+    icon: LEATHER_CHESTPLATE
+    slot: 3
+    ranked: true
+    boxing: true
+    hits-to-win: 100
+    damage-ticks: 20
+    items:
+      - material: DIAMOND_SWORD
+        enchantments:
+          sharpness: 1
+
+  archer:
+    display-name: "<green>Archer"
+    icon: BOW
+    slot: 4
+    ranked: true
+    damage-ticks: 20
+    items:
+      - material: BOW
+        enchantments:
+          power: 3
+          infinity: 1
+          unbreaking: 3
+      - material: DIAMOND_SWORD
+        enchantments:
+          sharpness: 2
+      - "ARROW:1"
+      - "GOLDEN_APPLE:8"
+    armor:
+      helmet: IRON_HELMET
+      chestplate: IRON_CHESTPLATE
+      leggings: IRON_LEGGINGS
+      boots: IRON_BOOTS
+
+  builduhc:
+    display-name: "<yellow>BuildUHC"
+    icon: SANDSTONE
+    slot: 5
+    ranked: true
+    build: true
+    hunger: false
+    damage-ticks: 20
+    void-level: 40
+    items:
+      - material: DIAMOND_SWORD
+        enchantments:
+          sharpness: 3
+      - material: DIAMOND_PICKAXE
+        enchantments:
+          efficiency: 5
+      - "SANDSTONE:64"
+      - "GOLDEN_APPLE:16"
+      - "WATER_BUCKET:1"
+    armor:
+      helmet:
+        material: DIAMOND_HELMET
+        enchantments:
+          protection: 2
+      chestplate:
+        material: DIAMOND_CHESTPLATE
+        enchantments:
+          protection: 2
+      leggings:
+        material: DIAMOND_LEGGINGS
+        enchantments:
+          protection: 2
+      boots:
+        material: DIAMOND_BOOTS
+        enchantments:
+          protection: 2
+          feather_falling: 4
+
+  classic:
+    display-name: "<gray>Classic"
+    icon: IRON_SWORD
+    slot: 6
+    ranked: false
+    damage-ticks: 20
+    items:
+      - material: IRON_SWORD
+        enchantments:
+          sharpness: 1
+      - "GOLDEN_APPLE:5"
+    armor:
+      helmet: IRON_HELMET
+      chestplate: IRON_CHESTPLATE
+      leggings: IRON_LEGGINGS
+      boots: IRON_BOOTS
