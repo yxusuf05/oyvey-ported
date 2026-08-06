@@ -1,0 +1,18 @@
+prefix: "<dark_gray>[<aqua>Lobby<dark_gray>] <gray>"
+
+lobby:
+  sending: "<prefix><gray>Du wirst in die Lobby geschickt…"
+  already-here: "<prefix><gray>Du bist bereits in der Lobby."
+  spawn-set: "<prefix><green>Lobby-Spawn gesetzt <dark_gray>(<location>)"
+  wrong-world: "<prefix><red>Dafür musst du in der Welt <white><world></white> stehen."
+  missing-world: "<prefix><red>Die Lobby-Welt <white><world></white> existiert nicht."
+
+selector:
+  sending: "<prefix><gray>Du wirst zu <white><server></white> geschickt…"
+  world-missing: "<prefix><red>Der Bereich <white><world></white> ist gerade nicht verfügbar."
+  no-permission: "<prefix><red>Dieser Bereich ist für dich gesperrt."
+  player-count: "<dark_gray>» <gray><count> Spieler online"
+
+visibility:
+  shown: "<prefix><green>Du siehst jetzt alle Spieler."
+  hidden: "<prefix><gray>Andere Spieler sind jetzt ausgeblendet."

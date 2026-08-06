@@ -1,0 +1,45 @@
+name: NetworkChat
+version: '${version}'
+main: me.alpha432.network.chat.ChatPlugin
+api-version: '1.21'
+author: alpha432
+description: Chat formatting, private messages, join/leave messages, tab list and the default sidebars.
+depend: [NetworkCore]
+commands:
+  msg:
+    description: Send a private message.
+    usage: /msg <player> <message>
+    aliases: [w, tell, whisper, m]
+  reply:
+    description: Answer the last private message.
+    usage: /reply <message>
+    aliases: [r]
+  ignore:
+    description: Hide messages from a player.
+    usage: /ignore <player|list>
+  broadcast:
+    description: Announce a message to everyone.
+    usage: /broadcast <message>
+    aliases: [bc]
+  chat:
+    description: Administrate the chat.
+    usage: /chat <clear|mute|unmute|reload>
+permissions:
+  network.chat.color:
+    description: Use colour codes in chat.
+    default: false
+  network.chat.bypass-cooldown:
+    description: Ignore the chat cooldown.
+    default: op
+  network.chat.broadcast:
+    description: Access to /broadcast.
+    default: op
+  network.chat.admin:
+    description: Access to /chat.
+    default: op
+  network.chat.bypass-mute:
+    description: Talk while the chat is muted.
+    default: op
+  network.chat.msg:
+    description: Access to /msg and /reply.
+    default: true

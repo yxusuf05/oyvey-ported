@@ -4,6 +4,8 @@ import me.alpha432.network.core.Core;
 import me.alpha432.network.core.CorePlugin;
 import me.alpha432.network.core.profile.PlayerProfile;
 import me.alpha432.network.core.rank.Rank;
+import me.alpha432.network.core.rank.RankMenu;
+import me.alpha432.network.core.rank.RankService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -14,9 +16,57 @@ import java.util.List;
 /** {@code /rank list|info|set} */
 public final class RankCommand extends BaseCommand {
 
+    /** Only this permission may hand out staff ranks. */
+    private static final String STAFF_PERMISSION = "network.command.rank.staff";
+
     public RankCommand(CorePlugin plugin) {
         super(plugin, "rank");
-        permission("network.command.rank");
+
+        sub(new SubCommand("buy") {
+            @Override
+            public void run(CommandSender sender, String[] args) {
+                Player player = (Player) sender;
+                if (args.length < 1) {
+                    new RankMenu(player).open(player);
+                    return;
+                }
+                Rank rank = Core.ranks().byId(args[0]);
+                RankService.PurchaseResult result = Core.ranks().buy(player, args[0]);
+                switch (result) {
+                    case SUCCESS -> {
+                        Core.messages().send(sender, "rank.buy-success",
+                                "<rank>", rank.displayName(),
+                                "<price>", Core.economy().format(rank.price()));
+                        Core.tabs().refreshAll();
+                    }
+                    case UNKNOWN_RANK -> Core.messages().send(sender, "rank.unknown", "<rank>", args[0]);
+                    case ALREADY_OWNED -> Core.messages().send(sender, "rank.buy-already-owned");
+                    case NOT_ENOUGH_MONEY -> Core.messages().send(sender, "rank.buy-too-expensive",
+                            "<price>", Core.economy().format(rank.price()));
+                    case STAFF_LOCKED -> Core.messages().send(sender, "rank.buy-staff-locked");
+                    case NOT_PURCHASABLE -> Core.messages().send(sender, "rank.buy-not-purchasable");
+                    default -> Core.messages().send(sender, "rank.buy-failed");
+                }
+            }
+
+            @Override
+            public List<String> complete(CommandSender sender, String[] args) {
+                if (args.length != 1) {
+                    return List.of();
+                }
+                List<String> ids = new ArrayList<>();
+                Core.ranks().purchasable().forEach(rank -> ids.add(rank.id()));
+                return ids;
+            }
+        }.playerOnly().usage("[rang]").description("Kauft einen Rang mit Ingame-Geld"));
+
+        sub(new SubCommand("menu", "shop") {
+            @Override
+            public void run(CommandSender sender, String[] args) {
+                Player player = (Player) sender;
+                new RankMenu(player).open(player);
+            }
+        }.playerOnly().description("Öffnet den Rang-Shop"));
 
         sub(new SubCommand("list") {
             @Override
@@ -72,6 +122,15 @@ public final class RankCommand extends BaseCommand {
                     Core.messages().send(sender, "rank.unknown", "<rank>", args[1]);
                     return;
                 }
+                // Handing out staff ranks is reserved for the owner tier.
+                if (Core.ranks().byId(args[1]).staff() && !sender.hasPermission(STAFF_PERMISSION)) {
+                    Core.messages().send(sender, "rank.staff-forbidden");
+                    return;
+                }
+                if (Core.ranks().of(target).staff() && !sender.hasPermission(STAFF_PERMISSION)) {
+                    Core.messages().send(sender, "rank.staff-forbidden");
+                    return;
+                }
                 if (!Core.ranks().set(target, args[1])) {
                     Core.messages().send(sender, "rank.set-failed", "<player>", target.getName());
                     return;
@@ -94,7 +153,8 @@ public final class RankCommand extends BaseCommand {
                 }
                 return List.of();
             }
-        }.usage("<player> <rank>").description("Changes the rank of a player"));
+        }.permission("network.command.rank").usage("<player> <rank>")
+                .description("Setzt den Rang eines Spielers"));
     }
 
     @Override

@@ -55,10 +55,10 @@ public final class CorePlugin extends JavaPlugin {
         profiles = new ProfileService(this, database,
                 getConfig().getDouble("economy.starting-balance", 100.0D),
                 getConfig().getString("ranks.default", "member"));
-        ranks = new RankService(this, profiles);
         economy = new EconomyService(profiles,
                 getConfig().getString("economy.symbol", "$"),
                 getConfig().getString("economy.format", "#,##0.00"));
+        ranks = new RankService(this, profiles, economy);
         worlds = new WorldService(this);
         worlds.loadAll();
         regions = new RegionService(this);

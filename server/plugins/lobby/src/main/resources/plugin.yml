@@ -1,0 +1,29 @@
+name: NetworkLobby
+version: '${version}'
+main: me.alpha432.network.lobby.LobbyPlugin
+api-version: '1.21'
+author: alpha432
+description: The hub: spawn, server selector, lobby protection and double jump.
+depend: [NetworkCore]
+commands:
+  lobby:
+    description: Teleport to the lobby.
+    usage: /lobby
+    aliases: [hub, l]
+  setlobby:
+    description: Set the lobby spawn to your position.
+    usage: /setlobby
+  selector:
+    description: Open the server selector.
+    usage: /selector
+    aliases: [server, servers]
+permissions:
+  network.lobby.admin:
+    description: Build in the lobby and change its spawn.
+    default: op
+  network.lobby.fly:
+    description: Fly in the lobby.
+    default: false
+  network.lobby.doublejump.boost:
+    description: Stronger double jump.
+    default: false

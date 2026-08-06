@@ -1,8 +1,10 @@
 package me.alpha432.network.core.rank;
 
+import me.alpha432.network.core.economy.EconomyService;
 import me.alpha432.network.core.profile.PlayerProfile;
 import me.alpha432.network.core.profile.ProfileService;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -33,15 +35,28 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class RankService implements Listener {
 
+    /** Outcome of {@link RankService#buy(Player, String)}. */
+    public enum PurchaseResult {
+        SUCCESS,
+        UNKNOWN_RANK,
+        NOT_PURCHASABLE,
+        ALREADY_OWNED,
+        STAFF_LOCKED,
+        NOT_ENOUGH_MONEY,
+        NO_PROFILE
+    }
+
     private final Plugin plugin;
     private final ProfileService profiles;
+    private final EconomyService economy;
     private final Map<String, Rank> ranks = new LinkedHashMap<>();
     private final Map<UUID, PermissionAttachment> attachments = new ConcurrentHashMap<>();
     private String defaultRankId = "default";
 
-    public RankService(Plugin plugin, ProfileService profiles) {
+    public RankService(Plugin plugin, ProfileService profiles, EconomyService economy) {
         this.plugin = plugin;
         this.profiles = profiles;
+        this.economy = economy;
         reload();
     }
 
@@ -60,6 +75,7 @@ public final class RankService implements Listener {
                 if (rank == null) {
                     continue;
                 }
+                Material icon = Material.matchMaterial(rank.getString("icon", "PAPER"));
                 ranks.put(id.toLowerCase(), new Rank(
                         id.toLowerCase(),
                         rank.getString("display-name", id),
@@ -67,6 +83,11 @@ public final class RankService implements Listener {
                         rank.getString("suffix", ""),
                         rank.getString("name-color", "<gray>"),
                         rank.getInt("weight", 0),
+                        rank.getDouble("price", 0.0D),
+                        rank.getBoolean("purchasable", false),
+                        rank.getBoolean("staff", false),
+                        icon == null ? Material.PAPER : icon,
+                        rank.getStringList("perks"),
                         rank.getStringList("permissions"),
                         rank.getStringList("inherits")));
             }
@@ -127,6 +148,61 @@ public final class RankService implements Listener {
         return true;
     }
 
+    /**
+     * Buys a rank with in-game money. Only upgrades are allowed and staff ranks are never
+     * purchasable — those stay with the owner.
+     */
+    public PurchaseResult buy(Player player, String rankId) {
+        Rank target = ranks.get(rankId == null ? "" : rankId.toLowerCase());
+        if (target == null) {
+            return PurchaseResult.UNKNOWN_RANK;
+        }
+        if (target.staff() || !target.purchasable()) {
+            return PurchaseResult.NOT_PURCHASABLE;
+        }
+        PlayerProfile profile = profiles.get(player);
+        if (profile == null) {
+            return PurchaseResult.NO_PROFILE;
+        }
+        Rank current = of(profile);
+        if (current.staff()) {
+            return PurchaseResult.STAFF_LOCKED;
+        }
+        if (current.weight() >= target.weight()) {
+            return PurchaseResult.ALREADY_OWNED;
+        }
+        if (!economy.withdraw(profile, target.price())) {
+            return PurchaseResult.NOT_ENOUGH_MONEY;
+        }
+        profile.rankId(target.id());
+        apply(player);
+        profiles.save(profile);
+        return PurchaseResult.SUCCESS;
+    }
+
+    /** Ranks players can buy, cheapest first. */
+    public List<Rank> purchasable() {
+        List<Rank> result = new ArrayList<>();
+        for (Rank rank : ranks.values()) {
+            if (rank.purchasable() && !rank.staff()) {
+                result.add(rank);
+            }
+        }
+        result.sort((a, b) -> Integer.compare(a.weight(), b.weight()));
+        return result;
+    }
+
+    public List<Rank> staffRanks() {
+        List<Rank> result = new ArrayList<>();
+        for (Rank rank : ranks.values()) {
+            if (rank.staff()) {
+                result.add(rank);
+            }
+        }
+        result.sort((a, b) -> Integer.compare(a.weight(), b.weight()));
+        return result;
+    }
+
     /** Rebuilds the player's permission attachment from their rank. */
     public void apply(Player player) {
         PermissionAttachment previous = attachments.remove(player.getUniqueId());
@@ -139,6 +215,11 @@ public final class RankService implements Listener {
                 for (Permission permission : Bukkit.getPluginManager().getPermissions()) {
                     attachment.setPermission(permission, true);
                 }
+                // Tiered nodes such as network.smp.homes.15 are never registered in a
+                // plugin.yml, so the wildcard has to pick them up from the rank definitions.
+                for (String known : everyDeclaredPermission()) {
+                    attachment.setPermission(known, true);
+                }
             } else if (node.startsWith("-")) {
                 attachment.setPermission(node.substring(1), false);
             } else {
@@ -147,6 +228,19 @@ public final class RankService implements Listener {
         }
         attachments.put(player.getUniqueId(), attachment);
         player.recalculatePermissions();
+    }
+
+    /** Every permission node any rank mentions, used to expand the {@code *} wildcard. */
+    private Set<String> everyDeclaredPermission() {
+        Set<String> all = new LinkedHashSet<>();
+        for (Rank rank : ranks.values()) {
+            for (String node : rank.permissions()) {
+                if (!node.equals("*") && !node.startsWith("-")) {
+                    all.add(node);
+                }
+            }
+        }
+        return all;
     }
 
     /** Permissions of the rank plus everything it inherits, cycles guarded. */

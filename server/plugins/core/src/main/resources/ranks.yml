@@ -1,48 +1,242 @@
-# Ranks of the network. One rank per player, inheritance by id.
-# prefix/suffix/name-color use MiniMessage.
+# Ranks of the network.
+#
+# Two families live in here:
+#   * purchasable ranks (silber -> emerald -> diamant -> netherite) that players buy with
+#     in-game money via /rank buy. Every tier unlocks perks in all three areas.
+#   * staff ranks, flagged with `staff: true`. They can never be bought and are handed out by
+#     the owner with /rank set. Their permissions grow step by step.
+#
+# The practice area additionally shows an automatic ELO title (Bronze ... Champion); that one
+# is not a rank and lives in the practice plugin.
+#
+# prefix/suffix/name-color use MiniMessage. `perks` is only shown in the /ranks menu.
 
 default-rank: member
 
 ranks:
+
+  # ---------------------------------------------------------------- purchasable ranks
+
   member:
     display-name: "Member"
-    prefix: "<gray>[Member] "
-    suffix: ""
+    prefix: "<dark_gray>[<gray>Member<dark_gray>] "
     name-color: "<gray>"
     weight: 0
-    permissions: []
-
-  vip:
-    display-name: "VIP"
-    prefix: "<green>[VIP] "
-    suffix: ""
-    name-color: "<green>"
-    weight: 10
-    inherits: [member]
+    icon: PLAYER_HEAD
+    purchasable: false
+    perks:
+      - "<gray>2 Homes im SMP"
+      - "<gray>Starter-Kit"
+      - "<gray>1 eigenes Practice-Kit"
     permissions:
-      - network.smp.homes.5
-      - network.smp.kit.vip
+      - network.smp.homes.2
+      - network.smp.kit.starter
+      - network.practice.customkits.1
+
+  silber:
+    display-name: "Silber"
+    prefix: "<dark_gray>[<white>Silber<dark_gray>] "
+    name-color: "<white>"
+    weight: 10
+    price: 5000.0
+    purchasable: true
+    icon: IRON_INGOT
+    inherits: [member]
+    perks:
+      - "<white>4 Homes im SMP"
+      - "<white>Silber-Kit alle 6 Stunden"
+      - "<white>+5% Verkaufserlös im Shop"
+      - "<white>2 eigene Practice-Kits"
+      - "<white>Doppelsprung-Boost in der Lobby"
+    permissions:
+      - network.smp.homes.4
+      - network.smp.kit.silber
+      - network.smp.sellbonus.5
+      - network.practice.customkits.2
+      - network.lobby.doublejump.boost
+
+  emerald:
+    display-name: "Emerald"
+    prefix: "<dark_gray>[<green>Emerald<dark_gray>] "
+    name-color: "<green>"
+    weight: 20
+    price: 25000.0
+    purchasable: true
+    icon: EMERALD
+    inherits: [silber]
+    perks:
+      - "<green>6 Homes im SMP"
+      - "<green>Emerald-Kit alle 4 Stunden"
+      - "<green>+10% Verkaufserlös im Shop"
+      - "<green>4 eigene Practice-Kits"
+      - "<green>Bevorzugte Queue im Practice"
+    permissions:
+      - network.smp.homes.6
+      - network.smp.kit.emerald
+      - network.smp.sellbonus.10
+      - network.practice.customkits.4
+      - network.practice.queue.priority
+
+  diamant:
+    display-name: "Diamant"
+    prefix: "<dark_gray>[<aqua>Diamant<dark_gray>] "
+    name-color: "<aqua>"
+    weight: 30
+    price: 100000.0
+    purchasable: true
+    icon: DIAMOND
+    inherits: [emerald]
+    perks:
+      - "<aqua>10 Homes im SMP"
+      - "<aqua>Diamant-Kit alle 3 Stunden"
+      - "<aqua>+20% Verkaufserlös im Shop"
+      - "<aqua>6 eigene Practice-Kits"
+      - "<aqua>Halbe Teleport-Wartezeit"
+      - "<aqua>Fliegen in der Lobby"
+    permissions:
+      - network.smp.homes.10
+      - network.smp.kit.diamant
+      - network.smp.sellbonus.20
+      - network.practice.customkits.6
+      - network.practice.spectate
+      - network.teleport.fast
+      - network.lobby.fly
+
+  netherite:
+    display-name: "Netherite"
+    prefix: "<dark_gray>[<dark_red>Nether<red>ite<dark_gray>] "
+    name-color: "<red>"
+    weight: 40
+    price: 500000.0
+    purchasable: true
+    icon: NETHERITE_INGOT
+    inherits: [diamant]
+    perks:
+      - "<red>15 Homes im SMP"
+      - "<red>Netherite-Kit alle 2 Stunden"
+      - "<red>+35% Verkaufserlös im Shop"
+      - "<red>9 eigene Practice-Kits"
+      - "<red>Teleport ohne Wartezeit"
+      - "<red>Farben im Chat"
+    permissions:
+      - network.smp.homes.15
+      - network.smp.kit.netherite
+      - network.smp.sellbonus.35
+      - network.practice.customkits.9
+      - network.teleport.instant
+      - network.chat.color
+
+  # ---------------------------------------------------------------- staff ranks
+  # Assigned by the owner with /rank set, never purchasable.
+
+  helper:
+    display-name: "Helper"
+    prefix: "<dark_gray>[<blue>Helper<dark_gray>] "
+    name-color: "<blue>"
+    weight: 100
+    staff: true
+    icon: WOODEN_SWORD
+    inherits: [netherite]
+    perks:
+      - "<blue>/kick und /mute"
+      - "<blue>/warn und Strafhistorie"
+      - "<blue>Staff-Chat"
+    permissions:
+      - network.staff
+      - network.staff.kick
+      - network.staff.mute
+      - network.staff.warn
+      - network.staff.history
+      - network.staff.staffchat
+      - network.chat.bypass-cooldown
 
   mod:
     display-name: "Moderator"
-    prefix: "<aqua>[Mod] "
-    suffix: ""
-    name-color: "<aqua>"
-    weight: 50
-    inherits: [vip]
+    prefix: "<dark_gray>[<dark_aqua>Mod<dark_gray>] "
+    name-color: "<dark_aqua>"
+    weight: 200
+    staff: true
+    icon: IRON_SWORD
+    inherits: [helper]
+    perks:
+      - "<dark_aqua>/tempban und /tempmute"
+      - "<dark_aqua>/unmute"
+      - "<dark_aqua>Chat leeren und stummschalten"
     permissions:
-      - network.command.rank
+      - network.staff.tempban
+      - network.staff.tempmute
+      - network.staff.unmute
+      - network.staff.banlist
+      - network.chat.admin
+      - network.chat.bypass-mute
+
+  srmod:
+    display-name: "Sr. Moderator"
+    prefix: "<dark_gray>[<gold>SrMod<dark_gray>] "
+    name-color: "<gold>"
+    weight: 300
+    staff: true
+    icon: DIAMOND_SWORD
+    inherits: [mod]
+    perks:
+      - "<gold>Permanente Bans"
+      - "<gold>Strafen anderer Teammitglieder einsehen"
+      - "<gold>Region-Bypass"
+    permissions:
+      - network.staff.ban
+      - network.staff.history.all
       - network.region.bypass
-      - network.chat.bypass-cooldown
-      - network.chat.broadcast
-      - network.smp.homes.10
 
   admin:
     display-name: "Admin"
-    prefix: "<red>[Admin] "
-    suffix: ""
+    prefix: "<dark_gray>[<red>Admin<dark_gray>] "
     name-color: "<red>"
-    weight: 100
-    inherits: [mod]
+    weight: 400
+    staff: true
+    icon: NETHERITE_SWORD
+    inherits: [srmod]
+    perks:
+      - "<red>/unban und /clearpunishments"
+      - "<red>Ränge vergeben (ohne Staff)"
+      - "<red>Regionen bearbeiten"
+      - "<red>Warps, Kits und Shop pflegen"
+    permissions:
+      - network.staff.unban
+      - network.staff.clear
+      - network.command.rank
+      - network.command.region
+      - network.smp.admin
+      - network.practice.admin
+      - network.lobby.admin
+      - network.chat.broadcast
+
+  sradmin:
+    display-name: "Sr. Admin"
+    prefix: "<dark_gray>[<dark_red>SrAdmin<dark_gray>] "
+    name-color: "<dark_red>"
+    weight: 500
+    staff: true
+    icon: BEACON
+    inherits: [admin]
+    perks:
+      - "<dark_red>Staff-Ränge vergeben"
+      - "<dark_red>Konfiguration neu laden"
+      - "<dark_red>Vollzugriff auf alle Strafen"
+    permissions:
+      - network.command.rank.staff
+      - network.command.network
+      - network.staff.bypass
+      - network.economy.admin
+
+  owner:
+    display-name: "Owner"
+    prefix: "<dark_gray>[<light_purple>Owner<dark_gray>] "
+    name-color: "<light_purple>"
+    weight: 1000
+    staff: true
+    icon: NETHER_STAR
+    inherits: [sradmin]
+    perks:
+      - "<light_purple>Alle Rechte"
     permissions:
       - "*"

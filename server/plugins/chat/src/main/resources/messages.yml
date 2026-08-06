@@ -1,0 +1,32 @@
+prefix: "<dark_gray>[<aqua>Chat<dark_gray>] <gray>"
+
+chat:
+  muted: "<prefix><red>Der Chat ist aktuell gesperrt."
+  cooldown: "<prefix><red>Warte noch <white><seconds></white> Sekunden."
+  repeated: "<prefix><red>Bitte wiederhole dich nicht."
+  cleared: "<dark_gray>[<aqua>Chat<dark_gray>] <gray>Der Chat wurde von <white><player></white> geleert."
+  mute-broadcast: "<dark_gray>[<aqua>Chat<dark_gray>] <red>Der Chat wurde von <white><player></white> gesperrt."
+  unmute-broadcast: "<dark_gray>[<aqua>Chat<dark_gray>] <green>Der Chat wurde von <white><player></white> freigegeben."
+  reloaded: "<prefix><green>Chat-Konfiguration neu geladen."
+
+msg:
+  usage: "<prefix><yellow>Verwendung: <white>/msg <spieler> <nachricht>"
+  not-found: "<prefix><red><white><name></white> ist nicht online."
+  self: "<prefix><red>Du kannst dir nicht selbst schreiben."
+
+reply:
+  usage: "<prefix><yellow>Verwendung: <white>/reply <nachricht>"
+  nobody: "<prefix><red>Es gibt niemanden, dem du antworten könntest."
+
+ignore:
+  usage: "<prefix><yellow>Verwendung: <white>/ignore <spieler></white> oder <white>/ignore list"
+  not-found: "<prefix><red><white><name></white> ist unbekannt."
+  self: "<prefix><red>Dich selbst kannst du nicht ignorieren."
+  added: "<prefix><green>Du ignorierst jetzt <white><name></white>."
+  removed: "<prefix><green>Du ignorierst <white><name></white> nicht mehr."
+  list-empty: "<prefix><gray>Du ignorierst niemanden."
+  list-header: "<prefix><yellow>Ignoriert <dark_gray>(<count>)<yellow>:"
+  list-line: "<gray>  <white><name></white>"
+
+broadcast:
+  usage: "<prefix><yellow>Verwendung: <white>/broadcast <nachricht>"

@@ -7,7 +7,8 @@ description: Shared services (storage, profiles, ranks, economy, menus, worlds, 
 commands:
   rank:
     description: Manage player ranks.
-    usage: /rank <list|info|set> [player] [rank]
+    usage: /rank <buy|menu|list|info|set> [player] [rank]
+    aliases: [ranks]
   network:
     description: Administrate the network core.
     usage: /network <reload|save|info>
@@ -17,7 +18,10 @@ commands:
     aliases: [rg]
 permissions:
   network.command.rank:
-    description: Access to /rank.
+    description: Access to /rank set.
+    default: op
+  network.command.rank.staff:
+    description: Hand out staff ranks.
     default: op
   network.command.network:
     description: Access to /network.
@@ -36,6 +40,7 @@ permissions:
     default: op
     children:
       network.command.rank: true
+      network.command.rank.staff: true
       network.command.network: true
       network.command.region: true
       network.region.bypass: true

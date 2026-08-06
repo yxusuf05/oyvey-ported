@@ -1,0 +1,85 @@
+# NetworkLobby — the hub.
+
+# Must match a world from NetworkCore's worlds.yml.
+world: lobby
+
+# Send every player to the lobby when they join the server.
+teleport-on-join: true
+# Players with network.lobby.fly start flying right away.
+fly-by-default: false
+
+protection:
+  invulnerable: true
+  no-hunger: true
+  no-build: true
+  no-drop: true
+  no-pickup: true
+  lock-inventory: true
+  # Below this Y a player is teleported back to spawn instead of dying.
+  void-teleport-y: 0
+
+double-jump:
+  enabled: true
+  velocity: 1.0
+  boost-velocity: 1.4
+  up-velocity: 0.9
+  sound: entity.bat.takeoff
+
+join-items:
+  enabled: true
+  clear-inventory: true
+  gamemode: ADVENTURE
+  items:
+    selector:
+      slot: 0
+      material: COMPASS
+      action: selector
+      name: "<green><bold>Server-Auswahl <gray>(Rechtsklick)"
+      lore:
+        - "<gray>Wähle deinen Bereich."
+    visibility:
+      slot: 4
+      material: LIME_DYE
+      material-hidden: GRAY_DYE
+      action: visibility
+      name: "<green>Spieler sichtbar <gray>(Rechtsklick)"
+      name-hidden: "<red>Spieler versteckt <gray>(Rechtsklick)"
+      lore:
+        - "<gray>Blendet andere Spieler aus."
+    ranks:
+      slot: 8
+      material: NETHER_STAR
+      action: ranks
+      name: "<light_purple><bold>Ränge & Vorteile"
+      lore:
+        - "<gray>Silber, Emerald, Diamant, Netherite."
+
+selector:
+  title: "<dark_gray>Server-Auswahl"
+  rows: 3
+  select-sound: entity.enderman.teleport
+  deny-sound: entity.villager.no
+  entries:
+    smp:
+      slot: 11
+      material: GRASS_BLOCK
+      world: smp
+      name: "<green><bold>SMP"
+      lore:
+        - "<gray>Bauen, Economy, Shop, Homes und Warps."
+        - "<gray>Ränge bringen mehr Homes und Verkaufsbonus."
+    practice:
+      slot: 13
+      material: DIAMOND_SWORD
+      world: practice
+      name: "<aqua><bold>Practice"
+      lore:
+        - "<gray>Duelle, Ranked mit ELO, FFA und Kits."
+        - "<gray>Map- und Kit-Auswahl in der Queue."
+    ranks:
+      slot: 15
+      material: NETHER_STAR
+      command: "rank menu"
+      name: "<light_purple><bold>Rang-Shop"
+      lore:
+        - "<gray>Kaufe dir Vorteile mit Ingame-Geld."

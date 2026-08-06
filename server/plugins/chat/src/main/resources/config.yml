@@ -1,0 +1,74 @@
+# NetworkChat — chat, tab list and the default sidebars.
+# MiniMessage for formatting, %placeholder% for values, <message> for the player's text.
+
+format:
+  chat: "%rank_prefix%%rank_color%%player%<dark_gray> » <gray><message>"
+
+broadcast-format: "<dark_gray>[<gold>Info<dark_gray>] <white><message>"
+
+# Seconds a player has to wait between two messages (network.chat.bypass-cooldown skips it).
+cooldown-seconds: 2
+block-repeated-messages: true
+
+mention:
+  enabled: true
+  highlight: "<yellow><bold>"
+  sound: ENTITY_EXPERIENCE_ORB_PICKUP
+
+private-messages:
+  format-sender: "<dark_gray>[<gray>ich <dark_gray>» <white>%target%<dark_gray>] <gray><message>"
+  format-target: "<dark_gray>[<white>%sender% <dark_gray>» <gray>ich<dark_gray>] <gray><message>"
+  sound: ENTITY_EXPERIENCE_ORB_PICKUP
+
+join-quit:
+  enabled: true
+  join: "<dark_gray>[<green>+<dark_gray>] %rank_prefix%%rank_color%%player%"
+  quit: "<dark_gray>[<red>-<dark_gray>] %rank_prefix%%rank_color%%player%"
+  first-join: "<dark_gray>[<gold>★<dark_gray>] <white>%player% <gray>ist zum ersten Mal dabei!"
+  first-join-sound: ENTITY_PLAYER_LEVELUP
+  welcome:
+    - "<dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    - "<aqua><bold>Willkommen, %player%!"
+    - "<gray>Wähle mit dem <white>Kompass<gray> deinen Bereich."
+    - "<gray>Ränge und Vorteile: <white>/rank menu"
+    - "<dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+
+tab:
+  header:
+    - "<dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    - "<aqua><bold>NETZWERK"
+    - ""
+  footer:
+    - ""
+    - "<gray>Ping <white>%ping%ms <dark_gray>| <gray>Online <white>%online%/%max%"
+    - "<dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+
+# One sidebar per group of worlds. The practice plugin overrides this during a match.
+boards:
+  lobby:
+    worlds: [lobby]
+    title: "<aqua><bold>NETZWERK"
+    lines:
+      - "<dark_gray>───────────────"
+      - "<gray>Spieler <white>%player%"
+      - "<gray>Rang %rank_prefix%"
+      - "<gray>Guthaben <gold>%balance%"
+      - ""
+      - "<gray>Online <white>%online%/%max%"
+      - "<dark_gray>───────────────"
+      - "<yellow>Kompass = Auswahl"
+
+  smp:
+    worlds: [smp, smp_nether]
+    title: "<green><bold>SMP"
+    lines:
+      - "<dark_gray>───────────────"
+      - "<gray>Spieler <white>%player%"
+      - "<gray>Rang %rank_prefix%"
+      - "<gray>Guthaben <gold>%balance%"
+      - ""
+      - "<gray>Welt <white>%world%"
+      - "<gray>Position <white>%x% %y% %z%"
+      - "<gray>Spielzeit <white>%playtime%"
+      - "<dark_gray>───────────────"
+      - "<yellow>/help für alle Befehle"
