@@ -80,8 +80,18 @@ public final class Database implements AutoCloseable {
         this.source = new HikariDataSource(hikari);
 
         if (sqlite) {
-            execute("PRAGMA journal_mode=WAL");
-            execute("PRAGMA synchronous=NORMAL");
+            // PRAGMA statements answer with a result set, so executeUpdate would fail here.
+            executeRaw("PRAGMA journal_mode=WAL");
+            executeRaw("PRAGMA synchronous=NORMAL");
+        }
+    }
+
+    /** Runs a statement that may or may not produce a result set (PRAGMA, DDL). */
+    public void executeRaw(String sql) {
+        try (Connection connection = connection(); Statement statement = connection.createStatement()) {
+            statement.execute(sql);
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed statement: " + sql, e);
         }
     }
 

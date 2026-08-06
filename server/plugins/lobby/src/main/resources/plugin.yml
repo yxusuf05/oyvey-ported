@@ -3,7 +3,7 @@ version: '${version}'
 main: me.alpha432.network.lobby.LobbyPlugin
 api-version: '1.21'
 author: alpha432
-description: The hub: spawn, server selector, lobby protection and double jump.
+description: 'The hub - spawn, server selector, lobby protection and double jump.'
 depend: [NetworkCore]
 commands:
   lobby:

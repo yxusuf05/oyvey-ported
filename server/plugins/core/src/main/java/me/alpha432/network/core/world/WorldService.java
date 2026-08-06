@@ -10,15 +10,23 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
 /** Creates and configures the worlds of the network from {@code worlds.yml}. */
 public final class WorldService {
 
+    /** Every spelling of every gamerule this server build knows, resolved once. */
+    private static final Map<String, GameRule<?>> GAME_RULES = indexGameRules();
+
     private final Plugin plugin;
     private final Map<String, WorldDefinition> definitions = new LinkedHashMap<>();
+    private boolean loggedGameRuleNames;
 
     public WorldService(Plugin plugin) {
         this.plugin = plugin;
@@ -87,14 +95,19 @@ public final class WorldService {
         return world;
     }
 
-    // GameRule.getByName is deprecated in favour of the registry, but it is the only lookup that
-    // takes the vanilla names people write in worlds.yml.
-    @SuppressWarnings({"deprecation", "removal"})
     private void applyGameRules(World world, Map<String, String> rules) {
         for (Map.Entry<String, String> entry : rules.entrySet()) {
-            GameRule<?> rule = GameRule.getByName(entry.getKey());
+            GameRule<?> rule = findGameRule(entry.getKey());
             if (rule == null) {
                 plugin.getLogger().warning("Unknown gamerule " + entry.getKey() + " for world " + world.getName());
+                if (!loggedGameRuleNames) {
+                    loggedGameRuleNames = true;
+                    StringBuilder names = new StringBuilder("Known gamerules:");
+                    for (GameRule<?> known : GameRule.values()) {
+                        names.append(' ').append(known.getName());
+                    }
+                    plugin.getLogger().warning(names.toString());
+                }
                 continue;
             }
             try {
@@ -111,6 +124,46 @@ public final class WorldService {
                 plugin.getLogger().warning("Invalid value for gamerule " + entry.getKey() + ": " + entry.getValue());
             }
         }
+    }
+
+    /**
+     * Resolves a gamerule by whatever spelling the config uses.
+     *
+     * <p>Minecraft 1.21.11 renamed the gamerule registry keys ({@code doDaylightCycle} is now
+     * {@code minecraft:advance_time}), while the Bukkit constants kept their old names. The
+     * lookup therefore accepts the registry key, the current name and the API constant name,
+     * comparing letters and digits only so casing and underscores do not matter.
+     */
+    private static GameRule<?> findGameRule(String name) {
+        return GAME_RULES.get(normalise(name));
+    }
+
+    private static Map<String, GameRule<?>> indexGameRules() {
+        Map<String, GameRule<?>> index = new HashMap<>();
+        for (GameRule<?> rule : GameRule.values()) {
+            index.putIfAbsent(normalise(rule.getName()), rule);
+            index.putIfAbsent(normalise(rule.getKey().getKey()), rule);
+        }
+        // The constant names (DO_DAYLIGHT_CYCLE) are what people know from worlds.yml and the
+        // wiki, and they are only reachable through the fields.
+        for (Field field : GameRule.class.getFields()) {
+            if (!Modifier.isStatic(field.getModifiers()) || !GameRule.class.isAssignableFrom(field.getType())) {
+                continue;
+            }
+            try {
+                GameRule<?> rule = (GameRule<?>) field.get(null);
+                if (rule != null) {
+                    index.putIfAbsent(normalise(field.getName()), rule);
+                }
+            } catch (IllegalAccessException | RuntimeException ignored) {
+                // A constant that this server build does not provide; skip it.
+            }
+        }
+        return index;
+    }
+
+    private static String normalise(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
     /** Void worlds need something to stand on before anyone can build there. */
