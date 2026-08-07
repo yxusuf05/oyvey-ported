@@ -2,8 +2,10 @@ package io.github.yxusuf05.skyloom.screen;
 
 import io.github.yxusuf05.skyloom.Skyloom;
 import io.github.yxusuf05.skyloom.SkyloomConfig;
-import io.github.yxusuf05.skyloom.sky.SkyLoader;
+import io.github.yxusuf05.skyloom.sky.SkyCatalog;
+import io.github.yxusuf05.skyloom.sky.SkyDownloads;
 import io.github.yxusuf05.skyloom.sky.SkyPack;
+import io.github.yxusuf05.skyloom.sky.SkyTexture;
 import io.github.yxusuf05.skyloom.sky.SkyRegistry;
 import io.github.yxusuf05.skyloom.sky.render.SkyFace;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -60,6 +62,7 @@ public class SkyloomScreen extends Screen {
 
     private final List<Hotspot> hotspots = new ArrayList<>();
     private final Map<String, Float> hovers = new HashMap<>();
+    private final Map<String, SkyTexture> previews = new HashMap<>();
 
     private final Map<String, SliderTrack> sliders = new HashMap<>();
 
@@ -133,10 +136,10 @@ public class SkyloomScreen extends Screen {
 
         int paneLeft = contentLeft + RAIL_WIDTH + 18;
         renderRail(context, mouseX, mouseY, contentLeft, bodyTop, bodyBottom);
-        if (this.tab == Tab.SKIES) {
-            renderGrid(context, mouseX, mouseY, getVisibleSkies(), paneLeft, bodyTop, contentRight, bodyBottom);
-        } else {
-            renderSettings(context, mouseX, mouseY, paneLeft, bodyTop, contentRight, bodyBottom);
+        switch (this.tab) {
+            case SKIES -> renderGrid(context, mouseX, mouseY, getVisibleSkies(), paneLeft, bodyTop, contentRight, bodyBottom);
+            case BROWSE -> renderBrowse(context, mouseX, mouseY, paneLeft, bodyTop, contentRight, bodyBottom);
+            case SETTINGS -> renderSettings(context, mouseX, mouseY, paneLeft, bodyTop, contentRight, bodyBottom);
         }
         renderHeader(context, mouseX, mouseY, contentLeft, contentTop, contentRight);
         renderFooter(context, mouseX, mouseY, contentLeft, footerTop, contentRight);
@@ -153,11 +156,12 @@ public class SkyloomScreen extends Screen {
         SkyPack active = SkyRegistry.getActive();
         String subtitle = this.hoveredDescription != null ? this.hoveredDescription
                 : this.tab == Tab.SETTINGS ? "Trim the sky down to what you want to see"
+                : this.tab == Tab.BROWSE ? "Pick something new, it downloads straight into your library"
                 : active != null ? "Active: " + active.getName()
                 : "Pick a sky, or keep the vanilla one";
         context.drawString(this.font, this.font.plainSubstrByWidth(subtitle, right - left - 230), left, top + 22, fade(MUTED), false);
 
-        if (this.tab != Tab.SKIES) return;
+        if (this.tab == Tab.SETTINGS) return;
 
         int searchWidth = Math.min(210, (right - left) / 3);
         int searchX = right - searchWidth;
@@ -171,11 +175,17 @@ public class SkyloomScreen extends Screen {
 
     private void renderRail(GuiGraphics context, int mouseX, int mouseY, int left, int top, int bottom) {
         top = renderTabs(context, mouseX, mouseY, left, top) + 14;
-        if (this.tab != Tab.SKIES) return;
+        if (this.tab == Tab.SETTINGS) return;
 
         List<String> categories = new ArrayList<>();
         categories.add(ALL_CATEGORIES);
-        categories.addAll(SkyRegistry.categories());
+        if (this.tab == Tab.BROWSE) {
+            for (SkyCatalog.Entry entry : SkyCatalog.getEntries()) {
+                if (!categories.contains(entry.category())) categories.add(entry.category());
+            }
+        } else {
+            categories.addAll(SkyRegistry.categories());
+        }
 
         int y = top;
         for (String name : categories) {
@@ -205,34 +215,36 @@ public class SkyloomScreen extends Screen {
     }
 
     /**
-     * Segmented control at the top of the rail. The selected pill slides between the two
-     * segments instead of blinking over, which is what sells it as a switch.
+     * The tab rail. The selected pill slides between entries instead of blinking over, which is
+     * what sells it as a switch rather than a set of buttons.
      *
-     * @return the bottom edge of the control
+     * @return the bottom edge of the rail
      */
     private int renderTabs(GuiGraphics context, int mouseX, int mouseY, int left, int top) {
+        Tab[] tabs = Tab.values();
         int height = 26;
-        int half = RAIL_WIDTH / 2;
-        roundedRect(context, left, top, RAIL_WIDTH, height, 8, fade(0x18FFFFFF));
+        int step = height + 4;
 
-        float slide = slide("tab", this.tab == Tab.SETTINGS ? 1.0f : 0.0f);
-        int pillX = left + 2 + Math.round(slide * (RAIL_WIDTH - half - 2));
-        roundedRect(context, pillX, top + 2, half, height - 4, 7, fade(accent(0xFF)));
+        float slide = slide("tab", this.tab.ordinal());
+        roundedRect(context, left, top + Math.round(slide * step), RAIL_WIDTH, height, 8, fade(accent(0xE6)));
 
-        for (Tab value : Tab.values()) {
-            int segmentX = left + value.ordinal() * (RAIL_WIDTH - half);
+        for (Tab value : tabs) {
+            int y = top + value.ordinal() * step;
             boolean selected = this.tab == value;
-            float hover = hover("tab:" + value, contains(mouseX, mouseY, segmentX, top, half, height));
-            int textX = segmentX + (half - this.font.width(value.label)) / 2;
-            context.drawString(this.font, value.label, textX, top + 9,
+            float hover = hover("tab:" + value, contains(mouseX, mouseY, left, y, RAIL_WIDTH, height));
+            if (!selected && hover > 0.01f) {
+                roundedRect(context, left, y, RAIL_WIDTH, height, 8, fade(ARGB.color(Math.round(hover * 18.0f), 0xFFFFFF)));
+            }
+            context.drawString(this.font, value.label, left + 12, y + 9,
                     fade(selected ? 0xFFFFFFFF : mix(MUTED, TEXT, hover)), false);
-            this.hotspots.add(new Hotspot(segmentX, top, half, height, () -> {
+            this.hotspots.add(new Hotspot(left, y, RAIL_WIDTH, height, () -> {
                 this.tab = value;
                 this.scroll = 0.0f;
                 this.targetScroll = 0.0f;
+                if (value == Tab.BROWSE) SkyCatalog.ensureLoaded();
             }));
         }
-        return top + height;
+        return top + tabs.length * step - 4;
     }
 
     private void renderSettings(GuiGraphics context, int mouseX, int mouseY, int left, int top, int right, int bottom) {
@@ -420,6 +432,161 @@ public class SkyloomScreen extends Screen {
         }
     }
 
+    private void renderBrowse(GuiGraphics context, int mouseX, int mouseY, int left, int top, int right, int bottom) {
+        SkyCatalog.ensureLoaded();
+        int viewHeight = bottom - top;
+        int available = right - left;
+        if (available < MIN_CARD_WIDTH || viewHeight < 60) return;
+
+        SkyCatalog.State state = SkyCatalog.getState();
+        if (state != SkyCatalog.State.READY) {
+            String message = switch (state) {
+                case LOADING -> "Loading the list" + ".".repeat((int) (System.currentTimeMillis() / 400 % 4));
+                case FAILED -> "Could not reach the sky list: " + SkyCatalog.getError();
+                default -> "";
+            };
+            context.drawCenteredString(this.font, this.font.plainSubstrByWidth(message, available),
+                    (left + right) / 2, top + viewHeight / 2 - 12, fade(MUTED));
+            if (state == SkyCatalog.State.FAILED) {
+                int width = this.font.width("Try again") + 24;
+                button(context, mouseX, mouseY, (left + right) / 2 - width / 2, top + viewHeight / 2 + 4,
+                        "Try again", false, SkyCatalog::refresh);
+            }
+            return;
+        }
+
+        List<SkyCatalog.Entry> entries = new ArrayList<>();
+        String query = this.search.toLowerCase(Locale.ROOT).trim();
+        for (SkyCatalog.Entry entry : SkyCatalog.getEntries()) {
+            if (!ALL_CATEGORIES.equals(this.category) && !entry.category().equals(this.category)) continue;
+            if (!query.isEmpty() && !entry.name().toLowerCase(Locale.ROOT).contains(query)
+                    && !entry.category().toLowerCase(Locale.ROOT).contains(query)) continue;
+            entries.add(entry);
+        }
+        if (entries.isEmpty()) {
+            context.drawCenteredString(this.font, "Nothing here", (left + right) / 2, top + viewHeight / 2 - 4, fade(MUTED));
+            return;
+        }
+
+        int columns = Math.max(1, (available + CARD_GAP) / (MIN_CARD_WIDTH + CARD_GAP));
+        int cardWidth = (available - (columns - 1) * CARD_GAP) / columns;
+        int cardHeight = Math.round(cardWidth * 0.66f);
+        int rows = (entries.size() + columns - 1) / columns;
+        int contentHeight = rows * (cardHeight + CARD_GAP) - CARD_GAP;
+        float maxScroll = Math.max(0.0f, contentHeight - viewHeight);
+        this.targetScroll = Mth.clamp(this.targetScroll, 0.0f, maxScroll);
+        this.scroll = Mth.clamp(this.scroll, 0.0f, maxScroll);
+
+        context.enableScissor(left, top, right, bottom);
+        for (int index = 0; index < entries.size(); index++) {
+            int x = left + (index % columns) * (cardWidth + CARD_GAP);
+            int y = top + (index / columns) * (cardHeight + CARD_GAP) - Math.round(this.scroll);
+            if (y > bottom || y + cardHeight < top) continue;
+            renderCatalogCard(context, mouseX, mouseY, entries.get(index), x, y, cardWidth, cardHeight, top, bottom);
+        }
+        context.disableScissor();
+
+        if (maxScroll > 0.0f) {
+            int barHeight = Math.max(28, Math.round(viewHeight * (viewHeight / (float) contentHeight)));
+            int barY = top + Math.round((viewHeight - barHeight) * (this.scroll / maxScroll));
+            roundedRect(context, right + 8, top, 3, viewHeight, 2, fade(0x14FFFFFF));
+            roundedRect(context, right + 8, barY, 3, barHeight, 2, fade(accent(0xC0)));
+        }
+    }
+
+    private void renderCatalogCard(GuiGraphics context, int mouseX, int mouseY, SkyCatalog.Entry entry,
+                                   int x, int y, int width, int height, int clipTop, int clipBottom) {
+        boolean inside = contains(mouseX, mouseY, x, y, width, height) && mouseY >= clipTop && mouseY < clipBottom;
+        float hover = hover("catalog:" + entry.id(), inside);
+        y -= Math.round(hover * 3.0f);
+
+        roundedRect(context, x, y, width, height, 8, fade(SURFACE_RAISED));
+
+        Identifier preview = entry.thumbnailUrl() == null ? null : this.previews
+                .computeIfAbsent(entry.id(), key -> SkyTexture.ofUrl(
+                        Identifier.fromNamespaceAndPath("skyloom", "catalog/" + key.toLowerCase(Locale.ROOT)),
+                        entry.thumbnailUrl()))
+                .resolve();
+        if (preview != null) {
+            context.blit(preview, x, y, x + width, y + height, 0.0f, 1.0f, 0.0f, 1.0f);
+        } else {
+            float pulse = 0.5f + 0.5f * Mth.sin((System.currentTimeMillis() % 1400L) / 1400.0f * Mth.TWO_PI);
+            context.fill(x, y, x + width, y + height, fade(ARGB.color(Math.round(8.0f + pulse * 12.0f), 0xFFFFFF)));
+        }
+
+        context.fillGradient(x, y + height - 46, x + width, y + height, 0x00000000, fade(0xE6000000));
+        if (hover > 0.01f) context.fill(x, y, x + width, y + height, ARGB.color(Math.round(hover * 26.0f), 0xFFFFFF));
+        cornerMask(context, x, y, width, height, 8, fade(SURFACE));
+
+        context.drawString(this.font, this.font.plainSubstrByWidth(entry.name(), width - 20),
+                x + 10, y + height - 30, fade(0xFFFFFFFF), false);
+        context.pose().pushMatrix();
+        context.pose().scale(0.8f, 0.8f);
+        String note = entry.size() > 0 ? entry.category() + " . " + readableSize(entry.size()) : entry.category();
+        context.drawString(this.font, this.font.plainSubstrByWidth(note, Math.round((width - 20) / 0.8f)),
+                Math.round((x + 10) / 0.8f), Math.round((y + height - 17) / 0.8f), fade(0xFFA8A8B4), false);
+        context.pose().popMatrix();
+
+        renderCatalogAction(context, mouseX, mouseY, entry, x, y, width, clipTop, clipBottom);
+        if (inside && !entry.description().isEmpty()) this.hoveredDescription = entry.description();
+    }
+
+    private void renderCatalogAction(GuiGraphics context, int mouseX, int mouseY, SkyCatalog.Entry entry,
+                                     int x, int y, int width, int clipTop, int clipBottom) {
+        SkyDownloads.Download download = SkyDownloads.getDownload(entry.id());
+        boolean installed = SkyDownloads.isInstalled(entry.id());
+
+        int badgeHeight = 16;
+        int badgeY = y + 8;
+        boolean visible = badgeY >= clipTop && badgeY + badgeHeight <= clipBottom;
+
+        if (download != null && download.error() == null) {
+            int badgeWidth = 56;
+            int badgeX = x + width - badgeWidth - 8;
+            roundedRect(context, badgeX, badgeY, badgeWidth, badgeHeight, 8, fade(0xC0000000));
+            float progress = download.progress();
+            int inner = badgeWidth - 8;
+            int filled = progress < 0.0f
+                    ? Math.round(inner * (0.3f + 0.2f * Mth.sin(System.currentTimeMillis() / 200.0f)))
+                    : Math.round(inner * progress);
+            roundedRect(context, badgeX + 4, badgeY + 6, inner, 4, 2, fade(0x33FFFFFF));
+            roundedRect(context, badgeX + 4, badgeY + 6, Math.max(2, filled), 4, 2, fade(accent(0xFF)));
+            return;
+        }
+
+        String label = download != null ? "Failed" : installed ? "Installed" : "Get";
+        int badgeWidth = this.font.width(label) + 16;
+        int badgeX = x + width - badgeWidth - 8;
+        boolean hovered = visible && contains(mouseX, mouseY, badgeX, badgeY, badgeWidth, badgeHeight);
+        if (hovered && installed) {
+            label = "Remove";
+            badgeWidth = this.font.width(label) + 16;
+            badgeX = x + width - badgeWidth - 8;
+        }
+
+        int background = download != null ? 0xFFB4453C : installed ? (hovered ? 0xFFB4453C : 0x66000000) : accent(0xFF);
+        roundedRect(context, badgeX, badgeY, badgeWidth, badgeHeight, 8, fade(background));
+        context.drawString(this.font, label, badgeX + 8, badgeY + 4, fade(0xFFFFFFFF), false);
+
+        if (!visible) return;
+        String action = label;
+        this.hotspots.add(new Hotspot(badgeX, badgeY, badgeWidth, badgeHeight, () -> {
+            if (download != null) {
+                download.dismiss();
+            } else if (action.equals("Remove")) {
+                SkyDownloads.remove(entry.id());
+            } else if (!installed) {
+                SkyDownloads.install(entry);
+            }
+        }));
+    }
+
+    private static String readableSize(long bytes) {
+        if (bytes >= 1024L * 1024L * 1024L) return String.format(Locale.ROOT, "%.1f GB", bytes / 1024.0 / 1024.0 / 1024.0);
+        if (bytes >= 1024L * 1024L) return Math.round(bytes / 1024.0 / 1024.0) + " MB";
+        return Math.max(1L, bytes / 1024L) + " KB";
+    }
+
     private void renderCard(GuiGraphics context, int mouseX, int mouseY, SkyPack pack,
                             int x, int y, int width, int height, int clipTop, int clipBottom) {
         boolean inside = contains(mouseX, mouseY, x, y, width, height) && mouseY >= clipTop && mouseY < clipBottom;
@@ -479,20 +646,17 @@ public class SkyloomScreen extends Screen {
 
         int x = left;
         x = button(context, mouseX, mouseY, x, top, "Turn off", false, () -> SkyRegistry.setActive(null));
-        x = button(context, mouseX, mouseY, x, top, "Reload", false, () -> {
+        x = button(context, mouseX, mouseY, x, top, "Rescan", false, () -> {
             SkyRegistry.reload();
             this.scroll = 0.0f;
             this.targetScroll = 0.0f;
         });
-        String bind = this.listeningForBind ? "press a key" : bindName();
-        x = button(context, mouseX, mouseY, x, top, "Key  " + bind, this.listeningForBind,
-                () -> this.listeningForBind = !this.listeningForBind);
-
-        int available = right - x - 12;
-        if (available > 60) {
-            String hint = this.font.plainSubstrByWidth(SkyLoader.getSkiesDirectory().toString(), available);
-            context.drawString(this.font, hint, right - this.font.width(hint), top + 9, fade(0xFF5D5D68), false);
+        if (this.tab == Tab.BROWSE) {
+            x = button(context, mouseX, mouseY, x, top, "Refresh list", false, SkyCatalog::refresh);
         }
+        String bind = this.listeningForBind ? "press a key" : bindName();
+        button(context, mouseX, mouseY, x, top, "Key  " + bind, this.listeningForBind,
+                () -> this.listeningForBind = !this.listeningForBind);
     }
 
     private int button(GuiGraphics context, int mouseX, int mouseY, int x, int y, String label, boolean active, Runnable action) {
@@ -577,7 +741,7 @@ public class SkyloomScreen extends Screen {
     @Override
     public boolean charTyped(CharacterEvent input) {
         if (this.listeningForBind) return true;
-        if (this.tab != Tab.SKIES) return true;
+        if (this.tab == Tab.SETTINGS) return true;
         this.search += input.codepointAsString();
         this.targetScroll = 0.0f;
         return true;
@@ -726,13 +890,22 @@ public class SkyloomScreen extends Screen {
     private int countIn(String category) {
         int count = 0;
         String query = this.search.toLowerCase(Locale.ROOT).trim();
+        if (this.tab == Tab.BROWSE) {
+            for (SkyCatalog.Entry entry : SkyCatalog.getEntries()) {
+                if (matches(entry.name(), entry.category(), category, query)) count++;
+            }
+            return count;
+        }
         for (SkyPack pack : SkyRegistry.all()) {
-            boolean inCategory = ALL_CATEGORIES.equals(category) || pack.getCategory().equals(category);
-            boolean inSearch = query.isEmpty() || pack.getName().toLowerCase(Locale.ROOT).contains(query)
-                    || pack.getCategory().toLowerCase(Locale.ROOT).contains(query);
-            if (inCategory && inSearch) count++;
+            if (matches(pack.getName(), pack.getCategory(), category, query)) count++;
         }
         return count;
+    }
+
+    private static boolean matches(String name, String ownCategory, String category, String query) {
+        if (!ALL_CATEGORIES.equals(category) && !ownCategory.equals(category)) return false;
+        return query.isEmpty() || name.toLowerCase(Locale.ROOT).contains(query)
+                || ownCategory.toLowerCase(Locale.ROOT).contains(query);
     }
 
     private static String bindName() {
@@ -755,7 +928,8 @@ public class SkyloomScreen extends Screen {
     }
 
     private enum Tab {
-        SKIES("Skies"),
+        SKIES("My skies"),
+        BROWSE("Browse"),
         SETTINGS("Settings");
 
         private final String label;

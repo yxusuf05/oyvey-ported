@@ -25,34 +25,47 @@ public final class SkyTexture {
     private final Identifier id;
     private final Path packPath;
     private final String entry;
+    private final String url;
     private final boolean thumbnail;
 
     private volatile State state = State.IDLE;
     private volatile NativeImage decoded;
 
-    private SkyTexture(Identifier id, Path packPath, String entry, boolean thumbnail) {
+    private SkyTexture(Identifier id, Path packPath, String entry, String url, boolean thumbnail) {
         this.id = id;
         this.packPath = packPath;
         this.entry = entry;
+        this.url = url;
         this.thumbnail = thumbnail;
+    }
+
+    private boolean isManaged() {
+        return this.packPath != null || this.url != null;
     }
 
     /**
      * A texture that lives in a resource pack, the vanilla texture manager already handles those.
      */
     public static SkyTexture ofResource(Identifier id) {
-        return new SkyTexture(id, null, null, false);
+        return new SkyTexture(id, null, null, null, false);
+    }
+
+    /**
+     * A preview image the catalog points at, cached next to the local thumbnails.
+     */
+    public static SkyTexture ofUrl(Identifier id, String url) {
+        return new SkyTexture(id, null, null, url, false);
     }
 
     public static SkyTexture ofSheet(Identifier id, Path packPath, String entry) {
-        return new SkyTexture(id, packPath, entry, false);
+        return new SkyTexture(id, packPath, entry, null, false);
     }
 
     /**
      * A small crop of the sheets north face, kept around permanently for the picker grid.
      */
     public static SkyTexture ofThumbnail(Identifier id, Path packPath, String entry) {
-        return new SkyTexture(id, packPath, entry, true);
+        return new SkyTexture(id, packPath, entry, null, true);
     }
 
     public Identifier getId() {
@@ -64,7 +77,7 @@ public final class SkyTexture {
      */
     public SkyTexture toThumbnail() {
         if (this.packPath == null) return null;
-        return new SkyTexture(this.id.withSuffix("-thumb"), this.packPath, this.entry, true);
+        return new SkyTexture(this.id.withSuffix("-thumb"), this.packPath, this.entry, null, true);
     }
 
     /**
@@ -73,7 +86,7 @@ public final class SkyTexture {
      * @return the identifier once the texture is bindable, or null while it is still loading
      */
     public Identifier resolve() {
-        if (this.packPath == null) return this.id;
+        if (!isManaged()) return this.id;
         switch (this.state) {
             case READY -> {
                 return this.id;
@@ -93,14 +106,14 @@ public final class SkyTexture {
     }
 
     public boolean isReady() {
-        return this.packPath == null || this.state == State.READY;
+        return !isManaged() || this.state == State.READY;
     }
 
     /**
      * Hands the video memory back. The texture reloads by itself the next time it is resolved.
      */
     public void release() {
-        if (this.packPath == null) return;
+        if (!isManaged()) return;
         if (this.state == State.READY) Minecraft.getInstance().getTextureManager().release(this.id);
         NativeImage pending = this.decoded;
         this.decoded = null;
@@ -127,7 +140,8 @@ public final class SkyTexture {
 
     private void decode() {
         try {
-            NativeImage image = this.thumbnail ? decodeThumbnail() : decodeSheet();
+            NativeImage image = this.url != null ? decodeRemote()
+                    : this.thumbnail ? decodeThumbnail() : decodeSheet();
             if (image == null) {
                 this.state = State.FAILED;
                 return;
@@ -140,6 +154,27 @@ public final class SkyTexture {
         }
     }
 
+    private NativeImage decodeRemote() throws Exception {
+        Path cache = cacheFile();
+        if (Files.isRegularFile(cache)) {
+            return NativeImage.read(new ByteArrayInputStream(Files.readAllBytes(cache)));
+        }
+        byte[] data = SkyDownloads.fetchImage(this.url);
+        if (data == null) return null;
+        NativeImage image = NativeImage.read(new ByteArrayInputStream(data));
+        try {
+            Files.createDirectories(cache.getParent());
+            Files.write(cache, data);
+        } catch (Throwable throwable) {
+            LOGGER.warn("Could not cache the preview for {}", this.id, throwable);
+        }
+        return image;
+    }
+
+    private Path cacheFile() {
+        return SkyTextures.getThumbnailCache().resolve(this.id.getPath().replace('/', '_') + ".png");
+    }
+
     private NativeImage decodeSheet() throws Exception {
         byte[] data = SkyLoader.readEntry(this.packPath, this.entry);
         return data == null ? null : NativeImage.read(new ByteArrayInputStream(data));
@@ -149,7 +184,7 @@ public final class SkyTexture {
      * Thumbnails survive on disk, so browsing a large collection only pays the decode once ever.
      */
     private NativeImage decodeThumbnail() throws Exception {
-        Path cache = SkyTextures.getThumbnailCache().resolve(this.id.getPath().replace('/', '_') + ".png");
+        Path cache = cacheFile();
         if (Files.isRegularFile(cache)) {
             return NativeImage.read(new ByteArrayInputStream(Files.readAllBytes(cache)));
         }

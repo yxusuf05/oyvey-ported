@@ -35,6 +35,9 @@ public final class SkyloomConfig {
     /** Accent colour of the picker, as 0xRRGGBB. */
     public int accent = 0x4C6FFF;
 
+    /** Where the Browse tab fetches its list of downloadable skies from. */
+    public String catalogUrl = "https://raw.githubusercontent.com/yxusuf05/skyloom-skies/main/catalog.json";
+
     private static Path path() {
         return FabricLoader.getInstance().getConfigDir().resolve("skyloom.json");
     }

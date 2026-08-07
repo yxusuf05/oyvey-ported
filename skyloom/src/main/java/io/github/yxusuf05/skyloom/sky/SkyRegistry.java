@@ -19,11 +19,22 @@ public final class SkyRegistry {
     private static final Map<String, SkyPack> PACKS = new LinkedHashMap<>();
     private static boolean loaded;
     private static SkyPack resident;
+    private static volatile boolean reloadRequested;
 
     private SkyRegistry() {
     }
 
+    /** Lets a finished download ask for a rescan without touching textures off thread. */
+    public static void requestReload() {
+        reloadRequested = true;
+    }
+
     public static void ensureLoaded() {
+        if (reloadRequested) {
+            reloadRequested = false;
+            reload();
+            return;
+        }
         if (loaded) return;
         loaded = true;
         SkyLoader.load(PACKS);
