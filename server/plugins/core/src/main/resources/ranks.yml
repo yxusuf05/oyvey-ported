@@ -1,8 +1,10 @@
 # Ranks of the network.
 #
 # Two families live in here:
-#   * purchasable ranks (silber -> emerald -> diamant -> netherite) that players buy with
-#     in-game money via /rank buy. Every tier unlocks perks in all three areas.
+#   * shop ranks (silber -> emerald -> diamant -> netherite). They are sold for real money in
+#     the web shop; `price` is the amount in the currency configured under rank-shop in
+#     config.yml. The shop grants them by running "rank set <player> <rank>" through the
+#     server console — nothing in the plugin ever handles a payment.
 #   * staff ranks, flagged with `staff: true`. They can never be bought and are handed out by
 #     the owner with /rank set. Their permissions grow step by step.
 #
@@ -38,7 +40,7 @@ ranks:
     prefix: "<dark_gray>[<white>Silber<dark_gray>] "
     name-color: "<white>"
     weight: 10
-    price: 5000.0
+    price: 4.99
     purchasable: true
     icon: IRON_INGOT
     inherits: [member]
@@ -60,7 +62,7 @@ ranks:
     prefix: "<dark_gray>[<green>Emerald<dark_gray>] "
     name-color: "<green>"
     weight: 20
-    price: 25000.0
+    price: 9.99
     purchasable: true
     icon: EMERALD
     inherits: [silber]
@@ -82,7 +84,7 @@ ranks:
     prefix: "<dark_gray>[<aqua>Diamant<dark_gray>] "
     name-color: "<aqua>"
     weight: 30
-    price: 100000.0
+    price: 19.99
     purchasable: true
     icon: DIAMOND
     inherits: [emerald]
@@ -107,7 +109,7 @@ ranks:
     prefix: "<dark_gray>[<dark_red>Nether<red>ite<dark_gray>] "
     name-color: "<red>"
     weight: 40
-    price: 500000.0
+    price: 39.99
     purchasable: true
     icon: NETHERITE_INGOT
     inherits: [diamant]

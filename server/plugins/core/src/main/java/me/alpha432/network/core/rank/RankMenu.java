@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-/** The rank shop: every purchasable rank with its price and perks. */
+/** The rank shop: every rank that can be bought in the web shop, with its price and perks. */
 public final class RankMenu extends PagedMenu {
 
     private final Player viewer;
@@ -27,7 +27,7 @@ public final class RankMenu extends PagedMenu {
         Rank current = Core.ranks().of(viewer);
         List<MenuItem> items = new ArrayList<>();
         for (Rank rank : Core.ranks().purchasable()) {
-            items.add(MenuItem.of(icon(rank, current), event -> buy(rank)));
+            items.add(MenuItem.of(icon(rank, current), event -> showShop(rank)));
         }
         content(items);
     }
@@ -44,7 +44,7 @@ public final class RankMenu extends PagedMenu {
             lore.add(Core.messages().raw("rank.menu-staff-locked"));
         } else {
             lore.add(Core.messages().raw("rank.menu-price")
-                    .replace("<price>", Core.economy().format(rank.price())));
+                    .replace("<price>", Core.plugin().formatRealMoney(rank.price())));
             lore.add(Core.messages().raw("rank.menu-click"));
         }
         ItemBuilder builder = ItemBuilder.of(rank.icon())
@@ -57,29 +57,17 @@ public final class RankMenu extends PagedMenu {
         return builder.build();
     }
 
-    private void buy(Rank rank) {
-        RankService.PurchaseResult result = Core.ranks().buy(viewer, rank.id());
-        switch (result) {
-            case SUCCESS -> {
-                Core.messages().send(viewer, "rank.buy-success",
-                        "<rank>", rank.displayName(), "<price>", Core.economy().format(rank.price()));
-                viewer.playSound(viewer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
-                Core.tabs().refreshAll();
-                build();
-                render();
-            }
-            case ALREADY_OWNED -> deny("rank.buy-already-owned");
-            case NOT_ENOUGH_MONEY -> deny("rank.buy-too-expensive",
-                    "<price>", Core.economy().format(rank.price()));
-            case STAFF_LOCKED -> deny("rank.buy-staff-locked");
-            case NOT_PURCHASABLE -> deny("rank.buy-not-purchasable");
-            default -> deny("rank.buy-failed");
-        }
-    }
-
-    private void deny(String key, Object... placeholders) {
-        Core.messages().send(viewer, key, placeholders);
-        viewer.playSound(viewer.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+    /**
+     * Ranks are sold for real money, so a click cannot hand one out. It shows the shop link
+     * instead; the shop grants the rank by running {@code /rank set} through the console.
+     */
+    private void showShop(Rank rank) {
+        viewer.closeInventory();
+        Core.messages().send(viewer, "rank.shop-hint",
+                "<rank>", rank.displayName(),
+                "<price>", Core.plugin().formatRealMoney(rank.price()),
+                "<url>", Core.plugin().shopUrl());
+        viewer.playSound(viewer.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1f);
     }
 
     /** Shown when the rank has no icon configured. */

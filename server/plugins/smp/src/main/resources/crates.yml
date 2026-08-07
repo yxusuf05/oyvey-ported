@@ -1,0 +1,111 @@
+# Crates at the SMP spawn.
+#
+# Keys are sold in the web shop. After a purchase the shop runs
+#     key give <spieler> <crate> <anzahl>
+# through the server console. A key-all event is
+#     key giveall <crate> <anzahl>
+# Nothing in this plugin processes a payment — it only reacts to those commands.
+#
+# Set the crate block in game: stand in front of it and run /crate setblock <crate>.
+#
+# weight is a relative chance. All weights of a crate are added up, so a reward with weight 40
+# in a crate totalling 100 is won in 40 % of the openings. /crate preview shows the real numbers.
+
+crates:
+
+  vote:
+    display-name: "<green>Vote-Crate"
+    icon: CHEST
+    key:
+      material: TRIPWIRE_HOOK
+      name: "<green>Vote-Key"
+      glow: true
+      lore:
+        - "<gray>Rechtsklick auf die Vote-Crate."
+    rewards:
+      eisen:
+        display-name: "<white>Eisen"
+        weight: 40
+        items:
+          - "IRON_INGOT:16"
+      gold:
+        display-name: "<gold>Gold"
+        weight: 25
+        items:
+          - "GOLD_INGOT:12"
+      essen:
+        display-name: "<yellow>Proviant"
+        weight: 20
+        items:
+          - "GOLDEN_APPLE:4"
+          - "COOKED_BEEF:32"
+      diamanten:
+        display-name: "<aqua>Diamanten"
+        weight: 10
+        items:
+          - "DIAMOND:6"
+      geld:
+        display-name: "<gold>5.000 Münzen"
+        weight: 5
+        display:
+          material: GOLD_NUGGET
+          name: "<gold>5.000 Münzen"
+        items: []
+        commands:
+          - "eco give %player% 5000"
+
+  legendaer:
+    display-name: "<light_purple>Legendäre Crate"
+    icon: ENDER_CHEST
+    key:
+      material: TRIPWIRE_HOOK
+      name: "<light_purple>Legendärer Key"
+      glow: true
+      lore:
+        - "<gray>Rechtsklick auf die legendäre Crate."
+    rewards:
+      netherite_barren:
+        display-name: "<dark_red>Netherite-Barren"
+        weight: 30
+        items:
+          - "NETHERITE_INGOT:2"
+      god_schwert:
+        display-name: "<red>God-Schwert"
+        weight: 20
+        broadcast: true
+        items:
+          - material: NETHERITE_SWORD
+            name: "<red>Legendäres Schwert"
+            unbreakable: true
+            enchantments:
+              sharpness: 5
+              unbreaking: 3
+              fire_aspect: 2
+              looting: 3
+      god_ruestung:
+        display-name: "<aqua>God-Brustplatte"
+        weight: 20
+        broadcast: true
+        items:
+          - material: NETHERITE_CHESTPLATE
+            name: "<aqua>Legendäre Brustplatte"
+            unbreakable: true
+            enchantments:
+              protection: 4
+              unbreaking: 3
+              thorns: 3
+      gapples:
+        display-name: "<gold>Notch-Äpfel"
+        weight: 25
+        items:
+          - "ENCHANTED_GOLDEN_APPLE:4"
+      rang_upgrade:
+        display-name: "<light_purple>100.000 Münzen"
+        weight: 5
+        broadcast: true
+        display:
+          material: NETHER_STAR
+          name: "<light_purple>100.000 Münzen"
+        items: []
+        commands:
+          - "eco give %player% 100000"

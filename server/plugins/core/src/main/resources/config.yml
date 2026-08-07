@@ -23,9 +23,19 @@ economy:
 ranks:
   default: member
 
+# Ranks are sold for real money. The web shop (Tebex, CraftingStore, ...) grants them by
+# running "rank set <player> <rank>" through the server console — this section only controls
+# how the price is shown in /rank menu.
+rank-shop:
+  url: "https://example.com/shop"
+  currency: "€"
+  format: "#,##0.00"
+
 teleport:
   # How many previous positions /back remembers.
   back-history: 5
+  # Cooldown for /rtp in every area.
+  rtp-cooldown-seconds: 30
 
 board:
   # Sidebar refresh interval in ticks.

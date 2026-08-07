@@ -33,6 +33,9 @@ commands:
   ffa:
     description: Join a free-for-all arena.
     usage: /ffa [arena]
+  bot:
+    description: Train against a bot.
+    usage: /bot <spawn|stop|reset|difficulty|mode|kit|health|knockback|ping|stats>
   arena:
     description: Build and maintain the arenas.
     usage: /arena <create|spawn1|spawn2|pos1|pos2|bounds|kit|toggle|delete|list|teleport|sethub|setffa|reload>
@@ -46,3 +49,6 @@ permissions:
   network.practice.queue.priority:
     description: Preferred matchmaking.
     default: false
+  network.practice.bot:
+    description: Access to /bot.
+    default: true

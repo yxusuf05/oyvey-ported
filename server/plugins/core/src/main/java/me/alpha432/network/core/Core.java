@@ -7,6 +7,7 @@ import me.alpha432.network.core.profile.ProfileService;
 import me.alpha432.network.core.rank.RankService;
 import me.alpha432.network.core.region.RegionService;
 import me.alpha432.network.core.storage.Database;
+import me.alpha432.network.core.teleport.RandomTeleportService;
 import me.alpha432.network.core.teleport.TeleportService;
 import me.alpha432.network.core.text.Messages;
 import me.alpha432.network.core.world.WorldService;
@@ -63,6 +64,10 @@ public final class Core {
 
     public static TeleportService teleports() {
         return plugin().teleports();
+    }
+
+    public static RandomTeleportService randomTeleports() {
+        return plugin().randomTeleports();
     }
 
     public static RegionService regions() {

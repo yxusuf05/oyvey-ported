@@ -25,15 +25,11 @@ rank:
   staff-forbidden: "<prefix><red>Staff-Ränge darf nur die Serverleitung vergeben."
   menu-title: "<dark_gray>Rang-Shop"
   menu-price: "<gray>Preis: <gold><price></gold>"
-  menu-click: "<yellow>Klicke zum Kaufen"
+  menu-click: "<yellow>Klicke für den Shop-Link"
   menu-owned: "<green>✔ Bereits freigeschaltet"
   menu-staff-locked: "<red>Als Teammitglied nicht kaufbar"
-  buy-success: "<prefix><green>Du hast den Rang <white><rank></white> für <gold><price></gold> gekauft."
-  buy-already-owned: "<prefix><red>Du hast diesen Rang oder einen höheren bereits."
-  buy-too-expensive: "<prefix><red>Dafür brauchst du <gold><price></gold>."
-  buy-staff-locked: "<prefix><red>Teammitglieder können keine Ränge kaufen."
-  buy-not-purchasable: "<prefix><red>Dieser Rang ist nicht käuflich."
-  buy-failed: "<prefix><red>Der Kauf ist fehlgeschlagen."
+  buy-not-purchasable: "<prefix><red>Dieser Rang wird nicht verkauft."
+  shop-hint: "<prefix><gray>Den Rang <white><rank></white> gibt es für <gold><price></gold> im Shop:<newline><yellow><url>"
   set-usage: "<prefix><yellow>Verwendung: <white>/rank set <player> <rank>"
   set-failed: "<prefix><red>Der Rang von <white><player></white> konnte nicht gesetzt werden."
   set-success: "<prefix><green><white><player></white> hat jetzt den Rang <white><rank></white>."
@@ -47,6 +43,13 @@ teleport:
   cancelled: "<prefix><red>Teleport abgebrochen."
   cancelled-move: "<prefix><red>Teleport abgebrochen — du hast dich bewegt."
   cancelled-damage: "<prefix><red>Teleport abgebrochen — du hast Schaden bekommen."
+
+rtp:
+  wrong-world: "<prefix><red>Hier gibt es kein zufälliges Reiseziel."
+  searching: "<prefix><gray>Suche einen zufälligen Ort…"
+  failed: "<prefix><red>Es wurde kein sicherer Ort gefunden — versuch es noch mal."
+  done: "<prefix><green>Angekommen bei <white><location></white>."
+  cooldown: "<prefix><red>Warte noch <white><seconds></white> Sekunden."
 
 region:
   denied: "<red>Das ist hier nicht erlaubt."

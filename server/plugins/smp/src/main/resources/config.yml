@@ -33,3 +33,11 @@ shop:
   buy-sound: entity.experience_orb.pickup
   sell-sound: block.note_block.pling
   deny-sound: entity.villager.no
+
+crates:
+  # How many icons scroll past before the animation stops.
+  animation-length: 28
+  close-delay-ticks: 40
+  tick-sound: block.note_block.hat
+  win-sound: entity.player.levelup
+  deny-sound: entity.villager.no

@@ -10,14 +10,15 @@ import me.alpha432.network.smp.teleport.TeleportRequestService.Direction;
 import me.alpha432.network.smp.teleport.TeleportRequestService.Request;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
-/** {@code /tpa}, {@code /tpahere}, {@code /tpaccept}, {@code /tpdeny}, {@code /back}, {@code /rtp}. */
+/**
+ * {@code /tpa}, {@code /tpahere}, {@code /tpaccept}, {@code /tpdeny} and {@code /back}.
+ * {@code /rtp} lives in NetworkCore; this plugin only registers the destination provider.
+ */
 public final class TeleportCommands {
 
     private TeleportCommands() {
@@ -29,7 +30,6 @@ public final class TeleportCommands {
         new AcceptCommand(plugin).register();
         new DenyCommand(plugin).register();
         new BackCommand(plugin).register();
-        new RtpCommand(plugin).register();
     }
 
     /** Both /tpa and /tpahere; only the direction differs. */
@@ -172,51 +172,6 @@ public final class TeleportCommands {
                         "<location>", Locations.pretty(location));
                 Core.teleports().teleportWithWarmup(player, location, smp.warmupFor(player));
             }, () -> smp.messages().send(sender, "back.nothing"));
-        }
-    }
-
-    private static final class RtpCommand extends BaseCommand {
-
-        private final SmpPlugin smp;
-
-        private RtpCommand(SmpPlugin plugin) {
-            super(plugin, "rtp");
-            this.smp = plugin;
-            permission("network.smp.rtp");
-            playerOnly();
-        }
-
-        @Override
-        protected void run(CommandSender sender, String[] args) {
-            Player player = player(sender);
-            if (!smp.spawn().isSmp(player)) {
-                smp.messages().send(sender, "rtp.wrong-world");
-                return;
-            }
-            if (!smp.startTeleport(player, "rtp")) {
-                return;
-            }
-            World world = player.getWorld();
-            int radius = smp.getConfig().getInt("rtp.radius", 5000);
-            int minRadius = smp.getConfig().getInt("rtp.min-radius", 500);
-            Location candidate = randomLocation(world, minRadius, radius);
-
-            smp.messages().send(sender, "rtp.searching");
-            // Load the chunk first so the highest block is known before teleporting.
-            world.getChunkAtAsync(candidate).thenAccept(chunk -> {
-                Location target = world.getHighestBlockAt(candidate).getLocation().add(0.5, 1, 0.5);
-                Core.teleports().teleport(player, Locations.findSafe(target));
-                smp.messages().send(sender, "rtp.done", "<location>", Locations.pretty(target));
-            });
-        }
-
-        private static Location randomLocation(World world, int minRadius, int maxRadius) {
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-            int distance = random.nextInt(minRadius, Math.max(minRadius + 1, maxRadius));
-            double angle = random.nextDouble() * Math.PI * 2;
-            int x = (int) (Math.cos(angle) * distance);
-            int z = (int) (Math.sin(angle) * distance);
-            return new Location(world, x, world.getSeaLevel(), z);
         }
     }
 }

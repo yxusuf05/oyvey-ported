@@ -1,6 +1,5 @@
 package me.alpha432.network.core.rank;
 
-import me.alpha432.network.core.economy.EconomyService;
 import me.alpha432.network.core.profile.PlayerProfile;
 import me.alpha432.network.core.profile.ProfileService;
 import org.bukkit.Bukkit;
@@ -35,28 +34,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class RankService implements Listener {
 
-    /** Outcome of {@link RankService#buy(Player, String)}. */
-    public enum PurchaseResult {
-        SUCCESS,
-        UNKNOWN_RANK,
-        NOT_PURCHASABLE,
-        ALREADY_OWNED,
-        STAFF_LOCKED,
-        NOT_ENOUGH_MONEY,
-        NO_PROFILE
-    }
-
     private final Plugin plugin;
     private final ProfileService profiles;
-    private final EconomyService economy;
     private final Map<String, Rank> ranks = new LinkedHashMap<>();
     private final Map<UUID, PermissionAttachment> attachments = new ConcurrentHashMap<>();
     private String defaultRankId = "default";
 
-    public RankService(Plugin plugin, ProfileService profiles, EconomyService economy) {
+    public RankService(Plugin plugin, ProfileService profiles) {
         this.plugin = plugin;
         this.profiles = profiles;
-        this.economy = economy;
         reload();
     }
 
@@ -148,39 +134,7 @@ public final class RankService implements Listener {
         return true;
     }
 
-    /**
-     * Buys a rank with in-game money. Only upgrades are allowed and staff ranks are never
-     * purchasable — those stay with the owner.
-     */
-    public PurchaseResult buy(Player player, String rankId) {
-        Rank target = ranks.get(rankId == null ? "" : rankId.toLowerCase());
-        if (target == null) {
-            return PurchaseResult.UNKNOWN_RANK;
-        }
-        if (target.staff() || !target.purchasable()) {
-            return PurchaseResult.NOT_PURCHASABLE;
-        }
-        PlayerProfile profile = profiles.get(player);
-        if (profile == null) {
-            return PurchaseResult.NO_PROFILE;
-        }
-        Rank current = of(profile);
-        if (current.staff()) {
-            return PurchaseResult.STAFF_LOCKED;
-        }
-        if (current.weight() >= target.weight()) {
-            return PurchaseResult.ALREADY_OWNED;
-        }
-        if (!economy.withdraw(profile, target.price())) {
-            return PurchaseResult.NOT_ENOUGH_MONEY;
-        }
-        profile.rankId(target.id());
-        apply(player);
-        profiles.save(profile);
-        return PurchaseResult.SUCCESS;
-    }
-
-    /** Ranks players can buy, cheapest first. */
+    /** Ranks sold in the web shop, cheapest first. */
     public List<Rank> purchasable() {
         List<Rank> result = new ArrayList<>();
         for (Rank rank : ranks.values()) {

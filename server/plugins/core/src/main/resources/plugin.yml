@@ -16,6 +16,10 @@ commands:
     description: Create and edit protected regions.
     usage: /region <pos1|pos2|create|delete|flag|priority|list|here>
     aliases: [rg]
+  rtp:
+    description: Teleport to a random spot in the current area.
+    usage: /rtp
+    aliases: [wild, randomtp]
 permissions:
   network.command.rank:
     description: Access to /rank set.
@@ -28,6 +32,12 @@ permissions:
     default: op
   network.command.region:
     description: Access to /region.
+    default: op
+  network.command.rtp:
+    description: Access to /rtp.
+    default: true
+  network.command.rtp.bypass-cooldown:
+    description: Ignore the /rtp cooldown.
     default: op
   network.region.bypass:
     description: Ignore every region flag.

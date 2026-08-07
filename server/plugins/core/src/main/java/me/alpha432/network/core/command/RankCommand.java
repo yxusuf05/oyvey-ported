@@ -30,23 +30,20 @@ public final class RankCommand extends BaseCommand {
                     new RankMenu(player).open(player);
                     return;
                 }
-                Rank rank = Core.ranks().byId(args[0]);
-                RankService.PurchaseResult result = Core.ranks().buy(player, args[0]);
-                switch (result) {
-                    case SUCCESS -> {
-                        Core.messages().send(sender, "rank.buy-success",
-                                "<rank>", rank.displayName(),
-                                "<price>", Core.economy().format(rank.price()));
-                        Core.tabs().refreshAll();
-                    }
-                    case UNKNOWN_RANK -> Core.messages().send(sender, "rank.unknown", "<rank>", args[0]);
-                    case ALREADY_OWNED -> Core.messages().send(sender, "rank.buy-already-owned");
-                    case NOT_ENOUGH_MONEY -> Core.messages().send(sender, "rank.buy-too-expensive",
-                            "<price>", Core.economy().format(rank.price()));
-                    case STAFF_LOCKED -> Core.messages().send(sender, "rank.buy-staff-locked");
-                    case NOT_PURCHASABLE -> Core.messages().send(sender, "rank.buy-not-purchasable");
-                    default -> Core.messages().send(sender, "rank.buy-failed");
+                if (!Core.ranks().exists(args[0])) {
+                    Core.messages().send(sender, "rank.unknown", "<rank>", args[0]);
+                    return;
                 }
+                Rank rank = Core.ranks().byId(args[0]);
+                if (rank.staff() || !rank.purchasable()) {
+                    Core.messages().send(sender, "rank.buy-not-purchasable");
+                    return;
+                }
+                // Ranks cost real money, so the shop grants them — never the command itself.
+                Core.messages().send(sender, "rank.shop-hint",
+                        "<rank>", rank.displayName(),
+                        "<price>", plugin.formatRealMoney(rank.price()),
+                        "<url>", plugin.shopUrl());
             }
 
             @Override
@@ -58,7 +55,7 @@ public final class RankCommand extends BaseCommand {
                 Core.ranks().purchasable().forEach(rank -> ids.add(rank.id()));
                 return ids;
             }
-        }.playerOnly().usage("[rang]").description("Kauft einen Rang mit Ingame-Geld"));
+        }.playerOnly().usage("[rang]").description("Zeigt, wo es den Rang zu kaufen gibt"));
 
         sub(new SubCommand("menu", "shop") {
             @Override

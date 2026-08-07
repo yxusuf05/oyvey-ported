@@ -54,10 +54,6 @@ commands:
   back:
     description: Return to your previous position.
     usage: /back
-  rtp:
-    description: Teleport to a random position.
-    usage: /rtp
-    aliases: [wild]
   kit:
     description: Claim a kit.
     usage: /kit [name]
@@ -81,6 +77,18 @@ commands:
   sell:
     description: Sell the item in your hand or your whole inventory.
     usage: /sell <hand|all>
+  crate:
+    description: Preview and manage the crates.
+    usage: /crate <preview|setblock|unsetblock|reload> [crate]
+    aliases: [crates]
+  key:
+    description: Hand out or check crate keys.
+    usage: /key <check|give|giveall> ...
+    aliases: [keys]
+  fightarea:
+    description: The PvP areas at spawn.
+    usage: /fightarea <list|join|setspawn|reset|reload> [name]
+    aliases: [fa, arena-smp]
 permissions:
   network.smp.admin:
     description: Manage spawn, warps, kits and balances.
@@ -88,9 +96,9 @@ permissions:
   network.smp.tp.bypass-cooldown:
     description: Ignore teleport cooldowns.
     default: op
-  network.smp.rtp:
-    description: Access to /rtp.
-    default: true
   network.smp.back:
     description: Access to /back.
     default: true
+  network.smp.keys:
+    description: Hand out crate keys - this is what the web shop uses.
+    default: op

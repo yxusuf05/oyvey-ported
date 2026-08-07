@@ -32,6 +32,22 @@ ffa:
   # Announce every n-th kill of a streak to the arena; 0 disables it.
   killstreak-announce: 5
 
+# The PvP wilderness reached with /rtp inside the practice area. Its own world with hilly
+# terrain and trees, but no caves, no water and no mobs - built purely for fighting.
+pvp-world:
+  enabled: true
+  name: practice_pvp
+  # How far the hills rise and fall around the base height.
+  hill-height: 8
+  # Smaller values make wider, flatter hills.
+  hill-scale: 0.012
+  trees-per-chunk: 2
+  rtp-radius: 2000
+
+bot:
+  # How long a defeated bot stays down before it comes back.
+  respawn-delay-ticks: 40
+
 sounds:
   deny: entity.villager.no
 

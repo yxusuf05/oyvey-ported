@@ -1,0 +1,47 @@
+# PvP areas at the SMP spawn.
+#
+# type: SWORD    only the weapons under allowed-items work, nothing can be built or broken
+#       CRYSTAL  building is allowed and every change is rolled back on the reset timer
+#
+# bounds are block coordinates. The easiest way to fill them in is with the region tool:
+#   /region pos1  and  /region pos2  print the coordinates you are standing on.
+#
+# reset-seconds: 0 switches the automatic reset off. 600 is every ten minutes.
+# spawn is where /fightarea join <name> drops the player; set it with /fightarea setspawn.
+
+areas:
+
+  sword:
+    type: SWORD
+    reset-seconds: 0
+    # Everything that is not listed here cannot be used to hit or interact inside the area.
+    allowed-items:
+      - NETHERITE_SWORD
+      - DIAMOND_SWORD
+      - IRON_SWORD
+      - GOLDEN_SWORD
+      - STONE_SWORD
+      - WOODEN_SWORD
+      - MACE
+    bounds:
+      world: smp
+      min-x: -20
+      min-y: 60
+      min-z: 20
+      max-x: 20
+      max-y: 90
+      max-z: 60
+
+  crystal:
+    type: CRYSTAL
+    # Rolled back every ten minutes.
+    reset-seconds: 600
+    allowed-items: []
+    bounds:
+      world: smp
+      min-x: -20
+      min-y: 60
+      min-z: -60
+      max-x: 20
+      max-y: 90
+      max-z: -20

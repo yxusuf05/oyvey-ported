@@ -5,6 +5,7 @@ import me.alpha432.network.core.board.TabService;
 import me.alpha432.network.core.command.NetworkCommand;
 import me.alpha432.network.core.command.RankCommand;
 import me.alpha432.network.core.command.RegionCommand;
+import me.alpha432.network.core.command.RtpCommand;
 import me.alpha432.network.core.economy.EconomyService;
 import me.alpha432.network.core.menu.MenuListener;
 import me.alpha432.network.core.profile.ProfileService;
@@ -12,6 +13,7 @@ import me.alpha432.network.core.rank.RankService;
 import me.alpha432.network.core.region.RegionListener;
 import me.alpha432.network.core.region.RegionService;
 import me.alpha432.network.core.storage.Database;
+import me.alpha432.network.core.teleport.RandomTeleportService;
 import me.alpha432.network.core.teleport.TeleportService;
 import me.alpha432.network.core.text.Messages;
 import me.alpha432.network.core.world.VoidGenerator;
@@ -35,6 +37,7 @@ public final class CorePlugin extends JavaPlugin {
     private WorldService worlds;
     private RegionService regions;
     private TeleportService teleports;
+    private RandomTeleportService randomTeleports;
     private BoardService boards;
     private TabService tabs;
 
@@ -58,11 +61,12 @@ public final class CorePlugin extends JavaPlugin {
         economy = new EconomyService(profiles,
                 getConfig().getString("economy.symbol", "$"),
                 getConfig().getString("economy.format", "#,##0.00"));
-        ranks = new RankService(this, profiles, economy);
+        ranks = new RankService(this, profiles);
         worlds = new WorldService(this);
         worlds.loadAll();
         regions = new RegionService(this);
         teleports = new TeleportService(this, messages, getConfig().getInt("teleport.back-history", 5));
+        randomTeleports = new RandomTeleportService();
         boards = new BoardService(this);
         tabs = new TabService(this, boards, ranks);
 
@@ -82,6 +86,7 @@ public final class CorePlugin extends JavaPlugin {
         new RankCommand(this).register();
         new NetworkCommand(this).register();
         new RegionCommand(this).register();
+        new RtpCommand(this).register();
 
         boards.start(getConfig().getLong("board.update-ticks", 20L));
         tabs.start(getConfig().getLong("tab.update-ticks", 40L));
@@ -118,6 +123,18 @@ public final class CorePlugin extends JavaPlugin {
     @Override
     public @Nullable ChunkGenerator getDefaultWorldGenerator(@NotNull String worldName, @Nullable String id) {
         return "void".equalsIgnoreCase(id) ? new VoidGenerator() : null;
+    }
+
+    /** Formats a real money amount, e.g. {@code 9.99 €}, for the rank shop. */
+    public String formatRealMoney(double amount) {
+        String pattern = getConfig().getString("rank-shop.format", "#,##0.00");
+        java.text.DecimalFormat format = new java.text.DecimalFormat(pattern,
+                java.text.DecimalFormatSymbols.getInstance(java.util.Locale.GERMANY));
+        return format.format(amount) + " " + getConfig().getString("rank-shop.currency", "€");
+    }
+
+    public String shopUrl() {
+        return getConfig().getString("rank-shop.url", "");
     }
 
     /** Re-reads every configuration file without a restart. */
@@ -159,6 +176,10 @@ public final class CorePlugin extends JavaPlugin {
 
     public TeleportService teleports() {
         return teleports;
+    }
+
+    public RandomTeleportService randomTeleports() {
+        return randomTeleports;
     }
 
     public BoardService boards() {

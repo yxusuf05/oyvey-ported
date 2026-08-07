@@ -134,8 +134,33 @@ public final class WorldService {
      * lookup therefore accepts the registry key, the current name and the API constant name,
      * comparing letters and digits only so casing and underscores do not matter.
      */
-    private static GameRule<?> findGameRule(String name) {
+    public static GameRule<?> findGameRule(String name) {
         return GAME_RULES.get(normalise(name));
+    }
+
+    /**
+     * Sets a gamerule by name. Plugins use this instead of the Bukkit constants, which are
+     * deprecated for removal now that gamerules live in a registry.
+     *
+     * @return false when this server build does not know the rule
+     */
+    public static boolean applyGameRule(World world, String name, String value) {
+        GameRule<?> rule = findGameRule(name);
+        if (rule == null) {
+            return false;
+        }
+        try {
+            if (rule.getType() == Boolean.class) {
+                @SuppressWarnings("unchecked")
+                GameRule<Boolean> booleanRule = (GameRule<Boolean>) rule;
+                return world.setGameRule(booleanRule, Boolean.parseBoolean(value));
+            }
+            @SuppressWarnings("unchecked")
+            GameRule<Integer> integerRule = (GameRule<Integer>) rule;
+            return world.setGameRule(integerRule, Integer.parseInt(value));
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private static Map<String, GameRule<?>> indexGameRules() {
