@@ -28,6 +28,12 @@ manage. Packs can still be dropped into `.minecraft/skyloom/skies` by hand if yo
 
 See [docs/skies.md](docs/skies.md) for the catalog format, the pack formats and the sheet layout.
 
+## Making skies
+
+`tools/PanoramaToSkybox.java` turns any equirectangular panorama into a Skyloom sheet, and
+`tools/build_skies.py` builds a whole collection from Poly Haven's CC0 sky HDRIs, thumbnails and
+`catalog.json` included. See [docs/skies.md](docs/skies.md).
+
 ## Requirements
 
 Minecraft 1.21.11, Fabric Loader 0.18.4 or newer, and Fabric API. Client side only, so it works

@@ -10,6 +10,40 @@
   **Turn off** to go back to the vanilla sky. The choice survives restarts.
 * **Settings** holds the clean up switches, see below.
 
+## Making skies
+
+`tools/` has everything needed to build a collection from scratch, and needs nothing but a JDK.
+
+**One panorama into a sheet.** Any equirectangular image, which is what free HDRIs and 360 photos
+come as:
+
+```
+java tools/PanoramaToSkybox.java panorama.jpg sky.png 1536
+```
+
+The third argument is pixels per cube face, so 1536 writes a 4608x3072 sheet. A fourth argument
+rotates the result in degrees, for when the panorama's centre is not where north should be.
+
+**A whole collection at once.** Poly Haven publishes hundreds of sky HDRIs under CC0, which means
+they can be redistributed freely, no permission and no attribution required:
+
+```
+python3 tools/build_skies.py --count 40 \
+    --base-url https://github.com/you/skyloom-skies/releases/download/v1 \
+    --thumb-url https://raw.githubusercontent.com/you/skyloom-skies/main/thumbs
+```
+
+That downloads, converts, packs one zip per sky, cuts a thumbnail for each and writes a finished
+`catalog.json`. Only panoramas without terrain are used, so the lower faces stay sky. Reckon on
+roughly 12 MB per sky, so a set of 40 lands near 500 MB.
+
+Upload `out/zips/*` as release assets, commit `out/thumbs/*`, serve `out/catalog.json`.
+
+**A word on other people's art.** Sky packs from Planet Minecraft and the like are made by
+individual artists and nearly all of them forbid reuploading. Redistributing one through the
+catalog is the fast way to a takedown, and fan art of a licensed character is worse. CC0 sources
+avoid the problem entirely.
+
 ## Hosting the catalog
 
 The Browse tab reads a json file over https. Its address lives in `config/skyloom.json` as
