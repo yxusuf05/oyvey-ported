@@ -70,6 +70,15 @@ public final class SkyDownloads {
         return DOWNLOADS.get(id);
     }
 
+    /** How many downloads are running right now, failed ones do not count. */
+    public static int getActiveCount() {
+        int active = 0;
+        for (Download download : DOWNLOADS.values()) {
+            if (download.error() == null) active++;
+        }
+        return active;
+    }
+
     public static void install(SkyCatalog.Entry entry) {
         if (DOWNLOADS.containsKey(entry.id())) return;
         Download download = new Download(entry.size());

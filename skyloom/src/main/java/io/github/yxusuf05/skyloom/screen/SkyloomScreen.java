@@ -237,6 +237,16 @@ public class SkyloomScreen extends Screen {
             }
             context.drawString(this.font, value.label, left + 12, y + 9,
                     fade(selected ? 0xFFFFFFFF : mix(MUTED, TEXT, hover)), false);
+
+            // downloads land in My skies, so say so while any are running
+            int running = value == Tab.SKIES ? SkyDownloads.getActiveCount() : 0;
+            if (running > 0) {
+                String badge = running + " v";
+                int badgeWidth = this.font.width(badge) + 10;
+                int badgeX = left + RAIL_WIDTH - badgeWidth - 8;
+                roundedRect(context, badgeX, y + 6, badgeWidth, 14, 7, fade(accent(selected ? 0x80 : 0xFF)));
+                context.drawString(this.font, badge, badgeX + 5, y + 9, fade(0xFFFFFFFF), false);
+            }
             this.hotspots.add(new Hotspot(left, y, RAIL_WIDTH, height, () -> {
                 this.tab = value;
                 this.scroll = 0.0f;
@@ -527,12 +537,20 @@ public class SkyloomScreen extends Screen {
                 Math.round((x + 10) / 0.8f), Math.round((y + height - 17) / 0.8f), fade(0xFFA8A8B4), false);
         context.pose().popMatrix();
 
-        renderCatalogAction(context, mouseX, mouseY, entry, x, y, width, clipTop, clipBottom);
+        renderCatalogAction(context, mouseX, mouseY, entry, x, y, width, height, clipTop, clipBottom);
         if (inside && !entry.description().isEmpty()) this.hoveredDescription = entry.description();
+
+        int hotTop = Math.max(y, clipTop);
+        int hotHeight = Math.min(y + height, clipBottom) - hotTop;
+        this.hotspots.add(new Hotspot(x, hotTop, width, hotHeight, () -> {
+            if (SkyDownloads.getDownload(entry.id()) != null) return;   // already running
+            if (SkyDownloads.isInstalled(entry.id())) return;           // the badge removes it
+            SkyDownloads.install(entry);
+        }));
     }
 
     private void renderCatalogAction(GuiGraphics context, int mouseX, int mouseY, SkyCatalog.Entry entry,
-                                     int x, int y, int width, int clipTop, int clipBottom) {
+                                     int x, int y, int width, int height, int clipTop, int clipBottom) {
         SkyDownloads.Download download = SkyDownloads.getDownload(entry.id());
         boolean installed = SkyDownloads.isInstalled(entry.id());
 
@@ -541,16 +559,34 @@ public class SkyloomScreen extends Screen {
         boolean visible = badgeY >= clipTop && badgeY + badgeHeight <= clipBottom;
 
         if (download != null && download.error() == null) {
-            int badgeWidth = 56;
-            int badgeX = x + width - badgeWidth - 8;
-            roundedRect(context, badgeX, badgeY, badgeWidth, badgeHeight, 8, fade(0xC0000000));
+            // the whole card becomes the progress indicator, a badge sized one is too easy to miss
+            context.fill(x, y, x + width, y + height, fade(0xB0000000));
+
             float progress = download.progress();
-            int inner = badgeWidth - 8;
-            int filled = progress < 0.0f
-                    ? Math.round(inner * (0.3f + 0.2f * Mth.sin(System.currentTimeMillis() / 200.0f)))
-                    : Math.round(inner * progress);
-            roundedRect(context, badgeX + 4, badgeY + 6, inner, 4, 2, fade(0x33FFFFFF));
-            roundedRect(context, badgeX + 4, badgeY + 6, Math.max(2, filled), 4, 2, fade(accent(0xFF)));
+            int barWidth = width - 32;
+            int barX = x + 16;
+            int barY = y + height / 2 + 4;
+            roundedRect(context, barX, barY, barWidth, 6, 3, fade(0x40FFFFFF));
+            if (progress < 0.0f) {
+                // no length from the server, so a sliding piece instead of a filling bar
+                float slide = (System.currentTimeMillis() % 1200L) / 1200.0f;
+                int pieceWidth = Math.max(20, barWidth / 4);
+                int pieceX = barX + Math.round((barWidth - pieceWidth) * (0.5f - 0.5f * Mth.cos(slide * Mth.TWO_PI)));
+                roundedRect(context, pieceX, barY, pieceWidth, 6, 3, fade(accent(0xFF)));
+            } else {
+                roundedRect(context, barX, barY, Math.max(6, Math.round(barWidth * progress)), 6, 3, fade(accent(0xFF)));
+            }
+
+            String label = progress < 0.0f
+                    ? readableSize(download.done()) + " loaded"
+                    : Math.round(progress * 100.0f) + "%  of  " + readableSize(entry.size());
+            context.drawCenteredString(this.font, label, x + width / 2, y + height / 2 - 12, fade(0xFFFFFFFF));
+            String hint = "lands in My skies when it is done";
+            context.pose().pushMatrix();
+            context.pose().scale(0.8f, 0.8f);
+            context.drawCenteredString(this.font, hint,
+                    Math.round((x + width / 2) / 0.8f), Math.round((barY + 14) / 0.8f), fade(0xFFA8A8B4));
+            context.pose().popMatrix();
             return;
         }
 
