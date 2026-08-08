@@ -164,7 +164,10 @@ def main():
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--only", nargs="*", help="specific Poly Haven asset ids instead of a selection")
     parser.add_argument("--install", action="store_true",
-                        help="put the zips straight into .minecraft/skyloom/skies instead of out/zips")
+                        help="put the zips straight into the game's skies folder instead of out/zips")
+    parser.add_argument("--game-dir", default=None,
+                        help="the game folder to install into, for launchers that do not use .minecraft "
+                             "(the Modrinth app uses ModrinthApp/profiles/<name>)")
     parser.add_argument("--include-ground", action="store_true",
                         help="also use panoramas that contain terrain, by default only the puresky ones")
     args = parser.parse_args()
@@ -172,7 +175,7 @@ def main():
     out = pathlib.Path(args.out)
     zips, thumbs, work = out / "zips", out / "thumbs", out / "work"
     if args.install:
-        zips = minecraft_skies()
+        zips = (pathlib.Path(args.game_dir) / "skyloom" / "skies") if args.game_dir else minecraft_skies()
     for directory in (zips, thumbs, work):
         directory.mkdir(parents=True, exist_ok=True)
 
