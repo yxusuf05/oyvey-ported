@@ -50,7 +50,7 @@ public final class SkyCatalog {
         if (state == State.LOADING) return;
         state = State.LOADING;
         error = "";
-        SkyTextures.submit(SkyCatalog::fetch);
+        SkyTextures.submitNetwork(SkyCatalog::fetch);
     }
 
     private static void fetch() {
@@ -71,7 +71,11 @@ public final class SkyCatalog {
             if (response.statusCode() != 200) throw new IllegalStateException("server answered " + response.statusCode());
             if (response.body().length() > MAX_CATALOG_BYTES) throw new IllegalStateException("catalog is too large");
 
-            entries = parse(response.body());
+            // editors and copy paste like to leave a byte order mark in front of the first brace
+            String body = response.body().replace("\uFEFF", "").trim();
+            if (body.isEmpty()) throw new IllegalStateException("the catalog file is empty");
+
+            entries = parse(body);
             state = State.READY;
             LOGGER.info("Catalog listed {} skies", entries.size());
         } catch (Throwable throwable) {
@@ -83,16 +87,25 @@ public final class SkyCatalog {
     }
 
     private static List<Entry> parse(String body) {
-        JsonObject root = JsonParser.parseString(body).getAsJsonObject();
-        List<Entry> parsed = new ArrayList<>();
-        if (!root.has("skies")) return List.of();
+        JsonElement parsed;
+        try {
+            parsed = JsonParser.parseString(body);
+        } catch (Throwable throwable) {
+            throw new IllegalStateException("the catalog is not valid json");
+        }
+        if (!parsed.isJsonObject()) throw new IllegalStateException("the catalog is not valid json");
+        JsonObject root = parsed.getAsJsonObject();
+        List<Entry> found = new ArrayList<>();
+        if (!root.has("skies") || !root.get("skies").isJsonArray()) {
+            throw new IllegalStateException("the catalog has no \"skies\" list");
+        }
         for (JsonElement element : root.getAsJsonArray("skies")) {
             try {
                 JsonObject object = element.getAsJsonObject();
                 String id = object.get("id").getAsString().trim();
                 String download = object.get("download").getAsString().trim();
                 if (id.isEmpty() || !download.toLowerCase().startsWith("https://")) continue;
-                parsed.add(new Entry(
+                found.add(new Entry(
                         id,
                         object.has("name") ? object.get("name").getAsString() : id,
                         object.has("category") ? object.get("category").getAsString() : "Downloads",
@@ -105,7 +118,7 @@ public final class SkyCatalog {
                 LOGGER.warn("Skipping a malformed catalog entry", throwable);
             }
         }
-        return List.copyOf(parsed);
+        return List.copyOf(found);
     }
 
     private static String describe(Throwable throwable) {

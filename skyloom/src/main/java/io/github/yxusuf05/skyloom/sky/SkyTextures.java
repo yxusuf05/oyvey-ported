@@ -11,12 +11,29 @@ import java.util.concurrent.Executors;
  */
 public final class SkyTextures {
     private static ExecutorService executor;
+    private static ExecutorService network;
 
     private SkyTextures() {
     }
 
+    /** Image decoding. One thread on purpose, a large sheet is memory hungry. */
     static void submit(Runnable task) {
         getExecutor().execute(task);
+    }
+
+    /**
+     * Catalog and downloads. Separate from decoding, otherwise refreshing the list waits behind
+     * however many thumbnails happen to be queued.
+     */
+    static synchronized void submitNetwork(Runnable task) {
+        if (network == null) {
+            network = Executors.newFixedThreadPool(3, task2 -> {
+                Thread thread = new Thread(task2, "Skyloom network");
+                thread.setDaemon(true);
+                return thread;
+            });
+        }
+        network.execute(task);
     }
 
     /**

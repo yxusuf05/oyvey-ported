@@ -74,7 +74,7 @@ public final class SkyDownloads {
         if (DOWNLOADS.containsKey(entry.id())) return;
         Download download = new Download(entry.size());
         DOWNLOADS.put(entry.id(), download);
-        SkyTextures.submit(() -> run(entry, download));
+        SkyTextures.submitNetwork(() -> run(entry, download));
     }
 
     public static boolean remove(String id) {
