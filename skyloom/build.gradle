@@ -2,7 +2,25 @@ plugins {
     id 'fabric-loom' version "$loom_version"
 }
 
-version = project.mod_version
+// Which Minecraft to build for. `./gradlew build` gives the newest, `-Pmc=1.21.10` gives that one.
+// Everything version specific lives in versions/<mc>.properties and src/mc<mc>/java.
+def mc = (project.findProperty("mc") ?: project.minecraft_version).toString()
+def target = new Properties()
+def targetFile = file("versions/${mc}.properties")
+if (!targetFile.exists()) {
+    throw new GradleException("No versions/${mc}.properties, so ${mc} is not a version this can build")
+}
+targetFile.withInputStream { target.load(it) }
+
+def minecraftVersion = target.getProperty("minecraft_version")
+def loaderVersion = target.getProperty("loader_version")
+def fabricVersion = target.getProperty("fabric_version")
+
+// 1.21.11 renamed ResourceLocation to Identifier. Older targets get the old name written back in,
+// which is a plain rename and the only source difference broad enough to be worth automating.
+def renameIdentifier = minecraftVersion != "1.21.11"
+
+version = "${project.mod_version}+mc${minecraftVersion}"
 group = project.maven_group
 
 base {
@@ -14,22 +32,67 @@ repositories {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
     mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modImplementation "net.fabricmc:fabric-loader:${loaderVersion}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
+}
+
+def generatedSources = layout.buildDirectory.dir("generated/${mc}/java")
+
+def prepareSources = tasks.register("prepareSources", Copy) {
+    description = "Collects the sources for ${mc}, applying renames and per version overrides"
+    into generatedSources
+
+    // first match wins, so the overrides are listed before the shared sources they replace.
+    // legacy covers everything on the pre 1.21.11 render api, mc<version> is for a difference
+    // that belongs to one version alone.
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from("src/mc${mc}/java")
+    if (renameIdentifier) {
+        from("src/legacy/java")
+    }
+
+    from("src/main/java") {
+        if (renameIdentifier) {
+            filter { line ->
+                line.replace("net.minecraft.resources.Identifier", "net.minecraft.resources.ResourceLocation")
+                        .replaceAll(/\bIdentifier\b/, "ResourceLocation")
+            }
+        }
+    }
+}
+
+sourceSets.main.java.srcDirs = [generatedSources]
+tasks.named("compileJava") { dependsOn prepareSources }
+// sourcesJar only exists once the java block below has asked for it
+tasks.matching { it.name == "sourcesJar" }.configureEach { dependsOn prepareSources }
+
+// `./gradlew runClientGameTest -Pmc=<version>` boots a real client for that version
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "skyloom-test"
+        eula = true
+    }
+}
+
+tasks.matching { it.name == "runClientGameTest" }.configureEach {
+    // otherwise a startup error opens a window nobody is looking at and the run hangs
+    jvmArgs "-Djava.awt.headless=true"
 }
 
 processResources {
     inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
+    inputs.property "minecraft_version", minecraftVersion
+    inputs.property "loader_version", loaderVersion
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+                "minecraft_version": minecraftVersion,
+                "loader_version": loaderVersion
     }
 }
 

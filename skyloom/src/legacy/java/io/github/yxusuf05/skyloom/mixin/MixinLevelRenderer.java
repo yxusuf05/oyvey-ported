@@ -1,0 +1,32 @@
+package io.github.yxusuf05.skyloom.mixin;
+
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import io.github.yxusuf05.skyloom.sky.render.CustomSkyRenderer;
+import net.minecraft.client.CloudStatus;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/**
+ * The 1.21.9 and 1.21.10 shape of the cloud and weather hooks. Clouds do not get the tick count
+ * yet, and the weather pass still takes the camera position.
+ */
+@Mixin(LevelRenderer.class)
+public class MixinLevelRenderer {
+
+    @Inject(method = "addCloudsPass", at = @At("HEAD"), cancellable = true)
+    private void skyloom$hideClouds(FrameGraphBuilder frameGraphBuilder, CloudStatus cloudStatus, Vec3 cameraPosition,
+                                    float partialTick, int color, float height, CallbackInfo ci) {
+        if (CustomSkyRenderer.shouldHideClouds()) ci.cancel();
+    }
+
+    @Inject(method = "addWeatherPass", at = @At("HEAD"), cancellable = true)
+    private void skyloom$hideWeather(FrameGraphBuilder frameGraphBuilder, Vec3 cameraPosition,
+                                     GpuBufferSlice fogBuffer, CallbackInfo ci) {
+        if (CustomSkyRenderer.shouldHideWeather()) ci.cancel();
+    }
+}

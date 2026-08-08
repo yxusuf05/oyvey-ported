@@ -845,8 +845,17 @@ public class SkyloomScreen extends Screen {
         return 1.0f - (1.0f - clamped) * (1.0f - clamped);
     }
 
+    /**
+     * Straight per channel blend. Vanilla has this, but under three different names across the
+     * versions this mod builds for, and eight lines here is cheaper than a version split.
+     */
     private static int mix(int from, int to, float progress) {
-        return ARGB.srgbLerp(Mth.clamp(progress, 0.0f, 1.0f), from, to);
+        float t = Mth.clamp(progress, 0.0f, 1.0f);
+        int alpha = Math.round(ARGB.alpha(from) + (ARGB.alpha(to) - ARGB.alpha(from)) * t);
+        int red = Math.round(ARGB.red(from) + (ARGB.red(to) - ARGB.red(from)) * t);
+        int green = Math.round(ARGB.green(from) + (ARGB.green(to) - ARGB.green(from)) * t);
+        int blue = Math.round(ARGB.blue(from) + (ARGB.blue(to) - ARGB.blue(from)) * t);
+        return ARGB.color(alpha, red, green, blue);
     }
 
     // -----------------------------------------------------------------------------------------

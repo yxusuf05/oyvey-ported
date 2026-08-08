@@ -14,7 +14,6 @@ import io.github.yxusuf05.skyloom.sky.SkyPack;
 import io.github.yxusuf05.skyloom.sky.SkyRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
@@ -105,7 +104,8 @@ public final class CustomSkyRenderer {
     }
 
     private static void drawCube(Identifier texture, SkyLayer layer, int color) {
-        RenderType type = SkyPipelines.get(texture, layer.getBlend());
+        // var, because the render type lives in a different package before 1.21.11
+        var type = SkyPipelines.get(texture, layer.getBlend());
         BufferBuilder builder = Tesselator.getInstance()
                 .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 
