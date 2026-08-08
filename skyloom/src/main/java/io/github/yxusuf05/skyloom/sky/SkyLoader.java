@@ -111,6 +111,7 @@ public final class SkyLoader {
             LOGGER.error("Failed to create {}", directory, exception);
             return;
         }
+        dropLegacyCache(directory);
 
         List<Path> candidates = new ArrayList<>();
         try (Stream<Path> children = Files.list(directory)) {
@@ -122,7 +123,10 @@ public final class SkyLoader {
         candidates.sort(Comparator.comparing(path -> path.getFileName().toString().toLowerCase(Locale.ROOT)));
 
         for (Path candidate : candidates) {
-            boolean zip = Files.isRegularFile(candidate) && candidate.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".zip");
+            String fileName = candidate.getFileName().toString();
+            // dot folders are caches and platform clutter, never skies
+            if (fileName.startsWith(".") || fileName.equalsIgnoreCase("__MACOSX")) continue;
+            boolean zip = Files.isRegularFile(candidate) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip");
             if (!Files.isDirectory(candidate) && !zip) continue;
 
             try (PackSource source = zip ? new ZipSource(candidate) : new DirectorySource(candidate)) {
@@ -132,6 +136,27 @@ public final class SkyLoader {
             } catch (Throwable throwable) {
                 LOGGER.error("Failed to load sky pack {}", candidate.getFileName(), throwable);
             }
+        }
+    }
+
+    /**
+     * Earlier versions cached thumbnails inside the skies folder, where the scan then picked them
+     * up as skies of their own. They are regenerated elsewhere, so the old folder just goes.
+     */
+    private static void dropLegacyCache(Path directory) {
+        Path legacy = directory.resolve(".thumbnails");
+        if (!Files.isDirectory(legacy)) return;
+        try (Stream<Path> files = Files.walk(legacy)) {
+            files.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException exception) {
+                    LOGGER.warn("Could not remove {}", path, exception);
+                }
+            });
+            LOGGER.info("Removed the old thumbnail cache from inside the skies folder");
+        } catch (IOException exception) {
+            LOGGER.warn("Could not clean up {}", legacy, exception);
         }
     }
 

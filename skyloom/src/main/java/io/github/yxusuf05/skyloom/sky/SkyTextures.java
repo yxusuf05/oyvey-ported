@@ -19,8 +19,12 @@ public final class SkyTextures {
         getExecutor().execute(task);
     }
 
+    /**
+     * Deliberately a sibling of the skies folder rather than a child: anything inside that folder
+     * is treated as a sky, and cached thumbnails are not skies.
+     */
     public static Path getThumbnailCache() {
-        return SkyLoader.getSkiesDirectory().resolve(".thumbnails");
+        return SkyLoader.getSkiesDirectory().resolveSibling("cache");
     }
 
     private static synchronized ExecutorService getExecutor() {
