@@ -5,9 +5,6 @@
   "name": "Skyloom",
   "description": "Swap the sky from an in-game menu. Loads OptiFine and MCPatcher custom sky packs, no reload and no resource pack juggling.",
   "authors": ["yxusuf05"],
-  "contact": {
-    "sources": "https://github.com/yxusuf05/skyloom"
-  },
   "license": "MIT",
   "icon": "assets/skyloom/icon.png",
   "environment": "client",
