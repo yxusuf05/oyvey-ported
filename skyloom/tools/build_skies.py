@@ -17,6 +17,7 @@ the repository, and out/catalog.json wherever catalogUrl points.
 """
 import argparse
 import json
+import os
 import pathlib
 import random
 import re
@@ -139,6 +140,18 @@ def thumbnail(sheet_path, out_path, size=256):
     write_png(out_path, size, size, out)
 
 
+def minecraft_skies():
+    """The skies folder of a default Minecraft install, on any of the three platforms."""
+    home = pathlib.Path.home()
+    if sys.platform.startswith("win"):
+        base = pathlib.Path(os.environ.get("APPDATA", home)) / ".minecraft"
+    elif sys.platform == "darwin":
+        base = home / "Library" / "Application Support" / "minecraft"
+    else:
+        base = home / ".minecraft"
+    return base / "skyloom" / "skies"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--count", type=int, default=40)
@@ -150,12 +163,16 @@ def main():
                         help="where the thumbs folder will be served from, defaults to no thumbnails")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--only", nargs="*", help="specific Poly Haven asset ids instead of a selection")
+    parser.add_argument("--install", action="store_true",
+                        help="put the zips straight into .minecraft/skyloom/skies instead of out/zips")
     parser.add_argument("--include-ground", action="store_true",
                         help="also use panoramas that contain terrain, by default only the puresky ones")
     args = parser.parse_args()
 
     out = pathlib.Path(args.out)
     zips, thumbs, work = out / "zips", out / "thumbs", out / "work"
+    if args.install:
+        zips = minecraft_skies()
     for directory in (zips, thumbs, work):
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -228,6 +245,10 @@ def main():
     shutil.rmtree(work, ignore_errors=True)
     total = sum(entry["size"] for entry in entries)
     print(f"\nDone: {len(entries)} skies, {total / 1e6:.0f} MB of zips")
+    if args.install:
+        print(f"  installed into {zips}")
+        print("  start Minecraft, press I, hit Rescan")
+        return
     print(f"  {zips}/        -> upload as release assets")
     print(f"  {thumbs}/      -> commit into the repository")
     print(f"  {out}/catalog.json -> fix the thumbnail urls, then serve it")
