@@ -23,3 +23,77 @@ admin:
   header: "<dark_gray><strikethrough>                    </strikethrough> <gradient:#00d4ff:#0066ff><bold>CorePvP</bold></gradient> <dark_gray><strikethrough>                    </strikethrough>"
   help-entry: "<gray>/<label> <white><usage></white> <dark_gray>- <gray><description>"
   version: "<prefix><gray>Running <white>CorePvP v<version></white> on <white><server></white>."
+
+chat:
+  cooldown: "<prefix><red>Slow down - <white><time></white> left."
+
+lobby:
+  join: "<dark_gray>[<green>+</green>] <gray><player>"
+  quit: "<dark_gray>[<red>-</red>] <gray><player>"
+  spawn-set: "<prefix><green>Lobby spawn set to your position."
+  no-spawn: "<prefix><red>No lobby spawn is set. Use <white>/corepvp setspawn</white> first."
+  teleported: "<prefix><gray>Sent you back to spawn."
+
+  items:
+    unranked-queue:
+      name: "<green><bold>Unranked</bold>"
+      lore:
+        - "<gray>Fight without touching your ELO."
+        - ""
+        - "<yellow>Right click <gray>to pick a kit."
+    ranked-queue:
+      name: "<aqua><bold>Ranked</bold>"
+      lore:
+        - "<gray>Every match moves your ELO."
+        - ""
+        - "<yellow>Right click <gray>to pick a kit."
+    ffa:
+      name: "<light_purple><bold>Free For All</bold>"
+      lore:
+        - "<gray>Jump straight into an open arena."
+        - "<gray>Crystal, sumo and more."
+        - ""
+        - "<yellow>Right click <gray>to choose."
+    survival:
+      name: "<dark_green><bold>Survival</bold>"
+      lore:
+        - "<gray>The persistent world."
+        - ""
+        - "<yellow>Right click <gray>to travel."
+    kit-editor:
+      name: "<gold><bold>Kit Editor</bold>"
+      lore:
+        - "<gray>Arrange your own hotbar layouts."
+        - ""
+        - "<yellow>Right click <gray>to edit."
+    leaderboard:
+      name: "<yellow><bold>Leaderboards</bold>"
+      lore:
+        - "<gray>The best players per kit."
+        - ""
+        - "<yellow>Right click <gray>to view."
+    party:
+      name: "<blue><bold>Party</bold>"
+      lore:
+        - "<gray>Team up for 2v2 and 3v3."
+        - ""
+        - "<yellow>Right click <gray>to open."
+    settings:
+      name: "<white><bold>Settings</bold>"
+      lore:
+        - "<gray>Scoreboard, requests and visibility."
+        - ""
+        - "<yellow>Right click <gray>to open."
+
+scoreboard:
+  lobby:
+    title: "<gradient:#00d4ff:#0066ff><bold>CorePvP</bold></gradient>"
+    lines:
+      - "<dark_gray><strikethrough>                    </strikethrough>"
+      - "<gray>Online: <white><online></white>"
+      - "<gray>In fights: <white><fights></white>"
+      - "<gray>In queue: <white><queued></white>"
+      - ""
+      - "<gray>Rank: <white><rank></white>"
+      - "<gray>Ping: <white><ping>ms</white>"
+      - "<dark_gray><strikethrough>                    </strikethrough>"

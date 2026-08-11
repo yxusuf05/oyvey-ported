@@ -1,0 +1,52 @@
+# ---------------------------------------------------------------------------
+#  CorePvP - ranks
+#
+#  A player gets the highest-priority rank whose permission they hold, so this
+#  works with LuckPerms, any other permission plugin, or plain permissions.yml.
+#  Prefixes and colours are MiniMessage.
+# ---------------------------------------------------------------------------
+
+default-rank: default
+
+ranks:
+  default:
+    display: "Player"
+    prefix: ""
+    name-color: "gray"
+    priority: 0
+    permission: ""
+
+  vip:
+    display: "VIP"
+    prefix: "<green>VIP <dark_gray>| "
+    name-color: "green"
+    priority: 10
+    permission: "corepvp.rank.vip"
+
+  mvp:
+    display: "MVP"
+    prefix: "<aqua>MVP <dark_gray>| "
+    name-color: "aqua"
+    priority: 20
+    permission: "corepvp.rank.mvp"
+
+  mod:
+    display: "Mod"
+    prefix: "<dark_green>MOD <dark_gray>| "
+    name-color: "dark_green"
+    priority: 50
+    permission: "corepvp.rank.mod"
+
+  admin:
+    display: "Admin"
+    prefix: "<red>ADMIN <dark_gray>| "
+    name-color: "red"
+    priority: 80
+    permission: "corepvp.rank.admin"
+
+  owner:
+    display: "Owner"
+    prefix: "<dark_red><bold>OWNER</bold> <dark_gray>| "
+    name-color: "dark_red"
+    priority: 100
+    permission: "corepvp.rank.owner"

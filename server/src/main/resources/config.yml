@@ -1,7 +1,8 @@
 # ---------------------------------------------------------------------------
 #  CorePvP - main configuration
 #
-#  Message text lives in messages.yml, kits in kits.yml, arenas in arenas.yml.
+#  Message text lives in messages.yml, ranks in ranks.yml, kits in kits.yml
+#  and arenas in arenas.yml. Reload everything with /corepvp reload.
 # ---------------------------------------------------------------------------
 
 server:
@@ -32,3 +33,27 @@ profiles:
   # Kick players whose profile failed to load rather than letting them play
   # with a blank one (which would later overwrite their real stats).
   kick-on-load-failure: true
+
+worlds:
+  # These are created on first start if they do not exist. The lobby, arena and
+  # FFA worlds are pure void; survival uses normal generation.
+  lobby: "world"
+  arenas: "world_arenas"
+  ffa: "world_ffa"
+  survival: "world_survival"
+  create-survival: true
+
+lobby:
+  # Set in game with /corepvp setspawn. Empty means "use the lobby world spawn".
+  spawn: ""
+
+chat:
+  format: "<rank_prefix><player><dark_gray>: <gray><message>"
+  # 0 disables the cooldown. Bypass with corepvp.chat.bypass-cooldown.
+  cooldown-seconds: 0
+
+scoreboard:
+  enabled: true
+  # 4 ticks is five updates a second, which is plenty and costs nothing
+  # because only lines that actually changed are sent.
+  update-ticks: 4
