@@ -1,13 +1,23 @@
 package me.alpha432.corepvp;
 
+import me.alpha432.corepvp.arena.ArenaGenerator;
+import me.alpha432.corepvp.arena.ArenaManager;
+import me.alpha432.corepvp.arena.BuildProtectionListener;
+import me.alpha432.corepvp.arena.rollback.RollbackService;
 import me.alpha432.corepvp.board.BoardService;
+import me.alpha432.corepvp.combat.CombatListener;
+import me.alpha432.corepvp.combat.CombatModeService;
 import me.alpha432.corepvp.command.RootCommand;
+import me.alpha432.corepvp.command.impl.ArenaSubCommand;
+import me.alpha432.corepvp.command.impl.KitSubCommand;
 import me.alpha432.corepvp.command.impl.ReloadSubCommand;
 import me.alpha432.corepvp.command.impl.SetSpawnSubCommand;
 import me.alpha432.corepvp.command.impl.SpawnSubCommand;
 import me.alpha432.corepvp.command.impl.VersionSubCommand;
 import me.alpha432.corepvp.config.ConfigManager;
 import me.alpha432.corepvp.config.Messages;
+import me.alpha432.corepvp.kit.KitApplier;
+import me.alpha432.corepvp.kit.KitManager;
 import me.alpha432.corepvp.lobby.LobbyBoardProvider;
 import me.alpha432.corepvp.lobby.LobbyListener;
 import me.alpha432.corepvp.lobby.LobbyService;
@@ -51,6 +61,14 @@ public final class CorePvPPlugin extends JavaPlugin {
     private LobbyService lobby;
     private LobbyBoardProvider lobbyBoard;
 
+    private CombatModeService combat;
+    private KitManager kits;
+    private KitApplier kitApplier;
+    private RollbackService rollback;
+    private ArenaManager arenas;
+    private ArenaGenerator arenaGenerator;
+    private BuildProtectionListener buildProtection;
+
     public static CorePvPPlugin get() {
         return instance;
     }
@@ -86,11 +104,26 @@ public final class CorePvPPlugin extends JavaPlugin {
         nameTags = new NameTagService(ranks, boards);
         lobby = new LobbyService(this, configs, messages, states, worlds, nameTags);
 
+        combat = new CombatModeService(this);
+        kitApplier = new KitApplier(combat);
+        kits = new KitManager(this, configs);
+        kits.load();
+
+        rollback = new RollbackService(this,
+                configs.main().getInt("arenas.rollback-blocks-per-tick", 2000));
+        arenas = new ArenaManager(this, configs, rollback);
+        arenas.load();
+        arenaGenerator = new ArenaGenerator(this, arenas,
+                configs.main().getInt("arenas.blocks-per-tick", 4000));
+        buildProtection = new BuildProtectionListener(arenas);
+
         lobbyBoard = new LobbyBoardProvider(messages, configs, ranks);
         boards.register(PlayerState.LOBBY, lobbyBoard);
         boards.register(PlayerState.QUEUE, lobbyBoard);
 
         register(new MenuListener());
+        register(buildProtection);
+        register(new CombatListener(combat));
         register(new ProfileListener(this, profiles, messages,
                 configs.main().getBoolean("profiles.kick-on-load-failure", true)));
         register(new LobbyListener(lobby, states, boards, nameTags, messages));
@@ -112,6 +145,12 @@ public final class CorePvPPlugin extends JavaPlugin {
         // flushed synchronously before the pool that would write them is closed.
         if (boards != null) {
             boards.stop();
+        }
+        // Arenas are restored on the calling thread: the scheduler is already
+        // gone at this point, so a task-based rollback would never run and the
+        // arena would keep the last match's blocks forever.
+        if (arenas != null) {
+            arenas.restoreAllBlocking();
         }
         if (profiles != null) {
             profiles.shutdown();
@@ -159,6 +198,8 @@ public final class CorePvPPlugin extends JavaPlugin {
         RootCommand root = new RootCommand(messages)
                 .register(new SpawnSubCommand(lobby, messages))
                 .register(new SetSpawnSubCommand(lobby, messages))
+                .register(new ArenaSubCommand(arenas, arenaGenerator, worlds, messages))
+                .register(new KitSubCommand(kits, kitApplier, messages))
                 .register(new ReloadSubCommand(this))
                 .register(new VersionSubCommand(this));
 
@@ -181,7 +222,35 @@ public final class CorePvPPlugin extends JavaPlugin {
         messages.reload();
         ranks.reload();
         lobby.reload();
+        kits.load();
         nameTags.updateAll();
+        // Arenas are deliberately not reloaded: a running match holds a live
+        // Arena object, and swapping it out underneath would strand its
+        // rollback journal.
+    }
+
+    public CombatModeService combat() {
+        return combat;
+    }
+
+    public KitManager kits() {
+        return kits;
+    }
+
+    public KitApplier kitApplier() {
+        return kitApplier;
+    }
+
+    public ArenaManager arenas() {
+        return arenas;
+    }
+
+    public ArenaGenerator arenaGenerator() {
+        return arenaGenerator;
+    }
+
+    public BuildProtectionListener buildProtection() {
+        return buildProtection;
     }
 
     public ConfigManager configs() {

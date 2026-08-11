@@ -57,3 +57,11 @@ scoreboard:
   # 4 ticks is five updates a second, which is plenty and costs nothing
   # because only lines that actually changed are sent.
   update-ticks: 4
+
+arenas:
+  # Blocks placed per tick while generating. Higher finishes sooner but eats
+  # more of each tick.
+  blocks-per-tick: 4000
+  # Blocks restored per tick after a match. Deliberately lower: rollback runs
+  # while other matches are being played.
+  rollback-blocks-per-tick: 2000
