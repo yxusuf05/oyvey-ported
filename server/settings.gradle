@@ -1,0 +1,10 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+// Standalone build. This project is intentionally NOT part of the root
+// fabric-loom build: the root project is a client-side Fabric mod, this one is
+// a server-side Paper plugin. They share nothing but the repository.
+rootProject.name = 'corepvp'

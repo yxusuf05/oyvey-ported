@@ -1,0 +1,34 @@
+# ---------------------------------------------------------------------------
+#  CorePvP - main configuration
+#
+#  Message text lives in messages.yml, kits in kits.yml, arenas in arenas.yml.
+# ---------------------------------------------------------------------------
+
+server:
+  # Shown on scoreboards and in some messages.
+  name: "CorePvP"
+
+storage:
+  # SQLITE needs no setup at all and keeps everything in one file.
+  # MYSQL is there for when you outgrow that.
+  type: SQLITE
+
+  sqlite:
+    # Relative to the plugin folder.
+    file: "data.db"
+
+  mysql:
+    host: "127.0.0.1"
+    port: 3306
+    database: "corepvp"
+    username: "root"
+    password: ""
+    pool-size: 10
+    properties: "useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8"
+
+profiles:
+  # How often cached profiles with unsaved changes are flushed to storage.
+  autosave-interval-seconds: 300
+  # Kick players whose profile failed to load rather than letting them play
+  # with a blank one (which would later overwrite their real stats).
+  kick-on-load-failure: true

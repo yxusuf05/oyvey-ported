@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+#  CorePvP - all player facing text.
+#
+#  Formatting uses MiniMessage: https://docs.advntr.dev/minimessage/format.html
+#  <prefix> expands to the prefix defined below.
+#  Anything a player typed is inserted literally and is never parsed as tags.
+# ---------------------------------------------------------------------------
+
+prefix: "<dark_gray>[<gradient:#00d4ff:#0066ff><bold>Core</bold></gradient><dark_gray>] <gray>"
+
+general:
+  no-permission: "<prefix><red>You don't have permission to do that."
+  player-only: "<prefix><red>That command can only be used in game."
+  unknown-subcommand: "<prefix><red>Unknown subcommand '<white><input></white>'. Try <white>/<label> help</white>."
+  usage: "<prefix><gray>Usage: <white>/<label> <usage></white>"
+  player-not-found: "<prefix><red>No online player named '<white><input></white>'."
+  invalid-number: "<prefix><red>'<white><input></white>' is not a valid number."
+  reloaded: "<prefix><green>Configuration reloaded <dark_gray>(<white><ms>ms</white>)</green>."
+  reload-failed: "<prefix><red>Reload failed: <white><error></white>"
+  profile-load-failed: "<red>Your profile could not be loaded, so you were disconnected\nrather than risk overwriting your stats.\n\n<gray>Please try again in a moment."
+
+admin:
+  header: "<dark_gray><strikethrough>                    </strikethrough> <gradient:#00d4ff:#0066ff><bold>CorePvP</bold></gradient> <dark_gray><strikethrough>                    </strikethrough>"
+  help-entry: "<gray>/<label> <white><usage></white> <dark_gray>- <gray><description>"
+  version: "<prefix><gray>Running <white>CorePvP v<version></white> on <white><server></white>."

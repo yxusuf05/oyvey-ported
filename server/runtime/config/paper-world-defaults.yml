@@ -1,0 +1,29 @@
+# CorePvP - Paper per-world tuning.
+#
+# Only the values that differ from Paper's defaults are listed. Paper fills in
+# everything else on first start and keeps this file migrated via _version.
+_version: 31
+
+anticheat:
+  anti-xray:
+    # Arenas are open platforms with nothing hidden to find, so the
+    # obfuscation work would be pure overhead.
+    enabled: false
+
+# Note: arena worlds have saving switched off by WorldService via
+# World#setAutoSave(false). It is not set here because Paper's
+# chunks.auto-save-interval takes a duration, not -1, and silently resets an
+# invalid value back to "default".
+
+entities:
+  armor-stands:
+    tick: false
+
+environment:
+  disable-thunder: true
+  disable-ice-and-snow: true
+
+misc:
+  # Cheaper and more predictable than the vanilla implementation, and nothing
+  # here depends on vanilla redstone quirks.
+  redstone-implementation: ALTERNATE_CURRENT

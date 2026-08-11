@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.6.1'
+}
+
+group = 'me.alpha432.corepvp'
+version = '0.1.0'
+
+ext {
+    minecraftVersion = '1.21.11'
+    paperApiVersion = '1.21.11-R0.1-SNAPSHOT'
+    pluginApiVersion = '1.21'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:${paperApiVersion}"
+
+    // Shaded into the plugin jar so the server needs no extra setup.
+    implementation 'com.zaxxer:HikariCP:7.1.0'
+    runtimeOnly 'org.xerial:sqlite-jdbc:3.53.2.1'
+    runtimeOnly 'com.mysql:mysql-connector-j:26.7.0'
+
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
+}
+
+tasks.named('processResources') {
+    def tokens = [
+            version   : project.version.toString(),
+            apiVersion: pluginApiVersion,
+            minecraft : minecraftVersion
+    ]
+    inputs.properties(tokens)
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand(tokens)
+    }
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier.set('')
+    archiveBaseName.set('CorePvP')
+    // Only HikariCP is relocated. JDBC drivers resolve their own classes by
+    // name at runtime, so relocating them would break driver discovery.
+    relocate 'com.zaxxer.hikari', 'me.alpha432.corepvp.lib.hikari'
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('shadowJar')
+}

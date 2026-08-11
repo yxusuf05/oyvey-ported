@@ -1,0 +1,24 @@
+name: CorePvP
+version: '${version}'
+api-version: '${apiVersion}'
+main: me.alpha432.corepvp.CorePvPPlugin
+description: Practice PvP core - kits, arenas, queues, duels, FFA, crystal PvP and survival.
+website: https://github.com/yxusuf05/oyvey-ported
+authors: [ CorePvP ]
+folia-supported: false
+
+commands:
+  corepvp:
+    description: Administrative root command for CorePvP.
+    usage: /corepvp help
+    aliases: [ cpvp, practice ]
+
+permissions:
+  corepvp.admin:
+    description: Full administrative access.
+    default: op
+    children:
+      corepvp.command.admin: true
+  corepvp.command.admin:
+    description: Access to administrative subcommands.
+    default: op

@@ -1,0 +1,15 @@
+# CorePvP - Paper global tuning.
+#
+# Only the values that differ from Paper's defaults are listed. Paper fills in
+# everything else on first start and keeps this file migrated via _version.
+_version: 31
+
+chunk-system:
+  # Arenas are small and permanently loaded; two IO threads are plenty and
+  # leave more cores for the main thread, which is what PvP actually needs.
+  io-threads: 2
+
+player-auto-save:
+  # Player data lives in the plugin's database, not in playerdata files.
+  rate: -1
+  max-per-tick: -1
