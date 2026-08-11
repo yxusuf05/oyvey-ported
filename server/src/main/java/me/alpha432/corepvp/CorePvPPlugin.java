@@ -9,6 +9,10 @@ import me.alpha432.corepvp.combat.CombatListener;
 import me.alpha432.corepvp.combat.CombatModeService;
 import me.alpha432.corepvp.command.RootCommand;
 import me.alpha432.corepvp.command.impl.ArenaSubCommand;
+import me.alpha432.corepvp.command.impl.DuelCommand;
+import me.alpha432.corepvp.command.impl.InvCommand;
+import me.alpha432.corepvp.command.impl.LeaveCommand;
+import me.alpha432.corepvp.command.impl.SpectateCommand;
 import me.alpha432.corepvp.command.impl.KitSubCommand;
 import me.alpha432.corepvp.command.impl.ReloadSubCommand;
 import me.alpha432.corepvp.command.impl.SetSpawnSubCommand;
@@ -16,11 +20,16 @@ import me.alpha432.corepvp.command.impl.SpawnSubCommand;
 import me.alpha432.corepvp.command.impl.VersionSubCommand;
 import me.alpha432.corepvp.config.ConfigManager;
 import me.alpha432.corepvp.config.Messages;
+import me.alpha432.corepvp.duel.DuelService;
 import me.alpha432.corepvp.kit.KitApplier;
 import me.alpha432.corepvp.kit.KitManager;
 import me.alpha432.corepvp.lobby.LobbyBoardProvider;
 import me.alpha432.corepvp.lobby.LobbyListener;
 import me.alpha432.corepvp.lobby.LobbyService;
+import me.alpha432.corepvp.match.MatchBoardProvider;
+import me.alpha432.corepvp.match.MatchListener;
+import me.alpha432.corepvp.match.MatchManager;
+import me.alpha432.corepvp.match.snapshot.SnapshotService;
 import me.alpha432.corepvp.menu.MenuListener;
 import me.alpha432.corepvp.profile.ProfileListener;
 import me.alpha432.corepvp.profile.ProfileManager;
@@ -68,6 +77,9 @@ public final class CorePvPPlugin extends JavaPlugin {
     private ArenaManager arenas;
     private ArenaGenerator arenaGenerator;
     private BuildProtectionListener buildProtection;
+    private SnapshotService snapshots;
+    private MatchManager matches;
+    private DuelService duels;
 
     public static CorePvPPlugin get() {
         return instance;
@@ -117,13 +129,33 @@ public final class CorePvPPlugin extends JavaPlugin {
                 configs.main().getInt("arenas.blocks-per-tick", 4000));
         buildProtection = new BuildProtectionListener(arenas);
 
+        snapshots = new SnapshotService(configs.main().getInt("match.snapshot-cache-size", 200));
+        matches = new MatchManager(this, snapshots);
+        duels = new DuelService(this);
+
+        // Building is decided by the kit of the match the player is in.
+        buildProtection.policy(player -> {
+            var match = matches.matchOf(player);
+            return match != null && match.contains(player.getUniqueId())
+                    && match.kit().flags().build();
+        });
+
         lobbyBoard = new LobbyBoardProvider(messages, configs, ranks);
+        lobbyBoard.inFights(matches::fightingCount);
         boards.register(PlayerState.LOBBY, lobbyBoard);
         boards.register(PlayerState.QUEUE, lobbyBoard);
+
+        MatchBoardProvider matchBoard = new MatchBoardProvider(messages, matches);
+        boards.register(PlayerState.MATCH_STARTING, matchBoard);
+        boards.register(PlayerState.MATCH_FIGHTING, matchBoard);
+        boards.register(PlayerState.MATCH_DEAD, matchBoard);
+        boards.register(PlayerState.SPECTATING, matchBoard);
 
         register(new MenuListener());
         register(buildProtection);
         register(new CombatListener(combat));
+        register(new MatchListener(this, matches));
+        matches.start();
         register(new ProfileListener(this, profiles, messages,
                 configs.main().getBoolean("profiles.kick-on-load-failure", true)));
         register(new LobbyListener(lobby, states, boards, nameTags, messages));
@@ -145,6 +177,10 @@ public final class CorePvPPlugin extends JavaPlugin {
         // flushed synchronously before the pool that would write them is closed.
         if (boards != null) {
             boards.stop();
+        }
+        if (matches != null) {
+            matches.stop();
+            matches.endAllBlocking();
         }
         // Arenas are restored on the calling thread: the scheduler is already
         // gone at this point, so a task-based rollback would never run and the
@@ -210,6 +246,21 @@ public final class CorePvPPlugin extends JavaPlugin {
         }
         command.setExecutor(root);
         command.setTabCompleter(root);
+
+        bind("duel", new DuelCommand(this, duels));
+        bind("spectate", new SpectateCommand(this));
+        bind("inv", new InvCommand(this));
+        bind("leave", new LeaveCommand(this));
+    }
+
+    private void bind(String name, me.alpha432.corepvp.command.SimpleCommand executor) {
+        PluginCommand command = getCommand(name);
+        if (command == null) {
+            getLogger().severe("Command '" + name + "' is missing from plugin.yml");
+            return;
+        }
+        command.setExecutor(executor);
+        command.setTabCompleter(executor);
     }
 
     public void register(Listener listener) {
@@ -223,6 +274,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         ranks.reload();
         lobby.reload();
         kits.load();
+        matches.reload();
         nameTags.updateAll();
         // Arenas are deliberately not reloaded: a running match holds a live
         // Arena object, and swapping it out underneath would strand its
@@ -251,6 +303,18 @@ public final class CorePvPPlugin extends JavaPlugin {
 
     public BuildProtectionListener buildProtection() {
         return buildProtection;
+    }
+
+    public SnapshotService snapshots() {
+        return snapshots;
+    }
+
+    public MatchManager matches() {
+        return matches;
+    }
+
+    public DuelService duels() {
+        return duels;
     }
 
     public ConfigManager configs() {

@@ -65,3 +65,20 @@ arenas:
   # Blocks restored per tick after a match. Deliberately lower: rollback runs
   # while other matches are being played.
   rollback-blocks-per-tick: 2000
+
+match:
+  countdown-seconds: 5
+  # How long the result stays on screen before players return to the hub.
+  end-seconds: 3
+  # A match that runs this long is called a draw. 0 disables the limit.
+  max-duration-minutes: 15
+  # How long after being hit a player still counts as killed by that attacker,
+  # so void and fall deaths credit the right person.
+  combat-tag-seconds: 10
+  # Hits needed to win a boxing match.
+  boxing-hits: 100
+  # How many finished matches keep their inventories viewable.
+  snapshot-cache-size: 200
+
+duel:
+  request-expiry-seconds: 30

@@ -98,6 +98,29 @@ scoreboard:
       - "<gray>Ping: <white><ping>ms</white>"
       - "<dark_gray><strikethrough>                    </strikethrough>"
 
+  match:
+    title: "<gradient:#ff5f6d:#ffc371><bold>Match</bold></gradient>"
+    lines:
+      - "<dark_gray><strikethrough>                    </strikethrough>"
+      - "<gray>Kit: <white><kit></white>"
+      - "<gray>Time: <white><duration></white>"
+      - ""
+      - "<gray>Opponent: <white><opponent></white>"
+      - "<gray>Their ping: <white><ping>ms</white>"
+      - ""
+      - "<gray>Combo: <white><combo></white>"
+      - "<dark_gray><strikethrough>                    </strikethrough>"
+    boxing-lines:
+      - "<dark_gray><strikethrough>                    </strikethrough>"
+      - "<gray>Kit: <white><kit></white>"
+      - "<gray>Time: <white><duration></white>"
+      - ""
+      - "<gray>Your hits: <green><your_hits></green>"
+      - "<gray>Their hits: <red><their_hits></red>"
+      - ""
+      - "<gray>Opponent: <white><opponent></white>"
+      - "<dark_gray><strikethrough>                    </strikethrough>"
+
 arena:
   generate-usage: "<prefix><gray>Usage: <white>/corepvp arena generate <template> [count]</white> <dark_gray>- <gray>templates: <white><templates></white>"
   unknown-template: "<prefix><red>Unknown template '<white><input></white>'. Available: <white><templates></white>"
@@ -123,3 +146,57 @@ kit:
   given: "<prefix><gray>Gave you the <white><name></white> kit."
   save-usage: "<prefix><gray>Usage: <white>/corepvp kit save <id></white>"
   saved: "<prefix><green>Saved your inventory as the <white><name></white> kit."
+
+match:
+  start-title: "<gradient:#00d4ff:#0066ff><bold><kit></bold></gradient>"
+  start-subtitle: "<gray>vs <white><opponent></white>"
+  countdown: "<prefix><gray>Starting in <white><seconds></white>..."
+  begin: "<prefix><green><bold>Fight!</bold>"
+  death: "<prefix><white><player></white> <gray>died."
+  killed: "<prefix><white><player></white> <gray>was killed by <white><killer></white> <dark_gray>(<red><health>❤</red><dark_gray>)"
+  disconnected: "<prefix><white><player></white> <gray>disconnected."
+  result: "<prefix><green><winner></green> <gray>beat <red><loser></red> <dark_gray>(<gray><duration><dark_gray>)"
+  draw: "<prefix><gray>The match ended in a draw."
+  time-limit: "<prefix><gray>Time limit reached."
+  inventories: "<prefix><gray>Inventories: <players>"
+  inventory-hover: "<gray>Show <white><player></white>'s final inventory"
+  spectator-joined: "<prefix><gray><player> is now spectating."
+  left: "<prefix><gray>You left the match."
+  nothing-to-leave: "<prefix><red>You are not in a match."
+
+spectate:
+  usage: "<prefix><gray>Usage: <white>/spectate <player></white>"
+  not-in-lobby: "<prefix><red>You can only start spectating from the hub."
+  not-fighting: "<prefix><red><player> is not in a match."
+  disabled: "<prefix><red><player> has spectators turned off."
+  left: "<prefix><gray>Stopped spectating."
+
+duel:
+  usage: "<prefix><gray>Usage: <white>/duel <player> [kit]</white>"
+  accept-usage: "<prefix><gray>Usage: <white>/duel accept <player></white>"
+  self: "<prefix><red>You cannot duel yourself."
+  busy: "<prefix><red>Either you or <white><player></white> is not in the hub."
+  disabled: "<prefix><red><player> has duel requests turned off."
+  sent: "<prefix><gray>Challenged <white><player></white> to <white><kit></white>."
+  received: "<prefix><white><player></white> <gray>challenged you to <white><kit></white>. <yellow>/duel accept <player></yellow> <dark_gray>(<seconds>s)"
+  none: "<prefix><red>No pending challenge from <white><player></white>."
+  kit-gone: "<prefix><red>That kit no longer exists."
+  no-arena: "<prefix><red>No free <white><kit></white> arena right now - try again in a moment."
+
+snapshot:
+  usage: "<prefix><gray>Usage: <white>/inv <id> <player></white>"
+  expired: "<prefix><red>That match is no longer available."
+  no-player: "<prefix><red>'<white><input></white>' was not in that match. Players: <white><players></white>"
+  title: "<dark_gray><player>'s inventory"
+  summary-name: "<yellow><bold><player></bold>"
+  summary-lore:
+    - "<gray>Kit: <white><kit></white>"
+    - "<gray>Result: <white><result></white>"
+    - ""
+    - "<gray>Health: <red><health>❤</red>"
+    - "<gray>Hits: <white><hits></white> <dark_gray>(longest combo <white><combo></white>)"
+    - "<gray>Potions: <white><potions></white> <dark_gray>(<white><accuracy>%</white> accurate)"
+    - "<gray>Crystals: <white><crystals></white>"
+    - "<gray>Totems popped: <white><totems></white>"
+  won: "Won"
+  lost: "Lost"

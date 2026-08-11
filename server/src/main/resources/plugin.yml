@@ -12,6 +12,21 @@ commands:
     description: Administrative root command for CorePvP.
     usage: /corepvp help
     aliases: [ cpvp, practice ]
+  duel:
+    description: Challenge another player.
+    usage: /duel <player> [kit]
+    aliases: [ 1v1 ]
+  spectate:
+    description: Watch someone else's match.
+    usage: /spectate <player>
+    aliases: [ spec ]
+  inv:
+    description: View a post-match inventory.
+    usage: /inv <id> <player>
+    aliases: [ inventory ]
+  leave:
+    description: Leave your current match or stop spectating.
+    usage: /leave
 
 permissions:
   corepvp.admin:
