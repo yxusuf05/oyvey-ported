@@ -392,3 +392,31 @@ survival:
   tpa-not-survival: "<prefix><red>Both players must be in survival."
   tpa-accepted: "<prefix><green>Teleported to <white><player></white>."
   tpa-accepted-target: "<prefix><gray><player> teleported to you."
+
+settings:
+  title: "<dark_gray>Settings"
+  entry-name: "<white><setting> <dark_gray>- <state>"
+  entry-lore:
+    - "<yellow>Click to toggle"
+  on: "<green>on"
+  off: "<red>off"
+  names:
+    scoreboard: "Scoreboard"
+    duel-requests: "Duel requests"
+    party-invites: "Party invites"
+    player-visibility: "See other players"
+    allow-spectators: "Allow spectators"
+
+staff:
+  mode-on: "<prefix><green>Staff mode enabled."
+  mode-off: "<prefix><gray>Staff mode disabled."
+  vanish-on: "<prefix><green>You are now hidden."
+  vanish-off: "<prefix><gray>You are visible again."
+  freeze-usage: "<prefix><gray>Usage: <white>/freeze <player></white>"
+  froze: "<prefix><gray>Froze <white><player></white>."
+  unfroze: "<prefix><gray>Unfroze <white><player></white>."
+  frozen: "<red><bold>You have been frozen.</bold>\n<gray>Do not log out - a staff member wants to talk to you."
+  unfrozen: "<prefix><green>You can move again."
+  tool-teleport: "<yellow>Random teleport"
+  tool-freeze: "<aqua>Freeze"
+  tool-exit: "<red>Leave staff mode"

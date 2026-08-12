@@ -8,6 +8,30 @@ world — all in one Paper plugin you run locally, with no hosting involved.
 > root. It has its own Gradle build and shares nothing with it. The root build
 > is untouched by anything in this folder.
 
+## What's in it
+
+- **Practice** — unranked and ranked queues, ELO with per-kit leaderboards,
+  direct duels, spectating, and post-match inventories you can click open
+- **Crystal PvP** — crystal, anchor and sword kits with explosion damage
+  attributed to whoever placed the crystal, totem-pop tracking and consumable
+  refills
+- **Twelve kits** — crystal, anchor, sword, nodebuff, debuff, gapple, archer,
+  sumo, builduhc, boxing, combo, vanilla, each with its own combat mode
+- **Arenas that build themselves** — `/corepvp arena generate crystal 6` lays
+  out arenas on a grid, and every block a match changes is rolled back
+  afterwards, explosions included
+- **FFA** — permanent open arenas with safe zones, killstreaks and combat-log
+  punishment
+- **Parties** — invites, party chat, balanced 2v2/3v3 splits and party FFA
+- **Survival** — a persistent world with homes, teleport requests and spawn
+  protection
+- **The rest of a network** — hub with menus, ranks and prefixes, sorted tab
+  list, formatted chat, flicker-free scoreboards, per-player settings, staff
+  mode with vanish and freeze
+
+Full details: [commands](docs/commands.md) ·
+[configuration](docs/configuration.md) · [permissions](docs/permissions.md)
+
 ## Requirements
 
 - **Java 21**

@@ -15,6 +15,7 @@ import me.alpha432.corepvp.command.impl.ArenaSubCommand;
 import me.alpha432.corepvp.command.impl.DuelCommand;
 import me.alpha432.corepvp.command.impl.FfaCommand;
 import me.alpha432.corepvp.command.impl.PartyCommand;
+import me.alpha432.corepvp.command.impl.StaffCommand;
 import me.alpha432.corepvp.command.impl.SurvivalCommand;
 import me.alpha432.corepvp.command.impl.InvCommand;
 import me.alpha432.corepvp.command.impl.LeaderboardCommand;
@@ -56,6 +57,9 @@ import me.alpha432.corepvp.profile.ProfileManager;
 import me.alpha432.corepvp.rank.ChatListener;
 import me.alpha432.corepvp.rank.NameTagService;
 import me.alpha432.corepvp.rank.RankManager;
+import me.alpha432.corepvp.profile.SettingsMenu;
+import me.alpha432.corepvp.staff.StaffListener;
+import me.alpha432.corepvp.staff.StaffService;
 import me.alpha432.corepvp.state.PlayerState;
 import me.alpha432.corepvp.survival.SurvivalListener;
 import me.alpha432.corepvp.survival.SurvivalService;
@@ -111,6 +115,7 @@ public final class CorePvPPlugin extends JavaPlugin {
     private FfaService ffa;
     private PartyService parties;
     private SurvivalService survival;
+    private StaffService staff;
 
     public static CorePvPPlugin get() {
         return instance;
@@ -176,6 +181,7 @@ public final class CorePvPPlugin extends JavaPlugin {
 
         crystals = new CrystalService(this);
         refills = new RefillService(this);
+        staff = new StaffService(this);
         survival = new SurvivalService(this);
         profiles.survival(survival);
         parties = new PartyService(this);
@@ -190,6 +196,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         // Hub items only appear once something has claimed their slot.
         lobby.setAction(HubItem.UNRANKED_QUEUE, player -> new QueueMenu(this, false).open(player));
         lobby.setAction(HubItem.RANKED_QUEUE, player -> new QueueMenu(this, true).open(player));
+        lobby.setAction(HubItem.SETTINGS, player -> new SettingsMenu(this).open(player));
         lobby.setAction(HubItem.SURVIVAL, player -> survival.enter(player));
         lobby.setAction(HubItem.FFA, player -> new FfaMenu(this).open(player));
         lobby.setAction(HubItem.KIT_EDITOR, player -> new KitEditorMenu(this).open(player));
@@ -221,6 +228,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         register(new CrystalListener(this, crystals));
         register(new FfaListener(this, ffa));
         register(new SurvivalListener(this, survival));
+        register(new StaffListener(this, staff));
         matches.start();
         crystals.start();
         refills.start();
@@ -353,6 +361,10 @@ public final class CorePvPPlugin extends JavaPlugin {
             bind(name, survivalCommand);
         }
         bind("party", new PartyCommand(this));
+        StaffCommand staffCommand = new StaffCommand(this);
+        for (String name : new String[]{"staff", "vanish", "freeze"}) {
+            bind(name, staffCommand);
+        }
     }
 
     private void bind(String name, me.alpha432.corepvp.command.SimpleCommand executor) {
@@ -456,6 +468,10 @@ public final class CorePvPPlugin extends JavaPlugin {
 
     public SurvivalService survival() {
         return survival;
+    }
+
+    public StaffService staff() {
+        return staff;
     }
 
     public ConfigManager configs() {

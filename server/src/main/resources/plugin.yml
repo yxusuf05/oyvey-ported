@@ -62,6 +62,18 @@ commands:
   tpaccept:
     description: Accept a teleport request.
     usage: /tpaccept
+  staff:
+    description: Toggle staff mode.
+    usage: /staff
+    permission: corepvp.staff
+  vanish:
+    description: Toggle vanish.
+    usage: /vanish
+    permission: corepvp.staff
+  freeze:
+    description: Freeze or unfreeze a player.
+    usage: /freeze <player>
+    permission: corepvp.staff
 
 permissions:
   corepvp.admin:
@@ -69,6 +81,14 @@ permissions:
     default: op
     children:
       corepvp.command.admin: true
+      corepvp.staff: true
+      corepvp.build: true
   corepvp.command.admin:
     description: Access to administrative subcommands.
+    default: op
+  corepvp.staff:
+    description: Staff mode, vanish and freeze.
+    default: op
+  corepvp.build:
+    description: Build in protected areas.
     default: op
