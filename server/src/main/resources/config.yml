@@ -97,3 +97,21 @@ queue:
 leaderboard:
   entries: 30
   refresh-seconds: 60
+
+crystal:
+  # How long after placing a crystal its owner is still credited for the blast.
+  attribution-seconds: 30
+  # Respawn anchors explode without naming a player, so the detonation is
+  # matched to a nearby recent one within this window.
+  anchor-attribution-seconds: 3
+  announce-totems-outside-matches: true
+  # Consumables topped up for kits with infinite-items. Only materials the kit
+  # already contains are refilled.
+  refill-interval-ticks: 20
+  refill:
+    END_CRYSTAL: 64
+    OBSIDIAN: 64
+    ENCHANTED_GOLDEN_APPLE: 16
+    EXPERIENCE_BOTTLE: 64
+    RESPAWN_ANCHOR: 32
+    GLOWSTONE: 64

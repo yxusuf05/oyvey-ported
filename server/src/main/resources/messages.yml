@@ -290,3 +290,7 @@ editor:
     - "<gray>Go back to the kit's own order."
   saved: "<prefix><green>Saved layout <white><slot></white> for <white><kit></white>."
   reset: "<prefix><gray>Reset your <white><kit></white> layout."
+
+crystal:
+  totem-popped: "<prefix><white><player></white> <gray>popped a totem <dark_gray>(<white><count></white> this match)"
+  totem-popped-self: "<prefix><gold>Totem popped!"

@@ -7,6 +7,9 @@ import me.alpha432.corepvp.arena.rollback.RollbackService;
 import me.alpha432.corepvp.board.BoardService;
 import me.alpha432.corepvp.combat.CombatListener;
 import me.alpha432.corepvp.combat.CombatModeService;
+import me.alpha432.corepvp.crystal.CrystalListener;
+import me.alpha432.corepvp.crystal.CrystalService;
+import me.alpha432.corepvp.crystal.RefillService;
 import me.alpha432.corepvp.command.RootCommand;
 import me.alpha432.corepvp.command.impl.ArenaSubCommand;
 import me.alpha432.corepvp.command.impl.DuelCommand;
@@ -93,6 +96,8 @@ public final class CorePvPPlugin extends JavaPlugin {
     private EloService elo;
     private LeaderboardService leaderboards;
     private KitLayoutService layouts;
+    private CrystalService crystals;
+    private RefillService refills;
 
     public static CorePvPPlugin get() {
         return instance;
@@ -156,6 +161,8 @@ public final class CorePvPPlugin extends JavaPlugin {
                     && match.kit().flags().build();
         });
 
+        crystals = new CrystalService(this);
+        refills = new RefillService(this);
         queues = new QueueManager(this);
         elo = new EloService(this);
         leaderboards = new LeaderboardService(this, database,
@@ -190,7 +197,10 @@ public final class CorePvPPlugin extends JavaPlugin {
         register(buildProtection);
         register(new CombatListener(combat));
         register(new MatchListener(this, matches));
+        register(new CrystalListener(this, crystals));
         matches.start();
+        crystals.start();
+        refills.start();
         queues.start();
         register(queues.quitListener());
         leaderboards.start(kits.ids(), configs.main().getLong("leaderboard.refresh-seconds", 60L));
@@ -220,6 +230,12 @@ public final class CorePvPPlugin extends JavaPlugin {
         }
         if (queues != null) {
             queues.stop();
+        }
+        if (refills != null) {
+            refills.stop();
+        }
+        if (crystals != null) {
+            crystals.stop();
         }
         if (leaderboards != null) {
             leaderboards.stop();
@@ -324,6 +340,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         kits.load();
         matches.reload();
         queues.reload();
+        refills.reload();
         nameTags.updateAll();
         // Arenas are deliberately not reloaded: a running match holds a live
         // Arena object, and swapping it out underneath would strand its
@@ -380,6 +397,14 @@ public final class CorePvPPlugin extends JavaPlugin {
 
     public KitLayoutService layouts() {
         return layouts;
+    }
+
+    public CrystalService crystals() {
+        return crystals;
+    }
+
+    public RefillService refills() {
+        return refills;
     }
 
     public ConfigManager configs() {

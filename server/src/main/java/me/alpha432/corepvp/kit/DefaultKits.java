@@ -72,10 +72,13 @@ public final class DefaultKits {
                 .arenaTypes("crystal")
                 // Placing obsidian and crystals is the kit, so building has to
                 // be on; the rollback journal restores the arena afterwards.
+                // Consumables are refilled: running dry mid-fight decides
+                // matches on inventory management rather than play.
                 .flags(KitFlags.defaults()
                         .withBuild(true)
                         .withHunger(true)
-                        .withNaturalRegen(true));
+                        .withNaturalRegen(true)
+                        .withInfiniteItems(true));
     }
 
     private static Kit anchor() {
@@ -105,7 +108,8 @@ public final class DefaultKits {
                 .flags(KitFlags.defaults()
                         .withBuild(true)
                         .withHunger(true)
-                        .withNaturalRegen(true));
+                        .withNaturalRegen(true)
+                        .withInfiniteItems(true));
     }
 
     private static Kit sword() {
