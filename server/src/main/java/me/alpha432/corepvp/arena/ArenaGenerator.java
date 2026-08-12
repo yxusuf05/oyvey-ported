@@ -119,6 +119,47 @@ public final class ArenaGenerator {
         }.runTaskTimer(plugin, 1L, 1L);
     }
 
+    /** Where a generated free-for-all platform ended up. */
+    public record Platform(Location spawn, Cuboid bounds, int deathY) {
+    }
+
+    /**
+     * Builds a single platform for a free-for-all arena and reports where it
+     * is. Reuses the practice templates so FFA arenas look the same as the
+     * ones matches are played in.
+     */
+    public void generatePlatform(Template template, World world, java.util.function.Consumer<Platform> onDone) {
+        List<PendingBlock> blocks = new ArrayList<>();
+        int cell = arenas.takeCell();
+        int centerX = (cell % COLUMNS) * SPACING;
+        int centerZ = (cell / COLUMNS) * SPACING;
+
+        Arena scratch = layout(template, world, cell, centerX, centerZ, blocks);
+        Platform platform = new Platform(
+                new Location(world, centerX + 0.5D, template.floorY() + 1, centerZ + 0.5D),
+                scratch.bounds(),
+                scratch.deathY());
+
+        new BukkitRunnable() {
+            private int index;
+
+            @Override
+            public void run() {
+                int budget = blocksPerTick;
+                while (index < blocks.size() && budget-- > 0) {
+                    PendingBlock pending = blocks.get(index++);
+                    world.getBlockAt(pending.x(), pending.y(), pending.z())
+                            .setBlockData(pending.material().createBlockData(), false);
+                }
+                if (index >= blocks.size()) {
+                    cancel();
+                    arenas.saveAll();
+                    Tasks.sync(() -> onDone.accept(platform));
+                }
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
     private Arena layout(Template template, World world, int cell,
                          int centerX, int centerZ, List<PendingBlock> blocks) {
         int radius = template.radius();

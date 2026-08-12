@@ -115,3 +115,17 @@ crystal:
     EXPERIENCE_BOTTLE: 64
     RESPAWN_ANCHOR: 32
     GLOWSTONE: 64
+
+ffa:
+  # How far from spawn players cannot be hurt, so nobody is killed the moment
+  # they respawn.
+  safe-radius: 6.0
+  combat-tag-seconds: 15
+  # Logging out while tagged counts as a death.
+  punish-combat-log: true
+  # Refill the killer's kit after a kill, so a good player survives a crowd.
+  refill-on-kill: true
+  killstreak-milestones: [ 5, 10, 15, 25, 50 ]
+
+party:
+  max-size: 8

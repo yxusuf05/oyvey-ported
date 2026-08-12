@@ -13,6 +13,8 @@ import me.alpha432.corepvp.crystal.RefillService;
 import me.alpha432.corepvp.command.RootCommand;
 import me.alpha432.corepvp.command.impl.ArenaSubCommand;
 import me.alpha432.corepvp.command.impl.DuelCommand;
+import me.alpha432.corepvp.command.impl.FfaCommand;
+import me.alpha432.corepvp.command.impl.PartyCommand;
 import me.alpha432.corepvp.command.impl.InvCommand;
 import me.alpha432.corepvp.command.impl.LeaderboardCommand;
 import me.alpha432.corepvp.command.impl.LeaveCommand;
@@ -26,6 +28,10 @@ import me.alpha432.corepvp.command.impl.VersionSubCommand;
 import me.alpha432.corepvp.config.ConfigManager;
 import me.alpha432.corepvp.config.Messages;
 import me.alpha432.corepvp.duel.DuelService;
+import me.alpha432.corepvp.ffa.FfaBoardProvider;
+import me.alpha432.corepvp.ffa.FfaListener;
+import me.alpha432.corepvp.ffa.FfaMenu;
+import me.alpha432.corepvp.ffa.FfaService;
 import me.alpha432.corepvp.elo.EloService;
 import me.alpha432.corepvp.elo.LeaderboardService;
 import me.alpha432.corepvp.kit.KitApplier;
@@ -41,6 +47,7 @@ import me.alpha432.corepvp.match.MatchListener;
 import me.alpha432.corepvp.match.MatchManager;
 import me.alpha432.corepvp.match.snapshot.SnapshotService;
 import me.alpha432.corepvp.menu.MenuListener;
+import me.alpha432.corepvp.party.PartyService;
 import me.alpha432.corepvp.queue.QueueManager;
 import me.alpha432.corepvp.queue.QueueMenu;
 import me.alpha432.corepvp.profile.ProfileListener;
@@ -98,6 +105,8 @@ public final class CorePvPPlugin extends JavaPlugin {
     private KitLayoutService layouts;
     private CrystalService crystals;
     private RefillService refills;
+    private FfaService ffa;
+    private PartyService parties;
 
     public static CorePvPPlugin get() {
         return instance;
@@ -163,6 +172,9 @@ public final class CorePvPPlugin extends JavaPlugin {
 
         crystals = new CrystalService(this);
         refills = new RefillService(this);
+        parties = new PartyService(this);
+        ffa = new FfaService(this);
+        ffa.load();
         queues = new QueueManager(this);
         elo = new EloService(this);
         leaderboards = new LeaderboardService(this, database,
@@ -172,6 +184,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         // Hub items only appear once something has claimed their slot.
         lobby.setAction(HubItem.UNRANKED_QUEUE, player -> new QueueMenu(this, false).open(player));
         lobby.setAction(HubItem.RANKED_QUEUE, player -> new QueueMenu(this, true).open(player));
+        lobby.setAction(HubItem.FFA, player -> new FfaMenu(this).open(player));
         lobby.setAction(HubItem.KIT_EDITOR, player -> new KitEditorMenu(this).open(player));
         lobby.setAction(HubItem.LEADERBOARD, player -> {
             var kits = kits().enabled();
@@ -192,17 +205,25 @@ public final class CorePvPPlugin extends JavaPlugin {
         boards.register(PlayerState.MATCH_FIGHTING, matchBoard);
         boards.register(PlayerState.MATCH_DEAD, matchBoard);
         boards.register(PlayerState.SPECTATING, matchBoard);
+        boards.register(PlayerState.FFA, new FfaBoardProvider(messages, ffa));
 
         register(new MenuListener());
         register(buildProtection);
         register(new CombatListener(combat));
         register(new MatchListener(this, matches));
         register(new CrystalListener(this, crystals));
+        register(new FfaListener(this, ffa));
         matches.start();
         crystals.start();
         refills.start();
         queues.start();
         register(queues.quitListener());
+        register(new Listener() {
+            @org.bukkit.event.EventHandler
+            public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+                parties.handleQuit(event.getPlayer());
+            }
+        });
         leaderboards.start(kits.ids(), configs.main().getLong("leaderboard.refresh-seconds", 60L));
         register(new ProfileListener(this, profiles, messages,
                 configs.main().getBoolean("profiles.kick-on-load-failure", true)));
@@ -315,6 +336,8 @@ public final class CorePvPPlugin extends JavaPlugin {
         bind("leave", new LeaveCommand(this));
         bind("stats", new StatsCommand(this));
         bind("leaderboard", new LeaderboardCommand(this));
+        bind("ffa", new FfaCommand(this));
+        bind("party", new PartyCommand(this));
     }
 
     private void bind(String name, me.alpha432.corepvp.command.SimpleCommand executor) {
@@ -338,6 +361,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         ranks.reload();
         lobby.reload();
         kits.load();
+        ffa.load();
         matches.reload();
         queues.reload();
         refills.reload();
@@ -405,6 +429,14 @@ public final class CorePvPPlugin extends JavaPlugin {
 
     public RefillService refills() {
         return refills;
+    }
+
+    public FfaService ffa() {
+        return ffa;
+    }
+
+    public PartyService parties() {
+        return parties;
     }
 
     public ConfigManager configs() {

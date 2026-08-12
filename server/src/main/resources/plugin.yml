@@ -34,6 +34,13 @@ commands:
     description: Show the top players for a kit.
     usage: /leaderboard [kit]
     aliases: [ lb, top ]
+  ffa:
+    description: Join or manage free-for-all arenas.
+    usage: /ffa [join|leave|list]
+  party:
+    description: Team up with other players.
+    usage: /party create|invite|join|leave|list
+    aliases: [ p ]
 
 permissions:
   corepvp.admin:
