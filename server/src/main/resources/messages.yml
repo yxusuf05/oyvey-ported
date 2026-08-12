@@ -200,3 +200,93 @@ snapshot:
     - "<gray>Totems popped: <white><totems></white>"
   won: "Won"
   lost: "Lost"
+
+queue:
+  already: "<prefix><red>You are already in a queue."
+  in-match: "<prefix><red>You are already in a match."
+  not-ranked: "<prefix><red><kit> cannot be played ranked."
+  ranked-locked: "<prefix><red>Play <white><needed></white> more unranked <white><kit></white> matches to unlock ranked."
+  joined: "<prefix><gray>Queued for <white><kit></white>."
+  joined-ranked: "<prefix><gray>Queued for ranked <white><kit></white> <dark_gray>(<white><elo></white> elo)"
+  left: "<prefix><gray>Left the queue."
+  leave-item:
+    name: "<red><bold>Leave queue</bold>"
+    lore:
+      - "<gray>Stop waiting and go back to the hub."
+  menu:
+    title: "<dark_gray>Unranked"
+    ranked-title: "<dark_gray>Ranked"
+    empty: "<red>No kits available"
+    entry-name: "<green><bold><kit></bold>"
+    entry-lore:
+      - "<gray>In queue: <white><queued></white>"
+      - "<gray>Playing: <white><playing></white>"
+      - ""
+      - "<gray>Combat: <white><combat></white>"
+      - "<gray>Your record: <green><wins>W</green> <dark_gray>/ <red><losses>L</red>"
+      - ""
+      - "<yellow>Click to queue"
+    ranked-entry-lore:
+      - "<gray>In queue: <white><queued></white>"
+      - "<gray>Playing: <white><playing></white>"
+      - ""
+      - "<gray>Your elo: <aqua><elo></aqua>"
+      - "<gray>Your record: <green><wins>W</green> <dark_gray>/ <red><losses>L</red>"
+      - ""
+      - "<yellow>Click to queue"
+
+elo:
+  gained: "<prefix><green>+<change> elo <dark_gray>(<white><elo></white>)"
+  lost: "<prefix><red>-<change> elo <dark_gray>(<white><elo></white>)"
+
+leaderboard:
+  title: "<dark_gray>Top - <kit>"
+  empty: "<red>No ranked matches played yet"
+  entry-name: "<yellow>#<position> <white><player>"
+  entry-lore:
+    - "<gray>Elo: <aqua><elo></aqua>"
+    - "<gray>Record: <green><wins>W</green> <dark_gray>/ <red><losses>L</red>"
+  switch: "<gray>Show <white><kit></white>"
+
+stats:
+  title: "<dark_gray>Stats - <player>"
+  kit-name: "<yellow><bold><kit></bold>"
+  kit-lore:
+    - "<gray>Elo: <aqua><elo></aqua>"
+    - "<gray>Record: <green><wins>W</green> <dark_gray>/ <red><losses>L</red> <dark_gray>(<white><winrate>%</white>)"
+    - "<gray>Kills: <white><kills></white> <dark_gray>/ <gray>Deaths: <white><deaths></white>"
+  summary-name: "<gold><bold><player></bold>"
+  summary-lore:
+    - "<gray>Rank: <white><rank></white>"
+    - "<gray>Total kills: <white><kills></white>"
+    - "<gray>Total deaths: <white><deaths></white>"
+    - "<gray>Playing for: <white><first_seen></white>"
+
+editor:
+  title: "<dark_gray>Kit Editor"
+  no-kits: "<red>No editable kits"
+  kit-name: "<gold><bold><kit></bold>"
+  kit-lore:
+    - "<gray>Saved layouts: <white><saved></white><dark_gray>/<white><max></white>"
+    - ""
+    - "<yellow>Click to edit"
+  select-title: "<dark_gray>Layouts - <kit>"
+  slot-name: "<yellow>Layout <slot> <dark_gray>- <state>"
+  slot-lore:
+    - "<yellow>Left click <gray>to edit"
+    - "<yellow>Right click <gray>to use this one"
+  state-active: "<green>in use"
+  state-saved: "<gray>saved"
+  state-empty: "<dark_gray>empty"
+  selected: "<prefix><gray>Now using layout <white><slot></white> for <white><kit></white>."
+  back: "<gray>Back"
+  edit-title: "<dark_gray><kit> - layout <slot>"
+  palette-header: "<gray>Items in this kit"
+  save-name: "<green><bold>Save</bold>"
+  save-lore:
+    - "<gray>Store this hotbar and use it."
+  reset-name: "<red><bold>Reset</bold>"
+  reset-lore:
+    - "<gray>Go back to the kit's own order."
+  saved: "<prefix><green>Saved layout <white><slot></white> for <white><kit></white>."
+  reset: "<prefix><gray>Reset your <white><kit></white> layout."

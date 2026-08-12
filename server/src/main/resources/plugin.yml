@@ -27,6 +27,13 @@ commands:
   leave:
     description: Leave your current match or stop spectating.
     usage: /leave
+  stats:
+    description: Show a player's record.
+    usage: /stats [player]
+  leaderboard:
+    description: Show the top players for a kit.
+    usage: /leaderboard [kit]
+    aliases: [ lb, top ]
 
 permissions:
   corepvp.admin:

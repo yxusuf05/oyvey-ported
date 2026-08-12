@@ -11,13 +11,19 @@ import org.bukkit.potion.PotionEffect;
 public final class KitApplier {
 
     private final CombatModeService combat;
+    private me.alpha432.corepvp.kit.layout.KitLayoutService layouts;
 
     public KitApplier(CombatModeService combat) {
         this.combat = combat;
     }
 
+    public void layouts(me.alpha432.corepvp.kit.layout.KitLayoutService layouts) {
+        this.layouts = layouts;
+    }
+
+    /** Uses the player's saved layout for this kit when they have a valid one. */
     public void apply(Player player, Kit kit) {
-        apply(player, kit, null);
+        apply(player, kit, layouts == null ? null : layouts.hotbarFor(player, kit));
     }
 
     /**

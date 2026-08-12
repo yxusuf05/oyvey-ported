@@ -31,6 +31,13 @@ public final class LobbyListener implements Listener {
     private final BoardService boards;
     private final NameTagService nameTags;
     private final Messages messages;
+    /** Supplied by the plugin so the lobby does not have to know the queue system. */
+    private java.util.function.Consumer<Player> queueLeave = player -> {
+    };
+
+    public void onQueueLeave(java.util.function.Consumer<Player> handler) {
+        this.queueLeave = handler;
+    }
 
     public LobbyListener(LobbyService lobby, PlayerStateService states, BoardService boards,
                          NameTagService nameTags, Messages messages) {
@@ -132,12 +139,19 @@ public final class LobbyListener implements Listener {
         if (!protectedState(player)) {
             return;
         }
-        HubItem item = lobby.itemOf(event.getItem());
-        if (item == null) {
+        String raw = lobby.rawItemOf(event.getItem());
+        if (raw == null) {
             return;
         }
         event.setCancelled(true);
-        lobby.click(player, item);
+        if (LobbyService.LEAVE_QUEUE.equals(raw)) {
+            queueLeave.accept(player);
+            return;
+        }
+        HubItem item = lobby.itemOf(event.getItem());
+        if (item != null) {
+            lobby.click(player, item);
+        }
     }
 
     /** Falling out of a void lobby puts the player back at spawn instead of killing them. */

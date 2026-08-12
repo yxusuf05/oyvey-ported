@@ -26,6 +26,7 @@ public final class ProfileManager {
     private final Map<UUID, Profile> cache = new ConcurrentHashMap<>();
 
     private BukkitTask autosaveTask;
+    private me.alpha432.corepvp.kit.layout.KitLayoutService layouts;
 
     public ProfileManager(Plugin plugin, Database database, ProfileRepository repository) {
         this.plugin = plugin;
@@ -40,9 +41,17 @@ public final class ProfileManager {
     public Profile loadBlocking(UUID uuid, String name) throws SQLException {
         try (Connection connection = database.connection()) {
             Profile profile = repository.load(connection, uuid, name);
+            if (layouts != null) {
+                // Same connection, same login: one round trip instead of two.
+                layouts.load(connection, uuid);
+            }
             cache.put(uuid, profile);
             return profile;
         }
+    }
+
+    public void layouts(me.alpha432.corepvp.kit.layout.KitLayoutService layouts) {
+        this.layouts = layouts;
     }
 
     public Profile get(UUID uuid) {
@@ -85,6 +94,9 @@ public final class ProfileManager {
 
     /** Saves and drops a profile from the cache (on quit). */
     public void unload(UUID uuid) {
+        if (layouts != null) {
+            layouts.unload(uuid);
+        }
         Profile profile = cache.remove(uuid);
         if (profile != null) {
             profile.lastSeen(System.currentTimeMillis());

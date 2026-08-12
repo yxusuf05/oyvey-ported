@@ -82,3 +82,18 @@ match:
 
 duel:
   request-expiry-seconds: 30
+
+queue:
+  # Ranked pairing: how far apart two ratings may be, widening while waiting.
+  elo-range-base: 50
+  elo-range-expansion-per-second: 25
+  elo-range-max: 5000
+  # Base K-factor. Doubled for a player's first ten matches on a kit and
+  # halved above 2000, so newcomers settle fast and veterans move slowly.
+  k-factor: 32
+  # Unranked matches needed on a kit before its ranked queue opens.
+  ranked-min-games: 0
+
+leaderboard:
+  entries: 30
+  refresh-seconds: 60
