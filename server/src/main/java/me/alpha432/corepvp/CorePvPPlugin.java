@@ -15,6 +15,7 @@ import me.alpha432.corepvp.command.impl.ArenaSubCommand;
 import me.alpha432.corepvp.command.impl.DuelCommand;
 import me.alpha432.corepvp.command.impl.FfaCommand;
 import me.alpha432.corepvp.command.impl.PartyCommand;
+import me.alpha432.corepvp.command.impl.SurvivalCommand;
 import me.alpha432.corepvp.command.impl.InvCommand;
 import me.alpha432.corepvp.command.impl.LeaderboardCommand;
 import me.alpha432.corepvp.command.impl.LeaveCommand;
@@ -56,6 +57,8 @@ import me.alpha432.corepvp.rank.ChatListener;
 import me.alpha432.corepvp.rank.NameTagService;
 import me.alpha432.corepvp.rank.RankManager;
 import me.alpha432.corepvp.state.PlayerState;
+import me.alpha432.corepvp.survival.SurvivalListener;
+import me.alpha432.corepvp.survival.SurvivalService;
 import me.alpha432.corepvp.state.PlayerStateService;
 import me.alpha432.corepvp.storage.Database;
 import me.alpha432.corepvp.storage.ProfileRepository;
@@ -107,6 +110,7 @@ public final class CorePvPPlugin extends JavaPlugin {
     private RefillService refills;
     private FfaService ffa;
     private PartyService parties;
+    private SurvivalService survival;
 
     public static CorePvPPlugin get() {
         return instance;
@@ -172,6 +176,8 @@ public final class CorePvPPlugin extends JavaPlugin {
 
         crystals = new CrystalService(this);
         refills = new RefillService(this);
+        survival = new SurvivalService(this);
+        profiles.survival(survival);
         parties = new PartyService(this);
         ffa = new FfaService(this);
         ffa.load();
@@ -184,6 +190,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         // Hub items only appear once something has claimed their slot.
         lobby.setAction(HubItem.UNRANKED_QUEUE, player -> new QueueMenu(this, false).open(player));
         lobby.setAction(HubItem.RANKED_QUEUE, player -> new QueueMenu(this, true).open(player));
+        lobby.setAction(HubItem.SURVIVAL, player -> survival.enter(player));
         lobby.setAction(HubItem.FFA, player -> new FfaMenu(this).open(player));
         lobby.setAction(HubItem.KIT_EDITOR, player -> new KitEditorMenu(this).open(player));
         lobby.setAction(HubItem.LEADERBOARD, player -> {
@@ -213,6 +220,7 @@ public final class CorePvPPlugin extends JavaPlugin {
         register(new MatchListener(this, matches));
         register(new CrystalListener(this, crystals));
         register(new FfaListener(this, ffa));
+        register(new SurvivalListener(this, survival));
         matches.start();
         crystals.start();
         refills.start();
@@ -260,6 +268,9 @@ public final class CorePvPPlugin extends JavaPlugin {
         }
         if (leaderboards != null) {
             leaderboards.stop();
+        }
+        if (survival != null) {
+            survival.saveAllBlocking();
         }
         if (matches != null) {
             matches.stop();
@@ -316,7 +327,7 @@ public final class CorePvPPlugin extends JavaPlugin {
     private void registerCommands() {
         RootCommand root = new RootCommand(messages)
                 .register(new SpawnSubCommand(lobby, messages))
-                .register(new SetSpawnSubCommand(lobby, messages))
+                .register(new SetSpawnSubCommand(lobby, survival, messages))
                 .register(new ArenaSubCommand(arenas, arenaGenerator, worlds, messages))
                 .register(new KitSubCommand(kits, kitApplier, messages))
                 .register(new ReloadSubCommand(this))
@@ -337,6 +348,10 @@ public final class CorePvPPlugin extends JavaPlugin {
         bind("stats", new StatsCommand(this));
         bind("leaderboard", new LeaderboardCommand(this));
         bind("ffa", new FfaCommand(this));
+        SurvivalCommand survivalCommand = new SurvivalCommand(this);
+        for (String name : new String[]{"survival", "home", "homes", "sethome", "delhome", "tpa", "tpaccept"}) {
+            bind(name, survivalCommand);
+        }
         bind("party", new PartyCommand(this));
     }
 
@@ -437,6 +452,10 @@ public final class CorePvPPlugin extends JavaPlugin {
 
     public PartyService parties() {
         return parties;
+    }
+
+    public SurvivalService survival() {
+        return survival;
     }
 
     public ConfigManager configs() {

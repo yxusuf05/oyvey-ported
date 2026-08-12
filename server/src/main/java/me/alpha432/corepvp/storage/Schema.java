@@ -46,6 +46,26 @@ final class Schema {
               PRIMARY KEY (uuid, kit)
             )
             """, """
+            CREATE TABLE IF NOT EXISTS corepvp_survival (
+              uuid      VARCHAR(36) NOT NULL,
+              contents  MEDIUMTEXT,
+              armor     MEDIUMTEXT,
+              off_hand  MEDIUMTEXT,
+              health    DOUBLE      NOT NULL DEFAULT 20,
+              food      INT         NOT NULL DEFAULT 20,
+              level     INT         NOT NULL DEFAULT 0,
+              exp       DOUBLE      NOT NULL DEFAULT 0,
+              location  VARCHAR(128),
+              PRIMARY KEY (uuid)
+            )
+            """, """
+            CREATE TABLE IF NOT EXISTS corepvp_homes (
+              uuid     VARCHAR(36) NOT NULL,
+              name     VARCHAR(32) NOT NULL,
+              location VARCHAR(128) NOT NULL,
+              PRIMARY KEY (uuid, name)
+            )
+            """, """
             CREATE TABLE IF NOT EXISTS corepvp_kit_layouts (
               uuid     VARCHAR(36) NOT NULL,
               kit      VARCHAR(32) NOT NULL,

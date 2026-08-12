@@ -129,3 +129,11 @@ ffa:
 
 party:
   max-size: 8
+
+survival:
+  # Set in game with /corepvp setsurvivalspawn. Empty uses the world spawn.
+  spawn: ""
+  spawn-protection-radius: 24.0
+  default-homes: 2
+  # More homes are granted with corepvp.homes.<number>.
+  tpa-cooldown-seconds: 10

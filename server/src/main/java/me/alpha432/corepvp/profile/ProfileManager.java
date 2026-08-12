@@ -27,6 +27,7 @@ public final class ProfileManager {
 
     private BukkitTask autosaveTask;
     private me.alpha432.corepvp.kit.layout.KitLayoutService layouts;
+    private me.alpha432.corepvp.survival.SurvivalService survival;
 
     public ProfileManager(Plugin plugin, Database database, ProfileRepository repository) {
         this.plugin = plugin;
@@ -45,6 +46,9 @@ public final class ProfileManager {
                 // Same connection, same login: one round trip instead of two.
                 layouts.load(connection, uuid);
             }
+            if (survival != null) {
+                survival.loadHomes(connection, uuid);
+            }
             cache.put(uuid, profile);
             return profile;
         }
@@ -52,6 +56,10 @@ public final class ProfileManager {
 
     public void layouts(me.alpha432.corepvp.kit.layout.KitLayoutService layouts) {
         this.layouts = layouts;
+    }
+
+    public void survival(me.alpha432.corepvp.survival.SurvivalService survival) {
+        this.survival = survival;
     }
 
     public Profile get(UUID uuid) {

@@ -41,6 +41,27 @@ commands:
     description: Team up with other players.
     usage: /party create|invite|join|leave|list
     aliases: [ p ]
+  survival:
+    description: Travel to the survival world.
+    usage: /survival
+  home:
+    description: Teleport to one of your homes.
+    usage: /home [name]
+  homes:
+    description: List your homes.
+    usage: /homes
+  sethome:
+    description: Set a home where you stand.
+    usage: /sethome [name]
+  delhome:
+    description: Delete one of your homes.
+    usage: /delhome [name]
+  tpa:
+    description: Ask to teleport to another player.
+    usage: /tpa <player>
+  tpaccept:
+    description: Accept a teleport request.
+    usage: /tpaccept
 
 permissions:
   corepvp.admin:
