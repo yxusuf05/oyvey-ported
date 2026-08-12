@@ -3,7 +3,7 @@
   "id": "smoothinv",
   "version": "${version}",
   "name": "SmoothInv",
-  "description": "Reduces inventory GUI stutter in PvP by caching item tooltips and cutting per-frame allocations. Helps most on low-RAM setups.",
+  "description": "Caches item tooltip lines instead of rebuilding them every frame, reducing allocations while the inventory screen is open. Optionally skips rendering the inventory player model.",
   "authors": [
     "yxusuf05"
   ],

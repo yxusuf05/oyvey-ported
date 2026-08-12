@@ -1,22 +1,38 @@
 # SmoothInv
 
-A tiny standalone Fabric mod for Minecraft 1.21.11 that reduces inventory GUI
-stutter in PvP — especially on low-RAM setups. No dependencies besides Fabric
-Loader (Fabric API is **not** required). Works alongside Sodium, Lithium,
-ImmediatelyFast, etc.
+A small standalone Fabric mod for Minecraft 1.21.11 that reduces the amount of
+work the client does while the inventory screen is open. No dependencies
+besides Fabric Loader (Fabric API is **not** required).
 
 ## What it does
 
-- **Tooltip caching** — vanilla rebuilds the full tooltip of the hovered item
-  every frame. With NBT-heavy items (shulker boxes, enchanted gear — i.e. a
-  typical crystal PvP inventory) that creates thousands of short-lived objects
-  per second. On low memory this fills the heap fast and triggers garbage
-  collector pauses, felt as sudden lag spikes when you open your inventory
-  mid-fight. SmoothInv caches tooltip lines for a few hundred milliseconds,
-  removing almost all of that work with no visible difference.
-- **Optional: hide the 3D player model** in the inventory screen. Since 1.21.6
-  it is rendered into its own offscreen texture every frame, which is
-  comparatively expensive with full enchanted armor. Off by default.
+- **Tooltip caching** — Minecraft rebuilds the tooltip line list of the hovered
+  item on every frame. SmoothInv stores that list and reuses it for a short,
+  configurable window (250 ms by default). This reduces the number of
+  short-lived objects allocated while an item is hovered; the effect is largest
+  for items with many data components, such as shulker boxes or enchanted gear.
+- **Optional: hide the 3D player model** in the inventory screen, skipping that
+  render work entirely. Off by default, because it visibly removes the model.
+
+## What it does not do
+
+- It does not give Minecraft more memory — that is set in your launcher
+  (`-Xmx`).
+- It does not affect server-side inventory desync, item rollbacks or ping.
+- It is not a general FPS mod. It touches tooltip building and one inventory
+  render call, nothing else.
+
+Whether this is noticeable depends on where your frame time actually goes. If
+you want to know what is costing you frames, profile with
+[spark](https://modrinth.com/mod/spark) first. No benchmark numbers are claimed
+here.
+
+## Compatibility
+
+Tooltip caching means a tooltip can be up to `tooltipCacheMs` out of date. Mods
+that render tooltips which change continuously (live timers, animated text) may
+appear to update in steps. Set `tooltipCacheMs` lower or disable
+`cacheTooltips` if that bothers you.
 
 ## Building
 
@@ -47,6 +63,6 @@ Modrinth project page, and a preview strip at various display sizes.
 ## Note on RAM
 
 A mod cannot give the game more memory — that is set in your launcher
-(`-Xmx`). 4–6 GB is the sweet spot; much more than that makes GC pauses
-*longer*. This mod reduces how fast the heap fills up, so the GC has to run
-less often in the first place.
+(`-Xmx`). Allocating a very large heap can make individual GC pauses longer
+rather than shorter. This mod reduces how quickly the heap fills while the
+inventory is open; it does not change how much heap you have.
