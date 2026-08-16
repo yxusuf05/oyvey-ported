@@ -31,3 +31,6 @@ forge*changelog.txt
 /HeadlessMC/
 /logs/
 /plugins/
+
+# session scratchpad (temporary working files)
+/scratchpad/
